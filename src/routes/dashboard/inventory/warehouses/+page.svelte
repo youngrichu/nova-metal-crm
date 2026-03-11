@@ -6,21 +6,31 @@
 	import * as Table from '$lib/components/ui/table';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { enhance } from '$app/forms';
-	import { Trash2, Plus, MapPin, ChevronDown, Pencil, Copy, Archive } from 'lucide-svelte';
+	import { Trash2, MapPin, ChevronDown, Pencil } from 'lucide-svelte';
 	
 	let { data, form } = $props();
 	
 	let isCreateModalOpen = $state(false);
+	let isEditModalOpen = $state(false);
 	let isSubmitting = $state(false);
+	let editingWarehouse = $state<any>(null);
 
-	function handleEnhance() {
-		isSubmitting = true;
-		return async ({ result, update }: any) => {
-			if (result.type === 'success') {
-				isCreateModalOpen = false;
-			}
-			isSubmitting = false;
-			await update();
+	function openEdit(wh: any) {
+		editingWarehouse = wh;
+		isEditModalOpen = true;
+	}
+
+	function makeEnhance(closeKey: 'create' | 'edit') {
+		return () => {
+			isSubmitting = true;
+			return async ({ result, update }: any) => {
+				if (result.type === 'success') {
+					if (closeKey === 'create') isCreateModalOpen = false;
+					if (closeKey === 'edit') isEditModalOpen = false;
+				}
+				isSubmitting = false;
+				await update();
+			};
 		};
 	}
 </script>
@@ -60,7 +70,7 @@
 							</Dialog.Description>
 						</Dialog.Header>
 
-						<form method="POST" action="?/create" use:enhance={handleEnhance} class="space-y-8">
+						<form method="POST" action="?/create" use:enhance={makeEnhance('create')} class="space-y-8">
 							<div class="space-y-1 group">
 								<Label for="name" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold group-focus-within:text-foreground transition-colors">Warehouse Name <span class="text-destructive">*</span></Label>
 								<Input id="name" name="name" placeholder="E.g., Head Office Depot" required class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
@@ -127,10 +137,10 @@
 										{/snippet}
 									</DropdownMenu.Trigger>
 									<DropdownMenu.Content align="end" class="w-44 bg-card/95 backdrop-blur-md rounded-xl shadow-xl border-white/10 p-1">
-										<DropdownMenu.Item disabled class="text-xs font-medium rounded-lg px-3 py-2 text-muted-foreground/40 cursor-not-allowed">
-											<Pencil class="mr-2 h-4 w-4" />
-											Edit
-										</DropdownMenu.Item>
+								<DropdownMenu.Item onSelect={() => openEdit(warehouse)} class="text-xs font-medium rounded-lg px-3 py-2 cursor-pointer">
+									<Pencil class="mr-2 h-4 w-4" />
+									Edit
+								</DropdownMenu.Item>
 										<DropdownMenu.Separator class="my-1 bg-border/40" />
 										<form method="POST" action="?/delete" use:enhance class="w-full">
 											<input type="hidden" name="id" value={warehouse.id} />
@@ -166,3 +176,35 @@
 
 	</div>
 </div>
+
+<!-- Edit Warehouse Dialog -->
+<Dialog.Root bind:open={isEditModalOpen}>
+	<Dialog.Content class="sm:max-w-[500px] border-none shadow-[0_0_40px_rgba(0,0,0,0.1)] px-8 py-10 rounded-3xl">
+		<Dialog.Header class="mb-8">
+			<Dialog.Title class="text-3xl font-light tracking-tight">Edit Warehouse</Dialog.Title>
+			<Dialog.Description class="text-sm font-light leading-relaxed mt-2 opacity-70">
+				Update the storage location name or address.
+			</Dialog.Description>
+		</Dialog.Header>
+
+		{#if editingWarehouse}
+			<form method="POST" action="?/update" use:enhance={makeEnhance('edit')} class="space-y-8">
+				<input type="hidden" name="id" value={editingWarehouse.id} />
+
+				<div class="space-y-1 group">
+					<Label for="edit-wh-name" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Warehouse Name <span class="text-destructive">*</span></Label>
+					<Input id="edit-wh-name" name="name" value={editingWarehouse.name} required class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
+				</div>
+
+				<div class="space-y-1 pb-4 group">
+					<Label for="edit-wh-loc" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Physical Location</Label>
+					<Input id="edit-wh-loc" name="location" value={editingWarehouse.location ?? ''} class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
+				</div>
+
+				<Button type="submit" class="w-full h-14 rounded-full text-base font-medium transition-all hover:scale-[1.02] bg-foreground text-background shadow-xl" disabled={isSubmitting}>
+					{isSubmitting ? 'Saving...' : 'Save Changes'}
+				</Button>
+			</form>
+		{/if}
+	</Dialog.Content>
+</Dialog.Root>

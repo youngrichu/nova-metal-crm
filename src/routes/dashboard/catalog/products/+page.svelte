@@ -4,26 +4,33 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Sheet from '$lib/components/ui/sheet';
 	import * as Table from '$lib/components/ui/table';
-	import * as Select from '$lib/components/ui/select';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { enhance } from '$app/forms';
-	import { Trash2, Plus, Box, ChevronDown, Pencil, Copy, Archive } from 'lucide-svelte';
+	import { Trash2, Box, ChevronDown, Pencil } from 'lucide-svelte';
 	
 	let { data, form } = $props();
 	
 	let isCreateOpen = $state(false);
+	let isEditOpen = $state(false);
 	let isSubmitting = $state(false);
+	let editingProduct = $state<any>(null);
 
-	let selectedCategory = $state('');
+	function openEdit(row: any) {
+		editingProduct = row;
+		isEditOpen = true;
+	}
 
-	function handleEnhance() {
-		isSubmitting = true;
-		return async ({ result, update }: any) => {
-			if (result.type === 'success') {
-				isCreateOpen = false;
-			}
-			isSubmitting = false;
-			await update();
+	function makeEnhance(closeKey: 'create' | 'edit') {
+		return () => {
+			isSubmitting = true;
+			return async ({ result, update }: any) => {
+				if (result.type === 'success') {
+					if (closeKey === 'create') isCreateOpen = false;
+					if (closeKey === 'edit') isEditOpen = false;
+				}
+				isSubmitting = false;
+				await update();
+			};
 		};
 	}
 </script>
@@ -57,7 +64,7 @@
 							</Sheet.Description>
 						</Sheet.Header>
 
-						<form method="POST" action="?/create" use:enhance={handleEnhance} class="flex-1 flex flex-col justify-between">
+						<form method="POST" action="?/create" use:enhance={makeEnhance('create')} class="flex-1 flex flex-col justify-between">
 							<div class="space-y-8">
 								{#if form?.error || form?.duplicate}
 									<div class="p-4 text-sm font-medium rounded-2xl bg-destructive/5 text-destructive border-l-4 border-destructive flex items-start gap-3">
@@ -69,7 +76,7 @@
 								<div class="space-y-1 relative group">
 									<Label for="categoryId" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold group-focus-within:text-foreground transition-colors mix-blend-multiply">Structural Category</Label>
 									<div class="relative">
-										<select id="categoryId" name="categoryId" bind:value={selectedCategory} required class="flex h-12 w-full appearance-none items-center justify-between whitespace-nowrap bg-transparent px-0 py-2 text-base shadow-none border-b border-border/40 focus:border-foreground focus:outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-50">
+										<select id="categoryId" name="categoryId" required class="flex h-12 w-full appearance-none items-center justify-between whitespace-nowrap bg-transparent px-0 py-2 text-base shadow-none border-b border-border/40 focus:border-foreground focus:outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-50">
 											<option value="" disabled selected>— Select Classification —</option>
 											{#each data.categories as cat}
 												<option value={cat.id} class="text-foreground">{cat.name} ({cat.prefix})</option>
@@ -200,13 +207,9 @@
 										{/snippet}
 									</DropdownMenu.Trigger>
 									<DropdownMenu.Content align="end" class="w-48 bg-card/95 backdrop-blur-md rounded-xl shadow-xl border-white/10 p-1">
-										<DropdownMenu.Item disabled class="text-xs font-medium rounded-lg px-3 py-2 text-muted-foreground/40 cursor-not-allowed">
+										<DropdownMenu.Item onSelect={() => openEdit(row)} class="text-xs font-medium rounded-lg px-3 py-2 cursor-pointer">
 											<Pencil class="mr-2 h-4 w-4" />
 											Edit
-										</DropdownMenu.Item>
-										<DropdownMenu.Item disabled class="text-xs font-medium rounded-lg px-3 py-2 text-muted-foreground/40 cursor-not-allowed">
-											<Copy class="mr-2 h-4 w-4" />
-											Clone
 										</DropdownMenu.Item>
 										<DropdownMenu.Separator class="my-1 bg-border/40" />
 										<form method="POST" action="?/delete" use:enhance class="w-full">
@@ -241,3 +244,90 @@
 
 	</div>
 </div>
+
+<!-- Edit Product Sheet -->
+<Sheet.Root bind:open={isEditOpen}>
+	<Sheet.Content class="sm:max-w-[600px] overflow-y-auto flex flex-col h-full border-l-0 shadow-[0_0_40px_rgba(0,0,0,0.05)] px-8 py-10">
+		<Sheet.Header class="mb-10">
+			<Sheet.Title class="text-3xl font-light tracking-tight">Edit Product</Sheet.Title>
+			<Sheet.Description class="text-sm font-light leading-relaxed mt-2 opacity-70">
+				Modify product details. SKU will be regenerated automatically.
+			</Sheet.Description>
+		</Sheet.Header>
+
+		{#if editingProduct}
+			<form method="POST" action="?/update" use:enhance={makeEnhance('edit')} class="flex-1 flex flex-col justify-between">
+				<input type="hidden" name="id" value={editingProduct.product.id} />
+				<div class="space-y-8">
+					{#if form?.error}
+						<div class="p-4 text-sm font-medium rounded-2xl bg-destructive/5 text-destructive border-l-4 border-destructive">{form.error}</div>
+					{/if}
+
+					<div class="space-y-1 relative group">
+						<Label for="edit-categoryId" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Structural Category</Label>
+						<div class="relative">
+							<select id="edit-categoryId" name="categoryId" required
+								class="flex h-12 w-full appearance-none bg-transparent px-0 py-2 text-base border-b border-border/40 focus:border-foreground focus:outline-none transition-colors">
+								{#each data.categories as cat}
+									<option value={cat.id} selected={cat.id === editingProduct.product.categoryId}>{cat.name} ({cat.prefix})</option>
+								{/each}
+							</select>
+							<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-30"><path d="m6 9 6 6 6-6"/></svg>
+							</div>
+						</div>
+					</div>
+
+					<div class="space-y-1 group">
+						<Label for="edit-name" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Identifier Name</Label>
+						<Input id="edit-name" name="name" value={editingProduct.product.name} required class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
+					</div>
+
+					<div class="grid grid-cols-2 gap-8">
+						<div class="space-y-1 group">
+							<Label for="edit-size1" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Size 1 (mm)</Label>
+							<Input id="edit-size1" name="size1" type="number" step="0.1" value={editingProduct.product.size1 ?? ''} class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
+						</div>
+						<div class="space-y-1 group">
+							<Label for="edit-size2" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Size 2 (mm)</Label>
+							<Input id="edit-size2" name="size2" type="number" step="0.1" value={editingProduct.product.size2 ?? ''} class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
+						</div>
+					</div>
+
+					<div class="grid grid-cols-2 gap-8">
+						<div class="space-y-1 group">
+							<Label for="edit-thickness" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Gauge / Thickness (mm)</Label>
+							<Input id="edit-thickness" name="thickness" type="number" step="0.1" value={editingProduct.product.thickness ?? ''} class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
+						</div>
+						<div class="space-y-1 group">
+							<Label for="edit-length" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Standard Length (mm)</Label>
+							<Input id="edit-length" name="length" type="number" value={editingProduct.product.length ?? ''} class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
+						</div>
+					</div>
+
+					<div class="grid grid-cols-2 gap-8">
+						<div class="space-y-1 group">
+							<Label for="edit-weight" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Unit Weight (kg)</Label>
+							<Input id="edit-weight" name="weightPerPiece" type="number" step="0.01" value={editingProduct.product.weightPerPiece ?? ''} class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
+						</div>
+						<div class="space-y-1 group">
+							<Label for="edit-minStock" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Alert Threshold</Label>
+							<Input id="edit-minStock" name="minStockLevel" type="number" value={editingProduct.product.minStockLevel} required class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
+						</div>
+					</div>
+
+					<div class="space-y-1 pb-10 group">
+						<Label for="edit-desc" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Specs & Annotations</Label>
+						<Input id="edit-desc" name="description" value={editingProduct.product.description ?? ''} class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
+					</div>
+				</div>
+
+				<div class="pt-4 mt-auto bg-background/80 backdrop-blur-md pb-4 sticky bottom-0">
+					<Button type="submit" class="w-full h-14 rounded-full text-base font-medium transition-all hover:scale-[1.02] bg-foreground text-background shadow-xl hover:shadow-2xl active:scale-[0.98]" disabled={isSubmitting}>
+						{isSubmitting ? 'Saving Changes...' : 'Save Changes'}
+					</Button>
+				</div>
+			</form>
+		{/if}
+	</Sheet.Content>
+</Sheet.Root>
