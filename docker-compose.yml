@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: nova_dev
+      POSTGRES_PASSWORD: nova_password
+      POSTGRES_DB: nova_crm
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backup:
+    image: postgres:16-alpine
+    restart: always
+    depends_on:
+      - db
+    environment:
+      PGHOST: db
+      PGUSER: nova_dev
+      PGPASSWORD: nova_password
+      PGDATABASE: nova_crm
+    volumes:
+      - ./scripts/backup.sh:/backup.sh
+      - ./backups:/mnt/backup
+    entrypoint: ["/bin/sh", "-c", "echo '0 2 * * * /backup.sh' > /etc/crontabs/root && crond -f -l 2"]
+
+volumes:
+  pgdata:
