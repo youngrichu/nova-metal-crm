@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import { cn } from '$lib/utils';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as m from '$lib/paraglide/messages';
 	import { LayoutDashboard, Package, Users, ShoppingCart, Settings, Box, Tags, Warehouse, LogOut, ChevronDown } from 'lucide-svelte';
 	import { page } from '$app/state';
@@ -40,21 +41,44 @@
 <Sidebar.Root id="invoice-sidebar" class="border-r-0">
 	<Sidebar.Header class="pt-6 pb-2 px-4 border-b border-border/10">
 		<div class="flex items-center gap-3">
-			<div class="bg-primary flex aspect-square w-8 items-center justify-center rounded shadow-sm">
-				<span class="text-primary-foreground text-sm font-black tracking-tighter">N</span>
+			<div class="bg-white flex aspect-square w-8 items-center justify-center rounded shadow-md">
+				<span class="text-zinc-900 text-sm font-black tracking-tighter select-none">N</span>
 			</div>
-			<span class="text-base font-semibold truncate tracking-tight text-white/90 uppercase">{m.app_name()}</span>
+			<div class="flex flex-col leading-tight">
+				<span class="text-[0.8rem] font-bold truncate tracking-widest text-sidebar-foreground uppercase">Nova Metal</span>
+				<span class="text-[0.6rem] text-sidebar-foreground/50 font-medium tracking-wider uppercase">ERP System</span>
+			</div>
 		</div>
 	</Sidebar.Header>
 
 	<div class="px-4 py-3 mb-2 border-b border-border/10">
-		<button class="flex items-center justify-between w-full hover:bg-sidebar-accent p-2 rounded-md transition-colors">
-			<div class="flex flex-col text-left">
-				<span class="text-[0.65rem] text-sidebar-foreground/50 uppercase font-bold tracking-wider mb-0.5">Signed in as</span>
-				<span class="text-sm font-medium text-sidebar-foreground/90 truncate max-w-[150px]">admin@novametal.co</span>
-			</div>
-			<ChevronDown class="w-4 h-4 text-sidebar-foreground/50" />
-		</button>
+		<DropdownMenu.Root>
+			<DropdownMenu.Trigger class="flex outline-none items-center justify-between w-full hover:bg-sidebar-accent p-2 rounded-md transition-colors">
+				<div class="flex flex-col text-left">
+					<span class="text-[0.65rem] text-sidebar-foreground/50 uppercase font-bold tracking-wider mb-0.5">Signed in as</span>
+					<span class="text-sm font-medium text-sidebar-foreground/90 truncate max-w-[150px]">{page.data.user?.email ?? 'Guest'}</span>
+				</div>
+				<ChevronDown class="w-4 h-4 text-sidebar-foreground/50" />
+			</DropdownMenu.Trigger>
+			<DropdownMenu.Content align="start" side="right" sideOffset={16} class="w-60 min-w-[240px] z-[100]">
+				<DropdownMenu.Label class="px-2 py-2">
+					<div class="flex flex-col space-y-1 relative">
+						<p class="text-sm font-medium leading-none">{page.data.user?.name ?? 'Admin'}</p>
+						<p class="text-xs leading-none text-muted-foreground">{page.data.user?.email ?? 'Guest'}</p>
+					</div>
+				</DropdownMenu.Label>
+				<DropdownMenu.Separator />
+				<DropdownMenu.Item onclick={() => goto('/settings')} class="cursor-pointer py-2">
+					<Settings class="mr-2 h-4 w-4 text-muted-foreground" />
+					<span>{m.nav_settings()}</span>
+				</DropdownMenu.Item>
+				<DropdownMenu.Separator />
+				<DropdownMenu.Item onclick={handleLogout} class="cursor-pointer py-2 text-rose-600 focus:text-rose-700">
+					<LogOut class="mr-2 h-4 w-4 text-rose-600" />
+					<span>{m.sign_out()}</span>
+				</DropdownMenu.Item>
+			</DropdownMenu.Content>
+		</DropdownMenu.Root>
 	</div>
 
 	<Sidebar.Content>

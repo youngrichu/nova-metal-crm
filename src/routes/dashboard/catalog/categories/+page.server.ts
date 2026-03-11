@@ -45,5 +45,24 @@ export const actions = {
 		} catch (e: any) {
 			return fail(500, { error: 'Could not delete category. Ensure no products depend on it.' });
 		}
+	},
+	update: async ({ request }) => {
+		const data = await request.formData();
+		const id = data.get('id')?.toString();
+		const name = data.get('name')?.toString();
+		const prefix = data.get('prefix')?.toString().toUpperCase();
+		const description = data.get('description')?.toString() || null;
+
+		if (!id || !name || !prefix) return fail(400, { missing: true });
+
+		try {
+			await db.update(categories)
+				.set({ name, prefix, description })
+				.where(eq(categories.id, id));
+			return { success: true };
+		} catch (e: any) {
+			if (e.code === '23505') return fail(400, { duplicate: true, prefix });
+			return fail(500, { error: 'Could not update category.' });
+		}
 	}
 };

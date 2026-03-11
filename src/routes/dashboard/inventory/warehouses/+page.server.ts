@@ -40,5 +40,22 @@ export const actions = {
 		} catch (e: any) {
 			return fail(500, { error: 'Could not delete warehouse. Ensure no inventory is linked to it.' });
 		}
+	},
+	update: async ({ request }) => {
+		const data = await request.formData();
+		const id = data.get('id')?.toString();
+		const name = data.get('name')?.toString();
+		const location = data.get('location')?.toString() || null;
+
+		if (!id || !name) return fail(400, { missing: true });
+
+		try {
+			await db.update(warehouses)
+				.set({ name, location })
+				.where(eq(warehouses.id, id));
+			return { success: true };
+		} catch (e: any) {
+			return fail(500, { error: 'Could not update warehouse.' });
+		}
 	}
 };

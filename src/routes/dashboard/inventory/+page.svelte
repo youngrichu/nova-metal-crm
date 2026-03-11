@@ -172,4 +172,61 @@
 			</Table.Body>
 		</Table.Root>
 	</div>
+
+	<!-- Transaction Audit Log -->
+	<div class="mt-8">
+		<h2 class="text-lg font-semibold tracking-tight mb-4 flex items-center gap-2">
+			<span class="text-muted-foreground text-sm font-normal">Audit Trail —</span> Transaction Log
+		</h2>
+		<div class="rounded-xl border shadow overflow-hidden">
+			<Table.Root>
+				<Table.Header>
+					<Table.Row class="bg-muted/50">
+						<Table.Head class="w-[110px]">Type</Table.Head>
+						<Table.Head>Product</Table.Head>
+						<Table.Head class="hidden md:table-cell">Warehouse</Table.Head>
+						<Table.Head class="text-right w-[80px]">Qty Δ</Table.Head>
+						<Table.Head class="hidden lg:table-cell">Reference</Table.Head>
+						<Table.Head class="text-right w-[160px]">Date</Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
+					{#each data.recentTransactions as tx}
+						<Table.Row class="hover:bg-muted/20 transition-colors">
+							<Table.Cell>
+								<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-wide
+									{tx.tx.transactionType === 'STOCK_IN' ? 'bg-emerald-100/70 text-emerald-700' :
+									 tx.tx.transactionType === 'STOCK_OUT' ? 'bg-rose-100/70 text-rose-700' :
+									 'bg-amber-100/70 text-amber-700'}">
+									{tx.tx.transactionType === 'STOCK_IN' ? '↑ IN' :
+									 tx.tx.transactionType === 'STOCK_OUT' ? '↓ OUT' : '± ADJ'}
+								</span>
+							</Table.Cell>
+							<Table.Cell>
+								<div class="font-medium text-sm text-foreground">{tx.productName}</div>
+								<div class="text-[10px] text-muted-foreground font-mono">{tx.productSku}</div>
+							</Table.Cell>
+							<Table.Cell class="hidden md:table-cell text-sm text-muted-foreground">{tx.warehouseName}</Table.Cell>
+							<Table.Cell class="text-right font-mono font-bold text-sm
+								{tx.tx.quantityChange > 0 ? 'text-emerald-600' : 'text-rose-600'}">
+								{tx.tx.quantityChange > 0 ? '+' : ''}{tx.tx.quantityChange}
+							</Table.Cell>
+							<Table.Cell class="hidden lg:table-cell text-xs text-muted-foreground italic">
+								{tx.tx.referenceDoc || '—'}
+							</Table.Cell>
+							<Table.Cell class="text-right text-xs text-muted-foreground">
+								{new Date(tx.tx.createdAt).toLocaleDateString('en-ET', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+							</Table.Cell>
+						</Table.Row>
+					{:else}
+						<Table.Row>
+							<Table.Cell colspan={6} class="h-24 text-center text-muted-foreground text-sm">
+								No transactions yet. Log a stock movement to see the audit trail.
+							</Table.Cell>
+						</Table.Row>
+					{/each}
+				</Table.Body>
+			</Table.Root>
+		</div>
+	</div>
 </div>

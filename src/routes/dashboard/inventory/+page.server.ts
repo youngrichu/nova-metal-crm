@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db';
 import { inventory, inventoryTransactions, products, warehouses } from '$lib/server/db/schema';
 import { fail } from '@sveltejs/kit';
-import { eq, sql, and } from 'drizzle-orm';
+import { eq, sql, and, desc } from 'drizzle-orm';
 
 export const load = async () => {
 	// Load all active inventory grouped by warehouse and product
@@ -19,10 +19,26 @@ export const load = async () => {
 	const allProducts = await db.select().from(products).orderBy(products.sku);
 	const allWarehouses = await db.select().from(warehouses).orderBy(warehouses.name);
 
+	// Recent transaction audit trail
+	const recentTransactions = await db
+		.select({
+			tx: inventoryTransactions,
+			productName: products.name,
+			productSku: products.sku,
+			warehouseName: warehouses.name
+		})
+		.from(inventoryTransactions)
+		.innerJoin(inventory, eq(inventoryTransactions.inventoryId, inventory.id))
+		.innerJoin(products, eq(inventory.productId, products.id))
+		.innerJoin(warehouses, eq(inventory.warehouseId, warehouses.id))
+		.orderBy(desc(inventoryTransactions.createdAt))
+		.limit(50);
+
 	return {
 		stockLevels,
 		products: allProducts,
-		warehouses: allWarehouses
+		warehouses: allWarehouses,
+		recentTransactions
 	};
 };
 
