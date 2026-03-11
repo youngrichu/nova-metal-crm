@@ -39,8 +39,8 @@
 		<Sheet.Root bind:open={isTransactOpen}>
 			<Sheet.Trigger>
 				{#snippet child({ props })}
-					<Button {...props}>
-						<ArrowDownUp class="w-4 h-4 mr-2" /> Log Transaction
+					<Button {...props} size="sm" class="h-8 text-xs font-medium shadow-none px-4 bg-primary text-primary-foreground hover:bg-primary/90">
+						<ArrowDownUp class="w-3.5 h-3.5 mr-2" /> Log Transaction
 					</Button>
 				{/snippet}
 			</Sheet.Trigger>
@@ -135,30 +135,30 @@
 	<div class="rounded-xl border shadow overflow-hidden">
 		<Table.Root>
 			<Table.Header>
-				<Table.Row class="bg-muted/50">
-					<Table.Head class="w-[180px]">Automated SKU</Table.Head>
-					<Table.Head>Product Item</Table.Head>
-					<Table.Head>Warehouse Depot</Table.Head>
-					<Table.Head class="text-right">Live Stock</Table.Head>
-					<Table.Head class="text-right">Unit Alert</Table.Head>
+				<Table.Row class="bg-muted/30 hover:bg-muted/30 border-b border-border/50">
+					<Table.Head class="h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle w-[180px]">Automated SKU</Table.Head>
+					<Table.Head class="h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle">Product Item</Table.Head>
+					<Table.Head class="h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle">Warehouse Depot</Table.Head>
+					<Table.Head class="h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle text-right">Live Stock</Table.Head>
+					<Table.Head class="h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle text-right">Unit Alert</Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
 				{#each data.stockLevels as row}
-					<Table.Row>
-						<Table.Cell class="font-mono text-xs font-semibold">{row.product.sku}</Table.Cell>
-						<Table.Cell class="font-medium">{row.product.name}</Table.Cell>
-						<Table.Cell>
-                            <span class="text-muted-foreground text-sm flex items-center">
+					<Table.Row class="hover:bg-muted/30 border-b border-border/40 transition-colors">
+						<Table.Cell class="py-3 text-sm font-semibold text-foreground align-middle">{row.product.sku}</Table.Cell>
+						<Table.Cell class="py-3 text-[13px] text-muted-foreground align-middle">{row.product.name}</Table.Cell>
+						<Table.Cell class="py-3 align-middle">
+                            <span class="text-[13px] text-muted-foreground/80 flex items-center">
                                 {row.warehouse.name}
                             </span>
                         </Table.Cell>
-						<Table.Cell class="text-right">
-                            <span class="font-bold text-lg {row.stock.quantity <= row.product.minStockLevel ? 'text-amber-500' : 'text-emerald-600'}">
+						<Table.Cell class="text-right py-3 align-middle">
+                            <span class="font-bold text-sm {row.stock.quantity <= row.product.minStockLevel ? 'text-amber-600' : 'text-emerald-600'}">
                                 {row.stock.quantity}
                             </span>
                         </Table.Cell>
-						<Table.Cell class="text-right text-muted-foreground text-sm">
+						<Table.Cell class="text-right text-muted-foreground/50 text-xs py-3 align-middle">
                             {row.product.minStockLevel} min
                         </Table.Cell>
 					</Table.Row>
@@ -181,40 +181,40 @@
 		<div class="rounded-xl border shadow overflow-hidden">
 			<Table.Root>
 				<Table.Header>
-					<Table.Row class="bg-muted/50">
-						<Table.Head class="w-[110px]">Type</Table.Head>
-						<Table.Head>Product</Table.Head>
-						<Table.Head class="hidden md:table-cell">Warehouse</Table.Head>
-						<Table.Head class="text-right w-[80px]">Qty Δ</Table.Head>
-						<Table.Head class="hidden lg:table-cell">Reference</Table.Head>
-						<Table.Head class="text-right w-[160px]">Date</Table.Head>
+					<Table.Row class="bg-muted/30 hover:bg-muted/30 border-b border-border/50">
+						<Table.Head class="h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle w-[110px]">Type</Table.Head>
+						<Table.Head class="h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle">Product</Table.Head>
+						<Table.Head class="hidden md:table-cell h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle">Warehouse</Table.Head>
+						<Table.Head class="h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle text-right w-[80px]">Qty Δ</Table.Head>
+						<Table.Head class="hidden lg:table-cell h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle">Reference</Table.Head>
+						<Table.Head class="h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle text-right w-[160px]">Date</Table.Head>
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
 					{#each data.recentTransactions as tx}
-						<Table.Row class="hover:bg-muted/20 transition-colors">
-							<Table.Cell>
-								<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-wide
-									{tx.tx.transactionType === 'STOCK_IN' ? 'bg-emerald-100/70 text-emerald-700' :
-									 tx.tx.transactionType === 'STOCK_OUT' ? 'bg-rose-100/70 text-rose-700' :
-									 'bg-amber-100/70 text-amber-700'}">
+						<Table.Row class="hover:bg-muted/30 border-b border-border/40 transition-colors">
+							<Table.Cell class="py-3 align-middle">
+								<span class="inline-flex items-center justify-center rounded-full px-2 py-[2px] text-[10px] font-bold uppercase tracking-wider border
+									{tx.tx.transactionType === 'STOCK_IN' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' :
+									 tx.tx.transactionType === 'STOCK_OUT' ? 'bg-rose-50 text-rose-700 border-rose-200/50' :
+									 'bg-amber-50 text-amber-700 border-amber-200/50'}">
 									{tx.tx.transactionType === 'STOCK_IN' ? '↑ IN' :
 									 tx.tx.transactionType === 'STOCK_OUT' ? '↓ OUT' : '± ADJ'}
 								</span>
 							</Table.Cell>
-							<Table.Cell>
-								<div class="font-medium text-sm text-foreground">{tx.productName}</div>
-								<div class="text-[10px] text-muted-foreground font-mono">{tx.productSku}</div>
+							<Table.Cell class="py-3 align-middle">
+								<div class="text-sm font-semibold text-foreground">{tx.productName}</div>
+								<div class="text-[11px] text-muted-foreground/70 tracking-wide mt-0.5">{tx.productSku}</div>
 							</Table.Cell>
-							<Table.Cell class="hidden md:table-cell text-sm text-muted-foreground">{tx.warehouseName}</Table.Cell>
-							<Table.Cell class="text-right font-mono font-bold text-sm
+							<Table.Cell class="hidden md:table-cell py-3 text-[13px] text-muted-foreground/80 align-middle">{tx.warehouseName}</Table.Cell>
+							<Table.Cell class="text-right font-semibold text-sm py-3 align-middle
 								{tx.tx.quantityChange > 0 ? 'text-emerald-600' : 'text-rose-600'}">
 								{tx.tx.quantityChange > 0 ? '+' : ''}{tx.tx.quantityChange}
 							</Table.Cell>
-							<Table.Cell class="hidden lg:table-cell text-xs text-muted-foreground italic">
+							<Table.Cell class="hidden lg:table-cell py-3 text-[12px] text-muted-foreground/60 italic align-middle">
 								{tx.tx.referenceDoc || '—'}
 							</Table.Cell>
-							<Table.Cell class="text-right text-xs text-muted-foreground">
+							<Table.Cell class="text-right py-3 text-[12px] text-muted-foreground/60 align-middle">
 								{new Date(tx.tx.createdAt).toLocaleDateString('en-ET', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
 							</Table.Cell>
 						</Table.Row>
