@@ -51,7 +51,7 @@
 				<Sheet.Root bind:open={isCreateOpen}>
 					<Sheet.Trigger>
 						{#snippet child({ props })}
-							<Button {...props} size="sm" class="h-8 text-xs font-medium bg-zinc-900 text-white hover:bg-zinc-800 shadow-none px-4">
+							<Button {...props} size="sm" class="h-8 text-xs font-medium shadow-none px-4 bg-primary text-primary-foreground hover:bg-primary/90">
 								New Product
 							</Button>
 						{/snippet}
@@ -151,22 +151,25 @@
 						<Table.Head class="w-[40px] px-4 py-3 h-10 align-middle">
 							<input type="checkbox" class="w-3.5 h-3.5 rounded-sm border-muted-foreground/30 text-primary focus:ring-primary/50" />
 						</Table.Head>
-						<Table.Head class="h-10 text-xs font-semibold text-muted-foreground align-middle tracking-wide group cursor-pointer hover:text-foreground transition-colors">
-							<div class="flex items-center gap-1">Category <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-50 group-hover:opacity-100 transition-opacity"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></div>
+						<Table.Head class="h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle transition-colors">
+							Category
 						</Table.Head>
-						<Table.Head class="h-10 text-xs font-semibold text-muted-foreground align-middle tracking-wide group cursor-pointer hover:text-foreground transition-colors">
-							<div class="flex items-center gap-1">SKU <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-50 group-hover:opacity-100 transition-opacity"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></div>
+						<Table.Head class="h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle transition-colors">
+							SKU
 						</Table.Head>
-						<Table.Head class="h-10 text-xs font-semibold text-muted-foreground align-middle tracking-wide group cursor-pointer hover:text-foreground transition-colors">
-							<div class="flex items-center gap-1">Product <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-50 group-hover:opacity-100 transition-opacity"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></div>
+						<Table.Head class="h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle transition-colors">
+							Identifier
 						</Table.Head>
-						<Table.Head class="hidden md:table-cell h-10 text-xs font-semibold text-muted-foreground align-middle tracking-wide group cursor-pointer hover:text-foreground transition-colors">
-							<div class="flex items-center gap-1">Specs <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-50 group-hover:opacity-100 transition-opacity"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></div>
+						<Table.Head class="hidden md:table-cell h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle transition-colors">
+							Dimensions
 						</Table.Head>
-						<Table.Head class="hidden lg:table-cell text-right h-10 text-xs font-semibold text-muted-foreground align-middle tracking-wide group cursor-pointer hover:text-foreground transition-colors">
-							<div class="flex items-center gap-1 justify-end">Weight <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-50 group-hover:opacity-100 transition-opacity"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></div>
+						<Table.Head class="hidden lg:table-cell text-right h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle transition-colors">
+							Min Stock
 						</Table.Head>
-						<Table.Head class="w-[120px] text-right h-10 text-xs font-semibold text-muted-foreground align-middle tracking-wide"></Table.Head>
+						<Table.Head class="hidden lg:table-cell text-right h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle transition-colors">
+							Weight / Pc
+						</Table.Head>
+						<Table.Head class="w-[120px] text-right h-10 align-middle"></Table.Head>
 					</Table.Row>
 				</Table.Header>
 				<Table.Body>
@@ -176,33 +179,45 @@
 								<input type="checkbox" class="w-3.5 h-3.5 rounded-sm border-muted-foreground/30 text-primary focus:ring-primary/50 opacity-40 group-hover/row:opacity-100 transition-opacity" />
 							</Table.Cell>
 							<Table.Cell class="py-3 align-middle">
-								<span class="inline-flex items-center justify-center rounded bg-emerald-100/60 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 tracking-wide uppercase">
+								<span class="inline-flex items-center justify-center rounded-full bg-muted/60 text-foreground/80 px-2 py-[2px] text-[10px] font-bold uppercase tracking-wider border border-border/50">
 									{row.category?.prefix || '—'}
 								</span>
 							</Table.Cell>
 							<Table.Cell class="py-3 text-sm align-middle">
-								<span class="text-blue-600 font-medium hover:underline cursor-pointer transition-all">{row.product.sku}</span>
+								<button onclick={() => openEdit(row)} class="text-foreground font-semibold hover:text-muted-foreground cursor-pointer transition-colors bg-transparent border-0 p-0 text-left outline-none">
+									{row.product.sku}
+								</button>
 							</Table.Cell>
-							<Table.Cell class="py-3 text-sm align-middle">
-								<div class="font-medium text-foreground">{row.product.name}</div>
+							<Table.Cell class="py-3 text-sm align-middle text-muted-foreground">
+								{row.product.name}
 							</Table.Cell>
-							<Table.Cell class="hidden md:table-cell py-3 text-sm align-middle text-muted-foreground">
-								{[
-									row.product.size1 && `S1=${row.product.size1}`,
-									row.product.size2 && `S2=${row.product.size2}`,
-									row.product.thickness && `T=${row.product.thickness}mm`,
-									row.product.length && `L=${row.product.length}mm`
-								].filter(Boolean).join(' · ')}
+							<Table.Cell class="hidden md:table-cell py-3 text-[13px] align-middle text-muted-foreground/80">
+								<div class="flex gap-2 items-center flex-wrap">
+									{#if row.product.size1 || row.product.size2}
+										<span>{row.product.size1 ?? '-'}{#if row.product.size2}×{row.product.size2}{/if}</span>
+									{/if}
+									{#if row.product.thickness}
+										<span class="text-border">|</span>
+										<span>T: {row.product.thickness}mm</span>
+									{/if}
+									{#if row.product.length}
+										<span class="text-border">|</span>
+										<span>L: {row.product.length}mm</span>
+									{/if}
+								</div>
 							</Table.Cell>
-							<Table.Cell class="hidden lg:table-cell text-right py-3 text-sm align-middle text-muted-foreground font-mono">
-								{row.product.weightPerPiece ? `${row.product.weightPerPiece}kg` : '—'}
+							<Table.Cell class="hidden lg:table-cell text-right py-3 text-sm align-middle text-muted-foreground">
+								{row.product.minStockLevel}
+							</Table.Cell>
+							<Table.Cell class="hidden lg:table-cell text-right py-3 text-sm align-middle text-muted-foreground">
+								{row.product.weightPerPiece ? `${row.product.weightPerPiece} kg` : '—'}
 							</Table.Cell>
 							<Table.Cell class="text-right py-2 px-4 align-middle">
 								<DropdownMenu.Root>
 									<DropdownMenu.Trigger>
 										{#snippet child({ props })}
-											<Button {...props} variant="outline" size="sm" class="h-8 bg-zinc-900 text-white hover:bg-zinc-800 hover:text-white border-none shadow-sm text-[11px] font-medium px-3 flex items-center justify-between min-w-[85px] cursor-pointer rounded">
-												Actions <ChevronDown class="h-3.5 w-3.5 ml-2 opacity-70" />
+											<Button {...props} variant="outline" size="sm" class="h-8 shadow-sm text-xs font-medium px-3 flex items-center justify-between min-w-[85px] cursor-pointer">
+												Actions <ChevronDown class="h-3.5 w-3.5 ml-2 opacity-50" />
 											</Button>
 										{/snippet}
 									</DropdownMenu.Trigger>
