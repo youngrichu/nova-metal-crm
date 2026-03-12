@@ -48,6 +48,7 @@
 		"lucide-svelte": "^0.577.0",
 		"pdfmake": "^0.3.6",
 		"pg": "^8.20.0",
+		"svelte-sonner": "^1.1.0",
 		"tailwindcss-animate": "^1.0.7"
 	}
 }
