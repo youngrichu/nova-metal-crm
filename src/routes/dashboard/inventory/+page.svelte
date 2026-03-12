@@ -5,7 +5,10 @@
 	import * as Sheet from '$lib/components/ui/sheet';
 	import * as Table from '$lib/components/ui/table';
 	import { enhance } from '$app/forms';
-	import { ArrowDownUp, AlertTriangle, PackageSearch, Activity } from 'lucide-svelte';
+	import { ArrowDownUp, AlertTriangle, PackageSearch, Activity, Check, ChevronsUpDown } from 'lucide-svelte';
+	import * as Popover from "$lib/components/ui/popover";
+	import * as Command from "$lib/components/ui/command";
+	import { cn } from "$lib/utils";
 	
 	let { data, form } = $props();
 	
@@ -13,8 +16,29 @@
 	let isSubmitting = $state(false);
 
 	let selectedType = $state('STOCK_IN');
+	let typeOpen = $state(false);
 	let selectedProduct = $state('');
+	let prodOpen = $state(false);
 	let selectedWarehouse = $state('');
+	let whOpen = $state(false);
+
+	const txTypes = [
+		{ value: 'STOCK_IN', label: 'STOCK IN (RECEIVE GOODS) ↑' },
+		{ value: 'STOCK_OUT', label: 'STOCK OUT (DISPATCH) ↓' },
+		{ value: 'ADJUSTMENT', label: 'ADJUSTMENT (AUDIT) ±' }
+	];
+
+	function getProductLabel(id: string) {
+		const prod = data.products.find((p: any) => p.id === id);
+		if (!prod) return "— Select a valid SKU —";
+		return `${prod.sku} — ${prod.name}`;
+	}
+
+	function getWarehouseLabel(id: string) {
+		const wh = data.warehouses.find((w: any) => w.id === id);
+		if (!wh) return "— Select Location —";
+		return wh.name;
+	}
 
 	function handleEnhance() {
 		isSubmitting = true;
@@ -77,33 +101,125 @@
 								<h3 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-2">Flow Properties</h3>
 
 								<div class="space-y-2">
-									<Label for="type" class="text-xs font-bold tracking-wider uppercase text-foreground/70">Transaction Type *</Label>
-									<select id="type" name="type" bind:value={selectedType} class="flex h-12 w-full items-center justify-between rounded-lg border-2 border-transparent bg-muted/30 px-4 text-sm font-bold focus:bg-transparent focus:border-primary focus:outline-none transition-colors">
-										<option value="STOCK_IN">STOCK IN (RECEIVE GOODS) ↑</option>
-										<option value="STOCK_OUT">STOCK OUT (DISPATCH) ↓</option>
-										<option value="ADJUSTMENT">ADJUSTMENT (AUDIT) ±</option>
-									</select>
+									<Label for="type" class="text-xs font-bold tracking-wider uppercase text-foreground/70 mb-2 block">Transaction Type *</Label>
+									<input type="hidden" name="type" value={selectedType} />
+									<Popover.Root bind:open={typeOpen}>
+										<Popover.Trigger
+											class={cn(
+												"flex h-12 w-full items-center justify-between rounded-lg border-2 border-transparent bg-muted/30 px-4 text-sm font-bold focus:bg-transparent focus:border-primary focus:outline-none transition-colors",
+												!selectedType && "text-muted-foreground"
+											)}
+											role="combobox"
+											aria-expanded={typeOpen}
+										>
+											<span class="truncate">{txTypes.find(t => t.value === selectedType)?.label}</span>
+											<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+										</Popover.Trigger>
+										<Popover.Content class="w-full p-0 rounded-lg border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card">
+											<Command.Root>
+												<Command.List>
+													<Command.Group>
+														{#each txTypes as type}
+															<Command.Item
+																value={type.label}
+																onSelect={() => {
+																	selectedType = type.value;
+																	typeOpen = false;
+																}}
+																class="cursor-pointer py-2"
+															>
+																<Check class={cn("mr-2 h-4 w-4", selectedType === type.value ? "opacity-100 text-primary" : "opacity-0")} />
+																<span class="font-bold">{type.label}</span>
+															</Command.Item>
+														{/each}
+													</Command.Group>
+												</Command.List>
+											</Command.Root>
+										</Popover.Content>
+									</Popover.Root>
 								</div>
 
 								<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 									<div class="space-y-2">
-										<Label for="warehouseId" class="text-xs font-bold tracking-wider uppercase text-foreground/70">Target Warehouse *</Label>
-										<select id="warehouseId" name="warehouseId" bind:value={selectedWarehouse} required class="flex h-12 w-full items-center justify-between rounded-lg border-2 border-transparent bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors">
-											<option value="" disabled selected>— Select Location —</option>
-											{#each data.warehouses as wh}
-												<option value={wh.id}>{wh.name}</option>
-											{/each}
-										</select>
+										<Label for="warehouseId" class="text-xs font-bold tracking-wider uppercase text-foreground/70 mb-2 block">Target Warehouse *</Label>
+										<input type="hidden" name="warehouseId" value={selectedWarehouse} />
+										<Popover.Root bind:open={whOpen}>
+											<Popover.Trigger
+												class={cn(
+													"flex h-12 w-full items-center justify-between rounded-lg border-2 border-transparent bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors",
+													!selectedWarehouse && "text-muted-foreground"
+												)}
+												role="combobox"
+												aria-expanded={whOpen}
+											>
+												<span class="truncate">{getWarehouseLabel(selectedWarehouse)}</span>
+												<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+											</Popover.Trigger>
+											<Popover.Content class="w-[300px] p-0 rounded-lg border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
+												<Command.Root>
+													<Command.Input placeholder="Search locations..." class="h-12 border-none font-medium" />
+													<Command.List>
+														<Command.Empty>No location found.</Command.Empty>
+														<Command.Group>
+															{#each data.warehouses as wh}
+																<Command.Item
+																	value={wh.name}
+																	onSelect={() => {
+																		selectedWarehouse = wh.id;
+																		whOpen = false;
+																	}}
+																	class="cursor-pointer py-2"
+																>
+																	<Check class={cn("mr-2 h-4 w-4", selectedWarehouse === wh.id ? "opacity-100 text-primary" : "opacity-0")} />
+																	<span class="font-bold">{wh.name}</span>
+																</Command.Item>
+															{/each}
+														</Command.Group>
+													</Command.List>
+												</Command.Root>
+											</Popover.Content>
+										</Popover.Root>
 									</div>
 
 									<div class="space-y-2">
-										<Label for="productId" class="text-xs font-bold tracking-wider uppercase text-foreground/70">Specific Product *</Label>
-										<select id="productId" name="productId" bind:value={selectedProduct} required class="flex h-12 w-full items-center justify-between rounded-lg border-2 border-transparent bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors">
-											<option value="" disabled selected>— Select a valid SKU —</option>
-											{#each data.products as prod}
-												<option value={prod.id}>{prod.sku} — {prod.name}</option>
-											{/each}
-										</select>
+										<Label for="productId" class="text-xs font-bold tracking-wider uppercase text-foreground/70 mb-2 block">Specific Product *</Label>
+										<input type="hidden" name="productId" value={selectedProduct} />
+										<Popover.Root bind:open={prodOpen}>
+											<Popover.Trigger
+												class={cn(
+													"flex h-12 w-full items-center justify-between rounded-lg border-2 border-transparent bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors",
+													!selectedProduct && "text-muted-foreground"
+												)}
+												role="combobox"
+												aria-expanded={prodOpen}
+											>
+												<span class="truncate">{getProductLabel(selectedProduct)}</span>
+												<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+											</Popover.Trigger>
+											<Popover.Content class="w-[300px] p-0 rounded-lg border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
+												<Command.Root>
+													<Command.Input placeholder="Search SKU..." class="h-12 border-none font-medium" />
+													<Command.List>
+														<Command.Empty>No product found.</Command.Empty>
+														<Command.Group>
+															{#each data.products as prod}
+																<Command.Item
+																	value={prod.sku + " " + prod.name}
+																	onSelect={() => {
+																		selectedProduct = prod.id;
+																		prodOpen = false;
+																	}}
+																	class="cursor-pointer py-2"
+																>
+																	<Check class={cn("mr-2 h-4 w-4", selectedProduct === prod.id ? "opacity-100 text-primary" : "opacity-0")} />
+																	<span class="font-bold">{prod.sku} — {prod.name}</span>
+																</Command.Item>
+															{/each}
+														</Command.Group>
+													</Command.List>
+												</Command.Root>
+											</Popover.Content>
+										</Popover.Root>
 									</div>
 								</div>
 

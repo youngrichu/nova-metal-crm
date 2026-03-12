@@ -6,7 +6,10 @@
 	import * as Table from '$lib/components/ui/table';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { enhance } from '$app/forms';
-	import { Trash2, Box, ChevronDown, Pencil } from 'lucide-svelte';
+	import { Trash2, Box, ChevronDown, Pencil, Check, ChevronsUpDown } from 'lucide-svelte';
+	import * as Popover from "$lib/components/ui/popover";
+	import * as Command from "$lib/components/ui/command";
+	import { cn } from "$lib/utils";
 	
 	let { data, form } = $props();
 	
@@ -14,6 +17,16 @@
 	let isEditOpen = $state(false);
 	let isSubmitting = $state(false);
 	let editingProduct = $state<any>(null);
+
+	let selectedCategory = $state('');
+	let catOpen = $state(false);
+	let editCatOpen = $state(false);
+
+	function getCategoryLabel(id: string) {
+		const cat = data.categories.find((c: any) => c.id === id);
+		if (!cat) return "— Select Classification —";
+		return `${cat.name} (${cat.prefix})`;
+	}
 
 	function openEdit(row: any) {
 		editingProduct = row;
@@ -95,13 +108,45 @@
 								<h3 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-2">Classification</h3>
 
 								<div class="space-y-2 relative group">
-									<Label for="categoryId" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Structural Category *</Label>
-									<select id="categoryId" name="categoryId" required class="flex h-12 w-full items-center justify-between rounded-lg border-2 border-transparent bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors">
-										<option value="" disabled selected>— Select Classification —</option>
-										{#each data.categories as cat}
-											<option value={cat.id}>{cat.name} ({cat.prefix})</option>
-										{/each}
-									</select>
+									<Label for="categoryId" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors mb-2 block">Structural Category *</Label>
+									<input type="hidden" name="categoryId" value={selectedCategory} />
+									<Popover.Root bind:open={catOpen}>
+										<Popover.Trigger
+											class={cn(
+												"flex h-12 w-full items-center justify-between rounded-lg border-2 border-transparent bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors",
+												!selectedCategory && "text-muted-foreground"
+											)}
+											role="combobox"
+											aria-expanded={catOpen}
+										>
+											<span class="truncate">{getCategoryLabel(selectedCategory)}</span>
+											<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+										</Popover.Trigger>
+										<Popover.Content class="w-[300px] p-0 rounded-lg border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
+											<Command.Root>
+												<Command.Input placeholder="Search category..." class="h-12 border-none font-medium" />
+												<Command.List>
+													<Command.Empty>No category found.</Command.Empty>
+													<Command.Group>
+														{#each data.categories as cat}
+															<Command.Item
+																value={cat.name + " " + cat.prefix}
+																onSelect={() => {
+																	selectedCategory = cat.id;
+																	catOpen = false;
+																}}
+																class="cursor-pointer py-2"
+															>
+																<Check class={cn("mr-2 h-4 w-4", selectedCategory === cat.id ? "opacity-100 text-primary" : "opacity-0")} />
+																<span class="font-bold">{cat.name}</span>
+																<span class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground ml-2">({cat.prefix})</span>
+															</Command.Item>
+														{/each}
+													</Command.Group>
+												</Command.List>
+											</Command.Root>
+										</Popover.Content>
+									</Popover.Root>
 								</div>
 
 								<div class="space-y-2 group">
@@ -292,12 +337,45 @@
 						<h3 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-2">Classification</h3>
 
 						<div class="space-y-2 group">
-							<Label for="edit-categoryId" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary">Structural Category *</Label>
-							<select id="edit-categoryId" name="categoryId" required class="flex h-12 w-full items-center justify-between rounded-none border-t-0 border-x-0 border-b-2 border-border/50 bg-transparent px-0 text-sm focus:border-primary focus:outline-none transition-colors">
-								{#each data.categories as cat}
-									<option value={cat.id} selected={cat.id === editingProduct.product.categoryId}>{cat.name} ({cat.prefix})</option>
-								{/each}
-							</select>
+							<Label for="edit-categoryId" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary mb-2 block">Structural Category *</Label>
+							<input type="hidden" name="categoryId" value={editingProduct.product.categoryId} />
+							<Popover.Root bind:open={editCatOpen}>
+								<Popover.Trigger
+									class={cn(
+										"flex h-12 w-full items-center justify-between rounded-none border-t-0 border-x-0 border-b-2 border-border/50 bg-transparent px-0 text-sm focus:border-primary focus:outline-none transition-colors",
+										!editingProduct.product.categoryId && "text-muted-foreground"
+									)}
+									role="combobox"
+									aria-expanded={editCatOpen}
+								>
+									<span class="truncate">{getCategoryLabel(editingProduct.product.categoryId)}</span>
+									<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+								</Popover.Trigger>
+								<Popover.Content class="w-[300px] p-0 rounded-none border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
+									<Command.Root>
+										<Command.Input placeholder="Search category..." class="h-12 border-none font-medium" />
+										<Command.List>
+											<Command.Empty>No category found.</Command.Empty>
+											<Command.Group>
+												{#each data.categories as cat}
+													<Command.Item
+														value={cat.name + " " + cat.prefix}
+														onSelect={() => {
+															editingProduct.product.categoryId = cat.id;
+															editCatOpen = false;
+														}}
+														class="cursor-pointer py-2"
+													>
+														<Check class={cn("mr-2 h-4 w-4", editingProduct.product.categoryId === cat.id ? "opacity-100 text-primary" : "opacity-0")} />
+														<span class="font-bold">{cat.name}</span>
+														<span class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground ml-2">({cat.prefix})</span>
+													</Command.Item>
+												{/each}
+											</Command.Group>
+										</Command.List>
+									</Command.Root>
+								</Popover.Content>
+							</Popover.Root>
 						</div>
 
 						<div class="space-y-2 group">
