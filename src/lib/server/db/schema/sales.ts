@@ -8,7 +8,12 @@ export const customers = pgTable("customers", {
   name: text('name').notNull(),
   contactPerson: text('contact_person'),
   phone: text('phone'),
+  whatsapp: text('whatsapp'),
   email: text('email'),
+  companyName: text('company_name'),
+  customerType: text('customer_type').notNull().default('INDIVIDUAL'), // 'WORKSHOP' | 'INDIVIDUAL'
+  pricingTier: text('pricing_tier').notNull().default('STANDARD'), // 'STANDARD' | 'PREFERRED' | 'VIP'
+  notes: text('notes'),
   address: text('address'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow()

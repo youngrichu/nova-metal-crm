@@ -15,7 +15,7 @@
 		{ title: m.nav_inventory, icon: Package, href: '/dashboard/inventory' },
 		{ title: m.nav_warehouses, icon: Warehouse, href: '/dashboard/inventory/warehouses' },
 		{ title: m.nav_sales, icon: ShoppingCart, href: '/sales' },
-		{ title: m.nav_customers, icon: Users, href: '/customers' },
+		{ title: m.nav_customers, icon: Users, href: '/dashboard/customers' },
 		{ title: m.nav_settings, icon: Settings, href: '/settings' }
 	];
 
