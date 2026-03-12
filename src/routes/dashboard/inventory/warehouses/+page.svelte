@@ -2,22 +2,22 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Sheet from '$lib/components/ui/sheet';
 	import * as Table from '$lib/components/ui/table';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { enhance } from '$app/forms';
-	import { Trash2, MapPin, ChevronDown, Pencil } from 'lucide-svelte';
+	import { Trash2, MapPin, ChevronDown, Pencil, Warehouse } from 'lucide-svelte';
 	
 	let { data, form } = $props();
 	
-	let isCreateModalOpen = $state(false);
-	let isEditModalOpen = $state(false);
+	let isCreateOpen = $state(false);
+	let isEditOpen = $state(false);
 	let isSubmitting = $state(false);
 	let editingWarehouse = $state<any>(null);
 
 	function openEdit(wh: any) {
 		editingWarehouse = wh;
-		isEditModalOpen = true;
+		isEditOpen = true;
 	}
 
 	function makeEnhance(closeKey: 'create' | 'edit') {
@@ -25,8 +25,8 @@
 			isSubmitting = true;
 			return async ({ result, update }: any) => {
 				if (result.type === 'success') {
-					if (closeKey === 'create') isCreateModalOpen = false;
-					if (closeKey === 'edit') isEditModalOpen = false;
+					if (closeKey === 'create') isCreateOpen = false;
+					if (closeKey === 'edit') isEditOpen = false;
 				}
 				isSubmitting = false;
 				await update();
@@ -35,176 +35,185 @@
 	}
 </script>
 
-<div class="p-4 md:p-8 max-w-[1600px] mx-auto space-y-6">
+<div class="p-4 md:p-8 max-w-[1600px] mx-auto space-y-8">
 
-	{#if form?.error}
-		<div class="p-3 text-sm rounded bg-destructive/15 text-destructive border border-destructive/20 mb-4">
-			{form.error}
+	<!-- Avant-Garde Page Header -->
+	<header class="flex flex-col md:flex-row justify-between items-end border-b-2 border-foreground pb-6 gap-6">
+		<div class="space-y-2 relative">
+			<div class="absolute -left-6 top-2 w-2 h-12 bg-primary transform -skew-x-12 hidden md:block"></div>
+			<h1 class="text-5xl md:text-7xl font-black tracking-tighter uppercase leading-[0.85]">
+				Storage<br/><span class="text-muted-foreground/40 italic">Network</span>
+			</h1>
+			<p class="text-sm font-medium tracking-widest uppercase text-primary/80 pt-2 ml-1">
+				{data.warehouses.length} Depot{data.warehouses.length !== 1 ? 's' : ''} Registered
+			</p>
 		</div>
-	{/if}
 
-	<!-- Main Table Card -->
-	<div class="rounded-lg border bg-card shadow-sm flex flex-col">
-		
-		<!-- Table Toolbar -->
-		<div class="flex flex-col sm:flex-row justify-between items-center p-3 border-b border-border/50 gap-3">
-			<div class="flex items-center gap-2 w-full sm:w-auto">
-				<Input placeholder="Search warehouses…" class="w-[220px] h-8 text-sm bg-transparent shadow-none" />
-			</div>
+		<div class="flex items-center gap-4 w-full md:w-auto">
+			<Sheet.Root bind:open={isCreateOpen}>
+				<Sheet.Trigger>
+					{#snippet child({ props })}
+						<Button {...props} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]">
+							Register Depot
+						</Button>
+					{/snippet}
+				</Sheet.Trigger>
+				<Sheet.Content class="sm:max-w-[600px] overflow-y-auto flex flex-col h-full border-l-[8px] border-primary shadow-2xl p-0">
+					<div class="bg-muted px-10 py-12 border-b border-border relative overflow-hidden">
+						<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+						<Sheet.Header class="relative z-10">
+							<span class="inline-block px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">New Location</span>
+							<Sheet.Title class="text-4xl font-black tracking-tight uppercase">Add Depot</Sheet.Title>
+							<Sheet.Description class="text-base font-medium opacity-70 mt-2">
+								Register a new storage location to hold and track stock quantities.
+							</Sheet.Description>
+						</Sheet.Header>
+					</div>
 
-			<div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-				
-				<Dialog.Root bind:open={isCreateModalOpen}>
-					<Dialog.Trigger>
-						{#snippet child({ props })}
-							<Button {...props} size="sm" class="h-8 text-xs font-medium shadow-none px-4 bg-primary text-primary-foreground hover:bg-primary/90">
-								New Warehouse
+					<form method="POST" action="?/create" use:enhance={makeEnhance('create')} class="flex-1 flex flex-col justify-between px-10 py-8 bg-background">
+						<div class="space-y-10">
+							{#if form?.error}
+								<div class="p-4 text-sm font-medium bg-red-500/10 text-red-600 border-l-4 border-red-600 animate-in fade-in">
+									{form.error}
+								</div>
+							{/if}
+
+							<div class="space-y-6">
+								<h3 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-2">Location Details</h3>
+
+								<div class="space-y-2 group">
+									<Label for="name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Depot Name *</Label>
+									<Input id="name" name="name" placeholder="E.g., Head Office Depot" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+								</div>
+
+								<div class="space-y-2 group">
+									<Label for="location" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors flex items-center gap-2">
+										<MapPin class="w-3.5 h-3.5" /> Physical Address
+									</Label>
+									<Input id="location" name="location" placeholder="Zone, District, or full address..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg" />
+								</div>
+							</div>
+						</div>
+
+						<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
+							<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px] transition-all" disabled={isSubmitting}>
+								{isSubmitting ? 'Processing...' : 'Register Depot'}
 							</Button>
-						{/snippet}
-					</Dialog.Trigger>
-					<Dialog.Content class="sm:max-w-[500px] border-none shadow-[0_0_40px_rgba(0,0,0,0.1)] px-8 py-10 rounded-3xl">
-						<Dialog.Header class="mb-8">
-							<Dialog.Title class="text-3xl font-light tracking-tight">New Warehouse</Dialog.Title>
-							<Dialog.Description class="text-sm font-light leading-relaxed mt-2 opacity-70">
-								Register a new storage location to hold stock quantities.
-							</Dialog.Description>
-						</Dialog.Header>
-
-						<form method="POST" action="?/create" use:enhance={makeEnhance('create')} class="space-y-8">
-							<div class="space-y-1 group">
-								<Label for="name" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold group-focus-within:text-foreground transition-colors">Warehouse Name <span class="text-destructive">*</span></Label>
-								<Input id="name" name="name" placeholder="E.g., Head Office Depot" required class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
-							</div>
-
-							<div class="space-y-1 pb-4 group">
-								<Label for="location" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold group-focus-within:text-foreground transition-colors">Physical Location</Label>
-								<Input id="location" name="location" placeholder="Address or Zone..." class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
-							</div>
-
-							<div class="pt-4">
-								<Button type="submit" class="w-full h-14 rounded-full text-base font-medium transition-all hover:scale-[1.02] bg-foreground text-background shadow-xl hover:shadow-2xl active:scale-[0.98]" disabled={isSubmitting}>
-									{isSubmitting ? 'Saving...' : 'Register Warehouse'}
-								</Button>
-							</div>
-						</form>
-					</Dialog.Content>
-				</Dialog.Root>
-			</div>
+						</div>
+					</form>
+				</Sheet.Content>
+			</Sheet.Root>
 		</div>
+	</header>
 
-		<!-- Table -->
-		<div class="overflow-x-auto">
-			<Table.Root>
-				<Table.Header>
-					<Table.Row class="bg-muted/30 hover:bg-muted/30 border-b border-border/50">
-						<Table.Head class="w-[40px] px-4 py-3 h-10 align-middle">
-							<input type="checkbox" class="w-3.5 h-3.5 rounded-sm border-muted-foreground/30 text-primary focus:ring-primary/50" />
-						</Table.Head>
-						<Table.Head class="h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle transition-colors">
-							Name
-						</Table.Head>
-						<Table.Head class="h-10 text-xs font-semibold uppercase tracking-wider text-muted-foreground align-middle transition-colors">
-							Location / Address
-						</Table.Head>
-						<Table.Head class="w-[120px] text-right h-10 align-middle"></Table.Head>
+	<!-- Data Table -->
+	<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)]">
+		<Table.Root class="w-full">
+			<Table.Header>
+				<Table.Row class="bg-muted/50 hover:bg-muted/50 border-b-2 border-foreground/10">
+					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">Depot Name</Table.Head>
+					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden md:table-cell">Physical Address</Table.Head>
+					<Table.Head class="w-[80px]"></Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
+				{#each data.warehouses as warehouse}
+					<Table.Row class="group hover:bg-muted/30 transition-colors border-b border-border/50">
+						<Table.Cell class="px-6 py-4">
+							<button onclick={() => openEdit(warehouse)} class="font-bold text-lg tracking-tight group-hover:text-primary transition-colors cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded">
+								{warehouse.name}
+							</button>
+						</Table.Cell>
+						<Table.Cell class="hidden md:table-cell px-6 py-4 text-sm text-muted-foreground/70">
+							{#if warehouse.location}
+								<span class="flex items-center gap-2">
+									<MapPin class="w-3.5 h-3.5 opacity-50 shrink-0" /> {warehouse.location}
+								</span>
+							{:else}
+								<span class="italic opacity-40">Unspecified</span>
+							{/if}
+						</Table.Cell>
+						<Table.Cell class="px-6 py-4 text-right">
+							<DropdownMenu.Root>
+								<DropdownMenu.Trigger>
+									{#snippet child({ props })}
+										<Button {...props} variant="outline" size="sm" class="h-8 text-[10px] font-bold uppercase tracking-widest px-3 flex items-center justify-between min-w-[95px] rounded-none border-2 border-foreground/10 hover:border-foreground/30 transition-colors shadow-[2px_2px_0px_0px_theme(colors.foreground_/_5%)]">
+											Actions <ChevronDown class="h-3.5 w-3.5 ml-2 opacity-50" />
+										</Button>
+									{/snippet}
+								</DropdownMenu.Trigger>
+								<DropdownMenu.Content align="end" class="w-44 rounded-none border-2 border-foreground/10 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)] p-2">
+									<DropdownMenu.Item onSelect={() => openEdit(warehouse)} class="text-xs font-bold uppercase tracking-wider cursor-pointer h-10 px-3 hover:bg-muted focus:bg-muted mb-1">
+										<Pencil class="mr-3 h-4 w-4" /> Edit
+									</DropdownMenu.Item>
+									<DropdownMenu.Separator class="bg-border/50 -mx-2 my-2" />
+									<form method="POST" action="?/delete" use:enhance>
+										<input type="hidden" name="id" value={warehouse.id} />
+										<button type="submit" class="w-full flex items-center text-xs font-bold uppercase tracking-wider cursor-pointer h-10 px-3 text-red-600 hover:bg-red-50 focus:bg-red-50 outline-none text-left">
+											<Trash2 class="mr-3 h-4 w-4" /> Delete
+										</button>
+									</form>
+								</DropdownMenu.Content>
+							</DropdownMenu.Root>
+						</Table.Cell>
 					</Table.Row>
-				</Table.Header>
-				<Table.Body>
-					{#each data.warehouses as warehouse}
-						<Table.Row class="hover:bg-muted/30 border-b border-border/40 transition-colors group/row">
-							<Table.Cell class="px-4 py-3 align-middle">
-								<input type="checkbox" class="w-3.5 h-3.5 rounded-sm border-muted-foreground/30 text-primary focus:ring-primary/50 opacity-40 group-hover/row:opacity-100 transition-opacity" />
-							</Table.Cell>
-							<Table.Cell class="py-3 text-sm align-middle">
-								<button onclick={() => openEdit(warehouse)} class="text-sm font-semibold text-foreground hover:text-muted-foreground transition-colors cursor-pointer bg-transparent border-0 p-0 text-left outline-none">{warehouse.name}</button>
-							</Table.Cell>
-							<Table.Cell class="py-3 text-[13px] align-middle">
-								<div class="flex items-center text-muted-foreground/80 whitespace-nowrap">
-									{#if warehouse.location}
-										<MapPin class="mr-2 h-3.5 w-3.5 opacity-50" /> {warehouse.location}
-									{:else}
-										<span class="text-muted-foreground/50 italic">Unspecified</span>
-									{/if}
-								</div>
-							</Table.Cell>
-							<Table.Cell class="text-right py-2 px-4 align-middle">
-								<DropdownMenu.Root>
-									<DropdownMenu.Trigger>
-										{#snippet child({ props })}
-											<Button {...props} variant="outline" size="sm" class="h-8 shadow-sm text-xs font-medium px-3 flex items-center justify-between min-w-[85px] cursor-pointer">
-												Actions <ChevronDown class="h-3.5 w-3.5 ml-2 opacity-50" />
-											</Button>
-										{/snippet}
-									</DropdownMenu.Trigger>
-									<DropdownMenu.Content align="end" class="w-44 bg-card/95 backdrop-blur-md rounded-xl shadow-xl border-white/10 p-1">
-								<DropdownMenu.Item onSelect={() => openEdit(warehouse)} class="text-xs font-medium rounded-lg px-3 py-2 cursor-pointer">
-									<Pencil class="mr-2 h-4 w-4" />
-									Edit
-								</DropdownMenu.Item>
-										<DropdownMenu.Separator class="my-1 bg-border/40" />
-										<form method="POST" action="?/delete" use:enhance class="w-full">
-											<input type="hidden" name="id" value={warehouse.id} />
-											<button type="submit" class="w-full flex items-center text-xs font-medium cursor-pointer rounded-lg px-3 py-2 text-destructive focus:bg-destructive/10 hover:bg-destructive/10 transition-colors outline-none text-left">
-												<Trash2 class="mr-2 h-4 w-4" />
-												Delete
-											</button>
-										</form>
-									</DropdownMenu.Content>
-								</DropdownMenu.Root>
-							</Table.Cell>
-						</Table.Row>
-					{:else}
-						<Table.Row>
-							<Table.Cell colspan={4} class="h-32 text-center text-xs align-middle">
-								<div class="flex flex-col items-center justify-center text-muted-foreground/60 gap-2">
-									<MapPin class="w-6 h-6 opacity-40" />
-									<p>No storage locations defined.</p>
-								</div>
-							</Table.Cell>
-						</Table.Row>
-					{/each}
-				</Table.Body>
-			</Table.Root>
-		</div>
+				{:else}
+					<Table.Row>
+						<Table.Cell colspan={3} class="h-64 text-center align-middle">
+							<div class="flex flex-col items-center justify-center text-muted-foreground/40 gap-4">
+								<Warehouse class="w-12 h-12 opacity-20" />
+								<p class="text-lg font-light tracking-widest uppercase">No Depots Registered</p>
+							</div>
+						</Table.Cell>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+		</Table.Root>
 
-		<!-- Table Footer / Pagination -->
-		<div class="flex items-center justify-between px-4 py-3 border-t border-border/50 text-xs text-muted-foreground bg-muted/10">
-		<div class="px-4 py-3 border-t border-border/50 text-sm text-muted-foreground bg-muted/10">
+		<div class="px-6 py-3 border-t border-border/30 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
 			{data.warehouses.length} warehouse{data.warehouses.length !== 1 ? 's' : ''} total
 		</div>
-		</div>
-
 	</div>
 </div>
 
-<!-- Edit Warehouse Dialog -->
-<Dialog.Root bind:open={isEditModalOpen}>
-	<Dialog.Content class="sm:max-w-[500px] border-none shadow-[0_0_40px_rgba(0,0,0,0.1)] px-8 py-10 rounded-3xl">
-		<Dialog.Header class="mb-8">
-			<Dialog.Title class="text-3xl font-light tracking-tight">Edit Warehouse</Dialog.Title>
-			<Dialog.Description class="text-sm font-light leading-relaxed mt-2 opacity-70">
-				Update the storage location name or address.
-			</Dialog.Description>
-		</Dialog.Header>
-
+<!-- Edit Warehouse Sheet -->
+<Sheet.Root bind:open={isEditOpen}>
+	<Sheet.Content class="sm:max-w-[600px] overflow-y-auto flex flex-col h-full border-l-[8px] border-primary shadow-2xl p-0">
 		{#if editingWarehouse}
-			<form method="POST" action="?/update" use:enhance={makeEnhance('edit')} class="space-y-8">
+			<div class="bg-muted px-10 py-12 border-b border-border relative overflow-hidden">
+				<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+				<Sheet.Header class="relative z-10">
+					<span class="inline-block px-3 py-1 bg-foreground text-background text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">Edit Location</span>
+					<Sheet.Title class="text-4xl font-black tracking-tight uppercase line-clamp-1">{editingWarehouse.name}</Sheet.Title>
+					<Sheet.Description class="text-base font-medium opacity-70 mt-2">
+						Update the depot name or physical address.
+					</Sheet.Description>
+				</Sheet.Header>
+			</div>
+
+			<form method="POST" action="?/update" use:enhance={makeEnhance('edit')} class="flex-1 flex flex-col justify-between px-10 py-8 bg-background">
 				<input type="hidden" name="id" value={editingWarehouse.id} />
-
-				<div class="space-y-1 group">
-					<Label for="edit-wh-name" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Warehouse Name <span class="text-destructive">*</span></Label>
-					<Input id="edit-wh-name" name="name" value={editingWarehouse.name} required class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
+				<div class="space-y-10">
+					<div class="space-y-6">
+						<div class="space-y-2 group">
+							<Label for="edit-wh-name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary">Depot Name *</Label>
+							<Input id="edit-wh-name" name="name" value={editingWarehouse.name} required class="h-14 bg-transparent border-t-0 border-x-0 border-b-2 border-border/50 focus-visible:border-primary focus-visible:ring-0 rounded-none text-lg px-0 font-bold transition-all" />
+						</div>
+						<div class="space-y-2 group">
+							<Label for="edit-wh-loc" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary flex items-center gap-2">
+								<MapPin class="w-3.5 h-3.5" /> Physical Address
+							</Label>
+							<Input id="edit-wh-loc" name="location" value={editingWarehouse.location ?? ''} class="h-12 bg-transparent border-t-0 border-x-0 border-b-2 border-border/50 focus-visible:border-primary focus-visible:ring-0 rounded-none px-0 transition-all" />
+						</div>
+					</div>
 				</div>
 
-				<div class="space-y-1 pb-4 group">
-					<Label for="edit-wh-loc" class="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-semibold">Physical Location</Label>
-					<Input id="edit-wh-loc" name="location" value={editingWarehouse.location ?? ''} class="h-12 border-0 border-b border-border/40 rounded-none bg-transparent px-0 text-base shadow-none focus-visible:ring-0 focus-visible:border-foreground transition-colors" />
+				<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
+					<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px] transition-all" disabled={isSubmitting}>
+						{isSubmitting ? 'Saving...' : 'Commit Changes'}
+					</Button>
 				</div>
-
-				<Button type="submit" class="w-full h-14 rounded-full text-base font-medium transition-all hover:scale-[1.02] bg-foreground text-background shadow-xl" disabled={isSubmitting}>
-					{isSubmitting ? 'Saving...' : 'Save Changes'}
-				</Button>
 			</form>
 		{/if}
-	</Dialog.Content>
-</Dialog.Root>
+	</Sheet.Content>
+</Sheet.Root>
