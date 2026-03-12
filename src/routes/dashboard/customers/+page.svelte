@@ -249,8 +249,8 @@
 							<DropdownMenu.Root>
 								<DropdownMenu.Trigger>
 									{#snippet child({ props })}
-										<Button {...props} variant="ghost" size="icon" class="h-8 w-8 rounded-none border border-transparent hover:border-foreground/20 group/btn">
-											<ChevronDown class="h-4 w-4 opacity-50 group-hover/btn:opacity-100" />
+										<Button {...props} variant="outline" size="sm" class="h-8 text-[10px] font-bold uppercase tracking-widest px-3 flex items-center justify-between min-w-[95px] rounded-none border-2 border-foreground/10 hover:border-foreground/30 transition-colors shadow-[2px_2px_0px_0px_theme(colors.foreground_/_5%)]">
+											Actions <ChevronDown class="h-3.5 w-3.5 ml-2 opacity-50" />
 										</Button>
 									{/snippet}
 								</DropdownMenu.Trigger>

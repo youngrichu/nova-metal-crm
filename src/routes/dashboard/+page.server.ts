@@ -35,11 +35,13 @@ export const load = async ({ locals }) => {
 			notes: inventoryTransactions.notes,
 			createdAt: inventoryTransactions.createdAt,
 			productName: products.name,
-			productSku: products.sku
+			productSku: products.sku,
+			warehouseName: warehouses.name
 		})
 		.from(inventoryTransactions)
 		.innerJoin(inventory, sql`${inventoryTransactions.inventoryId} = ${inventory.id}`)
 		.innerJoin(products, sql`${inventory.productId} = ${products.id}`)
+		.innerJoin(warehouses, sql`${inventory.warehouseId} = ${warehouses.id}`)
 		.orderBy(desc(inventoryTransactions.createdAt))
 		.limit(5);
 
