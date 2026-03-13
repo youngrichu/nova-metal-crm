@@ -1,7 +1,5 @@
 import { db } from '$lib/server/db';
 import { inventory, inventoryTransactions, products, warehouses } from '$lib/server/db/schema';
-import { salesOrders, salesOrderItems } from '$lib/server/db/schema/sales';
-import { categories } from '$lib/server/db/schema/catalog';
 import { sql, lte, desc } from 'drizzle-orm';
 
 export const load = async ({ locals }) => {
@@ -15,7 +13,7 @@ export const load = async ({ locals }) => {
 		.select({ count: sql<number>`count(*)` })
 		.from(warehouses);
 
-    // KPIs: Total Sales & Total Profit (Phase 3)
+    // KPIs: Total Sales & Total Profit (Phase 3) — tables: sales_orders, sales_order_items, products
     const { rows: kpiRows } = await db.execute(sql`
         SELECT 
             COALESCE(SUM(so.total_amount), 0) as total_sales,
@@ -63,7 +61,7 @@ export const load = async ({ locals }) => {
 		.orderBy(desc(inventoryTransactions.createdAt))
 		.limit(5);
 
-    // Sales trend: daily revenue for last 30 days
+    // Sales trend: daily revenue for last 30 days — table: sales_orders
     const { rows: trendRows } = await db.execute(sql`
         SELECT
             TO_CHAR(DATE(created_at), 'YYYY-MM-DD') as date,
@@ -80,13 +78,13 @@ export const load = async ({ locals }) => {
         revenue: Number(r.revenue)
     }));
 
-    // Profit margins by category
+    // Profit margins by category — tables: sales_order_items, products, categories, sales_orders
     const { rows: marginRows } = await db.execute(sql`
         SELECT
             c.name as category_name,
             ROUND(
-                SUM(soi.line_total - (p.average_landing_cost * soi.quantity)) /
-                NULLIF(SUM(soi.line_total), 0) * 100,
+                (SUM(soi.line_total - (p.average_landing_cost * soi.quantity)) /
+                 NULLIF(SUM(soi.line_total), 0)) * 100,
                 1
             )::float as margin_percent
         FROM sales_order_items soi
