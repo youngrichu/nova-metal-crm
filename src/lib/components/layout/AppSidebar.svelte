@@ -21,11 +21,9 @@
 	];
 
 	const visibleNavItems = $derived(
-		(() => {
-			const role = page.data.user?.role;
-			if (!role) return navItems;
-			return navItems.filter((item) => item.roles.includes(role));
-		})()
+		page.data.user?.role
+			? navItems.filter((item) => item.roles.includes(page.data.user!.role as string))
+			: navItems
 	);
 
 	async function handleLogout() {
