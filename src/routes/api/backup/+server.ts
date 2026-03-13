@@ -23,16 +23,22 @@ export const GET: RequestHandler = async ({ locals }) => {
 
     const date = new Date().toISOString().split('T')[0];
 
-    const pgArgs = [
-        `-h ${process.env.PGHOST || 'localhost'}`,
-        `-U ${process.env.PGUSER || 'postgres'}`,
-        `-d ${process.env.PGDATABASE || 'nova'}`
-    ].join(' ');
+    const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl) throw error(500, 'DATABASE_URL not configured');
+
+    const parsed = new URL(dbUrl);
+    const pgArgs: string[] = [
+        `-h ${parsed.hostname || 'localhost'}`,
+        `-p ${parsed.port || '5432'}`,
+        `-d ${parsed.pathname.slice(1)}`
+    ];
+    if (parsed.username) pgArgs.push(`-U ${parsed.username}`);
+    const pgPassword = parsed.password ? decodeURIComponent(parsed.password) : (process.env.PGPASSWORD || '');
 
     let stdout: Buffer;
     try {
-        const result = await execAsync(`pg_dump ${pgArgs}`, {
-            env: { ...process.env, PGPASSWORD: process.env.PGPASSWORD || '' },
+        const result = await execAsync(`pg_dump ${pgArgs.join(' ')}`, {
+            env: { ...process.env, PGPASSWORD: pgPassword },
             maxBuffer: 100 * 1024 * 1024,  // 100MB
             encoding: 'buffer',
             timeout: 120000  // 2 minute timeout
