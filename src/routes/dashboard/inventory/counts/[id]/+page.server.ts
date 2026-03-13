@@ -1,10 +1,14 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { inventoryCounts, inventoryCountItems, products, warehouses } from '$lib/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
+	const allowedRoles = ['admin', 'warehouse'];
+	if (!locals.user || !allowedRoles.includes(locals.user.role)) {
+		throw redirect(302, '/dashboard');
+	}
 	const { id } = params;
 
 	try {
@@ -68,6 +72,16 @@ export const actions: Actions = {
 		}
 
 		try {
+			// Verify the count session is still open
+			const [countSession] = await db
+				.select({ status: inventoryCounts.status })
+				.from(inventoryCounts)
+				.where(eq(inventoryCounts.id, countId))
+				.limit(1);
+
+			if (!countSession) return fail(404, { error: 'Count session not found' });
+			if (countSession.status === 'CLOSED') return fail(400, { error: 'This count session is already closed and cannot be modified' });
+
 			// Verify item belongs to this count session
 			const [item] = await db
 				.select()
