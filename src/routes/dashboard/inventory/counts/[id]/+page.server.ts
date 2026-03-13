@@ -47,6 +47,11 @@ export const actions: Actions = {
 		const sessionUser = locals.user;
 		if (!sessionUser) return fail(401, { error: 'Unauthorized' });
 
+		const allowedRoles = ['admin', 'warehouse'];
+		if (!allowedRoles.includes(sessionUser.role)) {
+			return fail(403, { error: 'Access denied' });
+		}
+
 		const { id: countId } = params;
 		const data = await request.formData();
 		const itemId = data.get('itemId')?.toString();
