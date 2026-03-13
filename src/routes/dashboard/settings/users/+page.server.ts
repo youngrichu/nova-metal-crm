@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ locals }) => {
     if (!locals.user) throw redirect(302, '/login');
 
     // Admin-only route
-    if ((locals.user as any).role !== 'admin') throw redirect(302, '/dashboard');
+    if (locals.user.role !== 'admin') throw redirect(302, '/dashboard');
 
     const allUsers = await db
         .select({
@@ -28,7 +28,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 export const actions: Actions = {
     updateRole: async ({ request, locals }) => {
         if (!locals.user) return fail(401, { error: 'Unauthorized' });
-        if ((locals.user as any).role !== 'admin') return fail(403, { error: 'Admin only' });
+        if (locals.user.role !== 'admin') return fail(403, { error: 'Admin only' });
 
         const formData = await request.formData();
         const targetId = formData.get('userId')?.toString();
@@ -58,22 +58,28 @@ export const actions: Actions = {
 
     toggleVerified: async ({ request, locals }) => {
         if (!locals.user) return fail(401, { error: 'Unauthorized' });
-        if ((locals.user as any).role !== 'admin') return fail(403, { error: 'Admin only' });
+        if (locals.user.role !== 'admin') return fail(403, { error: 'Admin only' });
 
         const formData = await request.formData();
-        const targetId = formData.get('userId')?.toString();
-        const currentValue = formData.get('emailVerified')?.toString() === 'true';
+        const targetUserId = formData.get('userId')?.toString();
 
-        if (!targetId) return fail(400, { error: 'Missing userId' });
+        if (!targetUserId) return fail(400, { error: 'Missing userId' });
 
-        if (targetId === locals.user.id) {
+        const currentUser = await db.select({ emailVerified: usersTable.emailVerified })
+            .from(usersTable)
+            .where(eq(usersTable.id, targetUserId))
+            .limit(1);
+        if (!currentUser[0]) return fail(404, { error: 'User not found' });
+        const currentValue = currentUser[0].emailVerified;
+
+        if (targetUserId === locals.user.id) {
             return fail(400, { error: 'You cannot deactivate your own account' });
         }
 
         try {
             await db.update(usersTable)
                 .set({ emailVerified: !currentValue, updatedAt: new Date() })
-                .where(eq(usersTable.id, targetId));
+                .where(eq(usersTable.id, targetUserId));
 
             return { success: true };
         } catch (e) {
