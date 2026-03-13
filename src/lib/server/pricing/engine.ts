@@ -81,7 +81,7 @@ export async function calculateDynamicPrice(
             where: eq(salesOrders.id, orderId)
         });
 
-        if (order && order.validUntil && order.validUntil >= now) {
+        if (order && order.validUntil && order.validUntil.getTime() >= now.getTime()) {
             // Order is still within the valid quote window — look for a locked item price
             const lockedItem = await db.query.salesOrderItems.findFirst({
                 where: and(
@@ -92,6 +92,9 @@ export async function calculateDynamicPrice(
 
             if (lockedItem) {
                 const lockedUnitPrice = Number(lockedItem.unitPrice);
+                // The lock is per-unit: the unit price is fixed from the original quote,
+                // but the quantity is allowed to differ (e.g. the buyer can increase or decrease
+                // the order quantity without invalidating the locked unit price).
                 const lockedLineTotal = Number((lockedUnitPrice * quantity).toFixed(2));
                 return {
                     baseCost,
@@ -134,6 +137,8 @@ export async function recordManualPriceOverride(params: {
         productId: params.productId,
         landingCost: params.landingCost.toFixed(2),
         marketPrice: params.marketPrice.toFixed(2),
+        // Workaround: price_history has no dedicated performedBy column, so the actor is
+        // encoded inline in the reason string for auditability.
         reason: `${params.reason} [performedBy: ${params.performedBy}]`,
         recordedAt: new Date()
     });
