@@ -88,8 +88,8 @@
 					<div class="bg-muted px-10 py-12 border-b border-border relative overflow-hidden">
 						<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 						<Sheet.Header class="relative z-10">
-							<span class="inline-block px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">New Registration</span>
-							<Sheet.Title class="text-4xl font-black tracking-tight uppercase">Define Product</Sheet.Title>
+							<span class="inline-block px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">New Product</span>
+							<Sheet.Title class="text-4xl font-black tracking-tight uppercase">Add Product</Sheet.Title>
 							<Sheet.Description class="text-base font-medium opacity-70 mt-2">
 								Automated SKU generation based on precise physical dimensions.
 							</Sheet.Description>
@@ -339,7 +339,7 @@
 			<div class="bg-muted px-10 py-12 border-b border-border relative overflow-hidden">
 				<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 				<Sheet.Header class="relative z-10">
-					<span class="inline-block px-3 py-1 bg-foreground text-background text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">Modulation Mode</span>
+					<span class="inline-block px-3 py-1 bg-foreground text-background text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">Edit Product</span>
 					<Sheet.Title class="text-4xl font-black tracking-tight uppercase line-clamp-1">{editingProduct.product.name}</Sheet.Title>
 					<Sheet.Description class="text-base font-medium opacity-70 mt-2">
 						SKU <span class="font-mono text-primary font-bold">{editingProduct.product.sku}</span>

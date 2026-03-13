@@ -122,16 +122,23 @@ export async function calculateDynamicPrice(
     }
 
     // 4. Load markup multipliers from system_settings, falling back to hardcoded defaults
-    const markupKeys = ['markup_retail', 'markup_wholesale', 'markup_vip'];
+    const markupKeys = ['markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred'];
     const settingRows = await db.select().from(systemSettings)
         .where(inArray(systemSettings.key, markupKeys));
-    const settingsMap = Object.fromEntries(settingRows.map(r => [r.key, parseFloat(r.value)]));
+    // Use Number.isFinite so corrupt/non-numeric DB values fall back to defaults
+    // rather than silently propagating NaN through all price calculations.
+    const settingsMap = Object.fromEntries(
+        settingRows.map(r => {
+            const parsed = parseFloat(r.value);
+            return [r.key, Number.isFinite(parsed) ? parsed : null];
+        })
+    );
 
     const dynamicTiers = {
-        RETAIL:    settingsMap['markup_retail']    ?? PRICING_RULES.TIERS.RETAIL,
-        WHOLESALE: settingsMap['markup_wholesale'] ?? PRICING_RULES.TIERS.WHOLESALE,
-        VIP:       settingsMap['markup_vip']       ?? PRICING_RULES.TIERS.VIP,
-        PREFERRED: settingsMap['markup_vip']       ?? PRICING_RULES.TIERS.PREFERRED,
+        RETAIL:    settingsMap['markup_retail']     ?? PRICING_RULES.TIERS.RETAIL,
+        WHOLESALE: settingsMap['markup_wholesale']  ?? PRICING_RULES.TIERS.WHOLESALE,
+        VIP:       settingsMap['markup_vip']        ?? PRICING_RULES.TIERS.VIP,
+        PREFERRED: settingsMap['markup_preferred']  ?? PRICING_RULES.TIERS.PREFERRED,
     };
 
     return computePrice(baseCost, pricingTier, quantity, dynamicTiers);
