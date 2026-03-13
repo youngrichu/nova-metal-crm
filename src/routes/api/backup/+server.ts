@@ -35,10 +35,26 @@ export const GET: RequestHandler = async ({ locals }) => {
     if (parsed.username) pgArgs.push(`-U ${parsed.username}`);
     const pgPassword = parsed.password ? decodeURIComponent(parsed.password) : (process.env.PGPASSWORD || '');
 
+    // pg_dump may not be in the PATH inherited by the Node.js process (e.g. Homebrew on macOS).
+    // Augment PATH with common PostgreSQL binary locations so exec can find it.
+    const pgBinDirs = [
+        '/opt/homebrew/opt/postgresql@17/bin',
+        '/opt/homebrew/opt/postgresql@16/bin',
+        '/opt/homebrew/opt/postgresql@15/bin',
+        '/opt/homebrew/bin',
+        '/usr/local/bin',
+        '/usr/bin',
+    ].join(':');
+    const augmentedEnv = {
+        ...process.env,
+        PATH: `${pgBinDirs}:${process.env.PATH || ''}`,
+        PGPASSWORD: pgPassword,
+    };
+
     let stdout: Buffer;
     try {
         const result = await execAsync(`pg_dump ${pgArgs.join(' ')}`, {
-            env: { ...process.env, PGPASSWORD: pgPassword },
+            env: augmentedEnv,
             maxBuffer: 100 * 1024 * 1024,  // 100MB
             encoding: 'buffer',
             timeout: 120000  // 2 minute timeout
