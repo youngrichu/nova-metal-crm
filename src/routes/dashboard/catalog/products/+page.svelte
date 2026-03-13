@@ -473,12 +473,3 @@
 		{/if}
 	</Sheet.Content>
 </Sheet.Root>
-					<!-- Pricing -->
-					<div class="space-y-6">
-						<h3 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-2">Pricing</h3>
-						<div class="space-y-2 group">
-							<Label for="edit-landingCost" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary">Purchase Cost (ETB) *</Label>
-							<p class="text-[11px] text-muted-foreground/60 mb-1">What you paid per piece. The selling price is calculated automatically from this using the markup in Settings.</p>
-							<Input id="edit-landingCost" name="averageLandingCost" type="number" step="0.01" min="0" value={editingProduct.product.averageLandingCost ?? '0'} required class="h-14 font-mono bg-transparent border-t-0 border-x-0 border-b-2 border-border/50 focus-visible:border-primary focus-visible:ring-0 rounded-none px-0 text-lg" />
-						</div>
-					</div>
