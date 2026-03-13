@@ -131,7 +131,7 @@
 								<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">Scan Barcode</Label>
 								<div class="relative">
 									<Input
-										bind:this={barcodeInputEl}
+										bind:ref={barcodeInputEl}
 										bind:value={barcodeInput}
 										onkeydown={handleBarcodeScan}
 										placeholder="Focus here and scan barcode..."
