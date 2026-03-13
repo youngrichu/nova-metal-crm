@@ -36,3 +36,21 @@ export const inventoryTransactions = pgTable("inventory_transactions", {
     createdAtIdx: index('idx_transactions_created_at').on(table.createdAt)
   };
 });
+
+export const inventoryCounts = pgTable("inventory_counts", {
+  id: uuid('id').primaryKey().defaultRandom(),
+  warehouseId: uuid('warehouse_id').notNull().references(() => warehouses.id),
+  status: text('status').notNull(), // 'DRAFT', 'IN_PROGRESS', 'RECONCILED', 'CLOSED'
+  startedAt: timestamp('started_at').notNull().defaultNow(),
+  completedAt: timestamp('completed_at'),
+  performedBy: text('performed_by').notNull().references(() => user.id)
+});
+
+export const inventoryCountItems = pgTable("inventory_count_items", {
+  id: uuid('id').primaryKey().defaultRandom(),
+  countId: uuid('count_id').notNull().references(() => inventoryCounts.id),
+  productId: uuid('product_id').notNull().references(() => products.id),
+  expectedQuantity: integer('expected_quantity').notNull(), // Captured at start of count
+  physicalQuantity: integer('physical_quantity'), // Entered by staff
+  notes: text('notes')
+});
