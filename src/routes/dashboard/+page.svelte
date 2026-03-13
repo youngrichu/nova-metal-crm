@@ -365,7 +365,13 @@
                   <div class="flex justify-between items-start gap-2 mb-1">
                     <p class="text-sm font-bold text-foreground tracking-tight line-clamp-1">{tx.productName}</p>
                     <span class="text-[9px] font-mono font-bold text-muted-foreground whitespace-nowrap">
-                      {new Date(tx.createdAt).toLocaleTimeString('en-ET', { hour: '2-digit', minute: '2-digit' })}
+                      {(() => {
+                        const d = new Date(tx.createdAt);
+                        const isToday = d.toDateString() === new Date().toDateString();
+                        return isToday
+                          ? d.toLocaleTimeString('en-ET', { hour: '2-digit', minute: '2-digit' })
+                          : d.toLocaleDateString('en-ET', { month: 'short', day: 'numeric' }) + ', ' + d.toLocaleTimeString('en-ET', { hour: '2-digit', minute: '2-digit' });
+                      })()}
                     </span>
                   </div>
                   
