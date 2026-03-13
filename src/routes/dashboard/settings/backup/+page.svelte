@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { Database, Download, Shield, HardDrive, Clock } from 'lucide-svelte';
-	import { page } from '$app/state';
 </script>
 
 <div class="p-4 md:p-8 max-w-[1200px] mx-auto space-y-12">

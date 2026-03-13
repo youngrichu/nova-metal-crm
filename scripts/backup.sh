@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+set -o pipefail
 
 # Environment variables expected to be passed from docker-compose or shell environment:
 # PGHOST, PGUSER, PGPASSWORD, PGDATABASE
