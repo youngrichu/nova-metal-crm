@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, numeric, index } from "drizzle-orm/pg-core";
 import { products } from "./catalog";
 
 export const priceHistory = pgTable("price_history", {
@@ -8,4 +8,6 @@ export const priceHistory = pgTable("price_history", {
   marketPrice: numeric('market_price', { precision: 14, scale: 2 }).notNull(),
   recordedAt: timestamp('recorded_at').notNull().defaultNow(),
   reason: text('reason')
-});
+}, (table) => ({
+  productIdx: index('idx_price_history_product').on(table.productId)
+}));

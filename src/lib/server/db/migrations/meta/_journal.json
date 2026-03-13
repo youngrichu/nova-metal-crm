@@ -29,6 +29,13 @@
       "when": 1773411433901,
       "tag": "0003_brief_magdalene",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1773412100301,
+      "tag": "0004_deep_dagger",
+      "breakpoints": true
     }
   ]
 }
