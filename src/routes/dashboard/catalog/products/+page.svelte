@@ -205,6 +205,15 @@
 							</div>
 						</div>
 
+							<!-- Pricing -->
+							<div class="space-y-6">
+								<h3 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-2">Pricing</h3>
+								<div class="space-y-2 group">
+									<Label for="averageLandingCost" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Purchase Cost (ETB) *</Label>
+									<p class="text-[11px] text-muted-foreground/60 mb-1">What you paid per piece. The selling price is calculated automatically from this using the markup in Settings.</p>
+									<Input id="averageLandingCost" name="averageLandingCost" type="number" step="0.01" min="0" placeholder="e.g. 150.00" required class="h-14 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+								</div>
+							</div>
 						<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
 							<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
 								{isSubmitting ? 'Generating SKU...' : 'Save Product Record'}
@@ -229,6 +238,7 @@
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden md:table-cell">Dimensions</Table.Head>
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden lg:table-cell text-right">Min Stock</Table.Head>
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden lg:table-cell text-right">Weight / Pc</Table.Head>
+					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right">Cost / Pc</Table.Head>
 					<Table.Head class="w-[80px]"></Table.Head>
 				</Table.Row>
 			</Table.Header>
@@ -275,6 +285,9 @@
 						</Table.Cell>
 						<Table.Cell class="hidden lg:table-cell px-6 py-4 text-right align-middle text-sm font-mono text-muted-foreground/50">
 							{row.product.weightPerPiece ? `${row.product.weightPerPiece}kg` : '—'}
+						</Table.Cell>
+						<Table.Cell class="px-6 py-4 text-right align-middle">
+							<span class="font-mono font-black text-sm text-foreground">ETB {Number(row.product.averageLandingCost || 0).toFixed(2)}</span>
 						</Table.Cell>
 						<Table.Cell class="px-6 py-4 text-right">
 							<DropdownMenu.Root>
@@ -442,6 +455,15 @@
 					</div>
 				</div>
 
+				<!-- Pricing -->
+				<div class="space-y-6">
+					<h3 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-2">Pricing</h3>
+					<div class="space-y-2 group">
+						<Label for="edit-landingCost" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary">Purchase Cost (ETB) *</Label>
+						<p class="text-[11px] text-muted-foreground/60 mb-1">What you paid per piece. The selling price is calculated automatically from this using the markup in Settings.</p>
+						<Input id="edit-landingCost" name="averageLandingCost" type="number" step="0.01" min="0" value={editingProduct.product.averageLandingCost ?? '0'} required class="h-14 font-mono bg-transparent border-t-0 border-x-0 border-b-2 border-border/50 focus-visible:border-primary focus-visible:ring-0 rounded-none px-0 text-lg" />
+					</div>
+				</div>
 				<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
 					<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
 						{isSubmitting ? 'Saving...' : 'Commit Changes'}
@@ -451,3 +473,12 @@
 		{/if}
 	</Sheet.Content>
 </Sheet.Root>
+					<!-- Pricing -->
+					<div class="space-y-6">
+						<h3 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-2">Pricing</h3>
+						<div class="space-y-2 group">
+							<Label for="edit-landingCost" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary">Purchase Cost (ETB) *</Label>
+							<p class="text-[11px] text-muted-foreground/60 mb-1">What you paid per piece. The selling price is calculated automatically from this using the markup in Settings.</p>
+							<Input id="edit-landingCost" name="averageLandingCost" type="number" step="0.01" min="0" value={editingProduct.product.averageLandingCost ?? '0'} required class="h-14 font-mono bg-transparent border-t-0 border-x-0 border-b-2 border-border/50 focus-visible:border-primary focus-visible:ring-0 rounded-none px-0 text-lg" />
+						</div>
+					</div>

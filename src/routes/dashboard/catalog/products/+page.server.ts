@@ -36,6 +36,7 @@ export const actions = {
 		const length = data.get('length') ? parseFloat(data.get('length') as string) : null;
 		const weightPerPiece = data.get('weightPerPiece') ? parseFloat(data.get('weightPerPiece') as string) : null;
 		const minStockLevel = data.get('minStockLevel') ? parseInt(data.get('minStockLevel') as string, 10) : 10;
+		const averageLandingCost = data.get('averageLandingCost') ? parseFloat(data.get('averageLandingCost') as string) : 0;
 
 		if (!name || !categoryId) {
 			return fail(400, { missing: true });
@@ -68,7 +69,8 @@ export const actions = {
 				length: length ? length.toString() : null,
 				weightPerPiece: weightPerPiece ? weightPerPiece.toString() : null,
 				minStockLevel,
-				barcode
+				barcode,
+				averageLandingCost: averageLandingCost.toFixed(2)
 			});
 
 			return { success: true };
@@ -112,6 +114,7 @@ export const actions = {
 		const length = data.get('length') ? parseFloat(data.get('length') as string) : null;
 		const weightPerPiece = data.get('weightPerPiece') ? parseFloat(data.get('weightPerPiece') as string) : null;
 		const minStockLevel = data.get('minStockLevel') ? parseInt(data.get('minStockLevel') as string, 10) : 10;
+		const averageLandingCost = data.get('averageLandingCost') ? parseFloat(data.get('averageLandingCost') as string) : 0;
 
 		if (!id || !name || !categoryId) return fail(400, { missing: true });
 
@@ -130,7 +133,8 @@ export const actions = {
 					length: length ? length.toString() : null,
 					weightPerPiece: weightPerPiece ? weightPerPiece.toString() : null,
 					minStockLevel,
-					barcode
+					barcode,
+					averageLandingCost: averageLandingCost.toFixed(2)
 				})
 				.where(eq(products.id, id));
 
