@@ -11,7 +11,11 @@ import {
 import { eq, and, sql } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals }) => {
+	const allowedRoles = ['admin', 'warehouse'];
+	if (!locals.user || !allowedRoles.includes(locals.user.role)) {
+		throw redirect(302, '/dashboard');
+	}
 	const { id } = params;
 
 	try {
@@ -78,16 +82,6 @@ export const actions: Actions = {
 		const { id: countId } = params;
 
 		try {
-			// Verify the count exists and is IN_PROGRESS
-			const [countSession] = await db
-				.select()
-				.from(inventoryCounts)
-				.where(eq(inventoryCounts.id, countId))
-				.limit(1);
-
-			if (!countSession) return fail(404, { error: 'Count session not found' });
-			if (countSession.status === 'CLOSED') return fail(400, { error: 'Count is already closed' });
-
 			// Fetch all items with physical quantities
 			const items = await db
 				.select({
@@ -103,7 +97,29 @@ export const actions: Actions = {
 				});
 			}
 
+			// Need warehouseId for inventory lookups — fetch it inside transaction scope
+			const [countMeta] = await db
+				.select({ warehouseId: inventoryCounts.warehouseId })
+				.from(inventoryCounts)
+				.where(eq(inventoryCounts.id, countId))
+				.limit(1);
+
+			if (!countMeta) return fail(404, { error: 'Count session not found' });
+
+			const skippedProducts: string[] = [];
+
 			await db.transaction(async (tx) => {
+				// First: atomically claim the close by updating status conditionally
+				const [updatedCount] = await tx
+					.update(inventoryCounts)
+					.set({ status: 'CLOSED', completedAt: new Date() })
+					.where(and(eq(inventoryCounts.id, countId), eq(inventoryCounts.status, 'IN_PROGRESS')))
+					.returning({ id: inventoryCounts.id });
+
+				if (!updatedCount) {
+					throw new Error('Count session is already closed or no longer available');
+				}
+
 				for (const { item } of items) {
 					if (item.physicalQuantity === null) continue;
 
@@ -117,12 +133,15 @@ export const actions: Actions = {
 						.where(
 							and(
 								eq(inventory.productId, item.productId),
-								eq(inventory.warehouseId, countSession.warehouseId)
+								eq(inventory.warehouseId, countMeta.warehouseId)
 							)
 						)
 						.limit(1);
 
-					if (!invRecord) continue;
+					if (!invRecord) {
+						skippedProducts.push(item.productId);
+						continue;
+					}
 
 					// Update inventory to physical quantity
 					await tx
@@ -139,25 +158,15 @@ export const actions: Actions = {
 						transactionType: 'ADJUSTMENT',
 						quantityChange: delta,
 						unitCost: null,
-						referenceDoc: 'STOCK_TAKE',
+						referenceDoc: countId,
 						performedBy: sessionUser.id,
 						notes: `Stock-take count ID: ${countId}`
 					});
 				}
-
-				// Close the count session
-				await tx
-					.update(inventoryCounts)
-					.set({
-						status: 'CLOSED',
-						completedAt: sql`now()`
-					})
-					.where(eq(inventoryCounts.id, countId));
 			});
 
-			redirect(303, '/dashboard/inventory/counts');
+			return { success: true, skippedProducts };
 		} catch (err: any) {
-			if (err?.status === 303) throw err;
 			console.error('Failed to close count:', err);
 			return fail(500, { error: 'Failed to close count and apply adjustments' });
 		}

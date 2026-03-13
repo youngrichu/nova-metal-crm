@@ -2,7 +2,7 @@ import { error, redirect, fail } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { inventory, inventoryCounts, inventoryCountItems, products, warehouses } from '$lib/server/db/schema';
 import { user } from '$lib/server/db/schema';
-import { eq, desc, inArray } from 'drizzle-orm';
+import { eq, desc, inArray, and } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async () => {
@@ -71,20 +71,27 @@ export const actions: Actions = {
 		const warehouseRecord = await db.query.warehouses.findFirst({ where: eq(warehouses.id, warehouseId) });
 		if (!warehouseRecord) return fail(400, { error: 'Warehouse not found' });
 
-		try {
-			// Capture current inventory for this warehouse
-			const currentInventory = await db
-				.select({
-					inv: inventory,
-					product: products
-				})
-				.from(inventory)
-				.innerJoin(products, eq(inventory.productId, products.id))
-				.where(eq(inventory.warehouseId, warehouseId));
+		const existingActive = await db.query.inventoryCounts.findFirst({
+			where: and(eq(inventoryCounts.warehouseId, warehouseId), eq(inventoryCounts.status, 'IN_PROGRESS'))
+		});
+		if (existingActive) {
+			return fail(400, { error: 'An active count session already exists for this warehouse. Please complete or cancel it first.' });
+		}
 
+		try {
 			let newCountId = '';
 
 			await db.transaction(async (tx) => {
+				// Capture current inventory snapshot atomically inside the transaction
+				const currentInventory = await tx
+					.select({
+						inv: inventory,
+						product: products
+					})
+					.from(inventory)
+					.innerJoin(products, eq(inventory.productId, products.id))
+					.where(eq(inventory.warehouseId, warehouseId));
+
 				// Insert count session
 				const [newCount] = await tx
 					.insert(inventoryCounts)
