@@ -16,12 +16,14 @@
   const todayLabel = new Date().toLocaleDateString('en-ET', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   // Use name if real, otherwise extract from email
-  const displayName = $derived(() => {
-    const name = data.user?.name;
-    if (name && name !== 'System' && name !== 'Admin') return name.split(' ')[0];
-    const email = data.user?.email ?? '';
-    return email.split('@')[0] ?? 'Operator';
-  });
+  const displayName = $derived(
+    (() => {
+      const name = data.user?.name;
+      if (name && name !== 'System' && name !== 'Admin') return name.split(' ')[0];
+      const email = data.user?.email ?? '';
+      return email.split('@')[0] ?? 'Operator';
+    })()
+  );
 
   // --- Sales Trend Chart ---
   const chartW = 600;
@@ -37,48 +39,54 @@
     trendData.length > 0 ? Math.max(...trendData.map((d: any) => d.revenue), 1) : 1
   );
 
-  const toX = $derived((index: number, total: number) =>
-    padLeft + (index / Math.max(total - 1, 1)) * (chartW - padLeft - padRight)
+  function toX(index: number, total: number) {
+    return padLeft + (index / Math.max(total - 1, 1)) * (chartW - padLeft - padRight);
+  }
+
+  function toY(revenue: number) {
+    return padTop + (1 - revenue / maxRevenue) * (chartH - padTop - padBottom);
+  }
+
+  const linePath = $derived(
+    trendData.length === 0
+      ? ''
+      : trendData
+          .map((d: any, i: number) => `${i === 0 ? 'M' : 'L'} ${toX(i, trendData.length).toFixed(1)} ${toY(d.revenue).toFixed(1)}`)
+          .join(' ')
   );
 
-  const toY = $derived((revenue: number) =>
-    padTop + (1 - revenue / maxRevenue) * (chartH - padTop - padBottom)
+  const areaPath = $derived(
+    (() => {
+      if (trendData.length === 0) return '';
+      const baseline = (chartH - padBottom).toFixed(1);
+      const line = trendData
+        .map((d: any, i: number) => `${i === 0 ? 'M' : 'L'} ${toX(i, trendData.length).toFixed(1)} ${toY(d.revenue).toFixed(1)}`)
+        .join(' ');
+      const firstX = toX(0, trendData.length).toFixed(1);
+      const lastX = toX(trendData.length - 1, trendData.length).toFixed(1);
+      return `${line} L ${lastX} ${baseline} L ${firstX} ${baseline} Z`;
+    })()
   );
-
-  const linePath = $derived(() => {
-    if (trendData.length === 0) return '';
-    return trendData
-      .map((d: any, i: number) => `${i === 0 ? 'M' : 'L'} ${toX(i, trendData.length).toFixed(1)} ${toY(d.revenue).toFixed(1)}`)
-      .join(' ');
-  });
-
-  const areaPath = $derived(() => {
-    if (trendData.length === 0) return '';
-    const baseline = (chartH - padBottom).toFixed(1);
-    const line = trendData
-      .map((d: any, i: number) => `${i === 0 ? 'M' : 'L'} ${toX(i, trendData.length).toFixed(1)} ${toY(d.revenue).toFixed(1)}`)
-      .join(' ');
-    const firstX = toX(0, trendData.length).toFixed(1);
-    const lastX = toX(trendData.length - 1, trendData.length).toFixed(1);
-    return `${line} L ${lastX} ${baseline} L ${firstX} ${baseline} Z`;
-  });
 
   // X-axis tick labels: show every ~5 days
-  const xAxisLabels = $derived(() => {
-    if (trendData.length === 0) return [];
-    const step = Math.max(1, Math.floor(trendData.length / 6));
-    return trendData
-      .map((d: any, i: number) => ({ ...d, i }))
-      .filter((_: any, i: number) => i % step === 0 || i === trendData.length - 1);
-  });
+  const xAxisLabels = $derived(
+    trendData.length === 0
+      ? []
+      : (() => {
+          const step = Math.max(1, Math.floor(trendData.length / 6));
+          return trendData
+            .map((d: any, i: number) => ({ ...d, i }))
+            .filter((_: any, i: number) => i % step === 0 || i === trendData.length - 1);
+        })()
+  );
 
   // Y-axis tick values
-  const yAxisTicks = $derived(() => {
-    return [0, 0.25, 0.5, 0.75, 1].map(f => ({
+  const yAxisTicks = $derived(
+    [0, 0.25, 0.5, 0.75, 1].map(f => ({
       value: maxRevenue * f,
       y: toY(maxRevenue * f)
-    }));
-  });
+    }))
+  );
 </script>
 
 <div class="p-4 md:p-8 max-w-[1600px] mx-auto space-y-12">
@@ -94,7 +102,7 @@
       </div>
 
       <h1 class="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.8]">
-        {greeting},<br/><span class="text-muted-foreground/40 italic">{displayName()}</span>
+        {greeting},<br/><span class="text-muted-foreground/40 italic">{displayName}</span>
       </h1>
     </div>
     
@@ -253,7 +261,7 @@
             </defs>
 
             <!-- Y-axis grid lines + labels -->
-            {#each yAxisTicks() as tick}
+            {#each yAxisTicks as tick}
               <line
                 x1={padLeft} y1={tick.y}
                 x2={chartW - padRight} y2={tick.y}
@@ -268,11 +276,11 @@
             {/each}
 
             <!-- Area fill -->
-            <path d={areaPath()} fill="url(#areaGradient)" />
+            <path d={areaPath} fill="url(#areaGradient)" />
 
             <!-- Line -->
             <path
-              d={linePath()}
+              d={linePath}
               fill="none"
               stroke="hsl(var(--primary))"
               stroke-width="2"
@@ -293,7 +301,7 @@
             {/each}
 
             <!-- X-axis labels -->
-            {#each xAxisLabels() as tick}
+            {#each xAxisLabels as tick}
               <text
                 x={toX(tick.i, trendData.length)}
                 y={chartH - padBottom + 16}
