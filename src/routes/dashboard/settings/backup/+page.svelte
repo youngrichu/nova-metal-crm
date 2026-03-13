@@ -10,8 +10,9 @@
 		try {
 			const res = await fetch('/api/backup');
 			if (!res.ok) {
-				const text = await res.text();
-				toast.error(`Export failed: ${text}`);
+				let msg = `Server error ${res.status}`;
+				try { const body = await res.json(); msg = body.message ?? msg; } catch { /* use status */ }
+				toast.error(msg);
 				return;
 			}
 			const blob = await res.blob();
