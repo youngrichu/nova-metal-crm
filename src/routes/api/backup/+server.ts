@@ -1,11 +1,12 @@
 import { execFile } from 'child_process';
-import { gzipSync } from 'node:zlib';
+import { gzip } from 'node:zlib';
 import { promisify } from 'node:util';
 import { error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import type { RequestHandler } from './$types';
 
 const execFileAsync = promisify(execFile);
+const gzipAsync = promisify(gzip);
 
 let lastBackupAt: number | null = null;
 const BACKUP_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
@@ -74,7 +75,7 @@ export const GET: RequestHandler = async ({ locals }) => {
     // Log audit event
     console.log(`[AUDIT] Database backup exported by user ${locals.user.id} at ${new Date().toISOString()}`);
 
-    const compressed = gzipSync(stdout);
+    const compressed = await gzipAsync(stdout);
 
     return new Response(compressed, {
         headers: {

@@ -82,33 +82,36 @@ export const actions: Actions = {
 		const { id: countId } = params;
 
 		try {
-			// Fetch all items with physical quantities
-			const items = await db
-				.select({
-					item: inventoryCountItems
-				})
+			// Pre-flight: check all items are entered (read outside tx is fine here — just a UX guard)
+			const preflight = await db
+				.select({ physicalQuantity: inventoryCountItems.physicalQuantity })
 				.from(inventoryCountItems)
 				.where(eq(inventoryCountItems.countId, countId));
 
-			const uncountedItems = items.filter(item => item.item.physicalQuantity === null);
+			const uncountedItems = preflight.filter(item => item.physicalQuantity === null);
 			if (uncountedItems.length > 0) {
 				return fail(400, {
 					error: `${uncountedItems.length} item(s) have not been counted yet. Please complete all entries before closing.`
 				});
 			}
 
-			// Need warehouseId for inventory lookups — fetch it inside transaction scope
-			const [countMeta] = await db
-				.select({ warehouseId: inventoryCounts.warehouseId })
-				.from(inventoryCounts)
-				.where(eq(inventoryCounts.id, countId))
-				.limit(1);
-
-			if (!countMeta) return fail(404, { error: 'Count session not found' });
-
 			const skippedProducts: string[] = [];
 
 			await db.transaction(async (tx) => {
+				// Re-fetch count metadata and items inside the transaction to avoid stale reads
+				const [countMeta] = await tx
+					.select({ warehouseId: inventoryCounts.warehouseId })
+					.from(inventoryCounts)
+					.where(eq(inventoryCounts.id, countId))
+					.limit(1);
+
+				if (!countMeta) throw new Error('Count session not found');
+
+				const items = await tx
+					.select({ item: inventoryCountItems })
+					.from(inventoryCountItems)
+					.where(eq(inventoryCountItems.countId, countId));
+
 				// First: atomically claim the close by updating status conditionally
 				const [updatedCount] = await tx
 					.update(inventoryCounts)
@@ -167,6 +170,7 @@ export const actions: Actions = {
 
 			return { success: true, skippedProducts };
 		} catch (err: any) {
+			if (err?.message === 'Count session not found') return fail(404, { error: 'Count session not found' });
 			console.error('Failed to close count:', err);
 			return fail(500, { error: 'Failed to close count and apply adjustments' });
 		}

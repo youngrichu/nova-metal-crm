@@ -77,17 +77,18 @@ export const actions: Actions = {
 		const warehouseRecord = await db.query.warehouses.findFirst({ where: eq(warehouses.id, warehouseId) });
 		if (!warehouseRecord) return fail(400, { error: 'Warehouse not found' });
 
-		const existingActive = await db.query.inventoryCounts.findFirst({
-			where: and(eq(inventoryCounts.warehouseId, warehouseId), eq(inventoryCounts.status, 'IN_PROGRESS'))
-		});
-		if (existingActive) {
-			return fail(400, { error: 'An active count session already exists for this warehouse. Please complete or cancel it first.' });
-		}
-
 		try {
 			let newCountId = '';
 
 			await db.transaction(async (tx) => {
+				// Check for existing IN_PROGRESS count inside the transaction to prevent TOCTOU race
+				const existingActive = await tx.query.inventoryCounts.findFirst({
+					where: and(eq(inventoryCounts.warehouseId, warehouseId), eq(inventoryCounts.status, 'IN_PROGRESS'))
+				});
+				if (existingActive) {
+					throw Object.assign(new Error('DUPLICATE_COUNT'), { code: 'DUPLICATE_COUNT' });
+				}
+
 				// Capture current inventory snapshot atomically inside the transaction
 				const currentInventory = await tx
 					.select({
@@ -127,6 +128,9 @@ export const actions: Actions = {
 			redirect(303, `/dashboard/inventory/counts/${newCountId}`);
 		} catch (err: any) {
 			if (err?.status === 303) throw err;
+			if (err?.code === 'DUPLICATE_COUNT') {
+				return fail(400, { error: 'An active count session already exists for this warehouse. Please complete or cancel it first.' });
+			}
 			console.error('Failed to start count:', err);
 			return fail(500, { error: 'Failed to start inventory count' });
 		}
