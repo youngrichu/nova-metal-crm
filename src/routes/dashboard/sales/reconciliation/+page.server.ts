@@ -1,10 +1,11 @@
 import { db } from '$lib/server/db';
 import { payments, dailyReconciliations, salesOrders, salesOrderItems, products } from '$lib/server/db/schema';
-import { fail, type Actions } from '@sveltejs/kit';
+import { fail, redirect, type Actions } from '@sveltejs/kit';
 import { sql, gte, lt, and, eq, desc, notInArray } from 'drizzle-orm';
 import { user as usersTable } from '$lib/server/db/schema/users';
 
-export const load = async () => {
+export const load = async ({ locals }: { locals: App.Locals }) => {
+    if (!locals.user) throw redirect(302, '/login');
     // Calculate expected cash for today
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
@@ -60,6 +61,11 @@ export const actions: Actions = {
     reconcile: async ({ request, locals }) => {
         const user = locals.user;
         if (!user) return fail(401, { error: 'Unauthorized' });
+
+        const allowedRoles = ['admin', 'sales'];
+        if (!allowedRoles.includes(user.role)) {
+            return fail(403, { error: 'Access denied' });
+        }
 
         const formData = await request.formData();
         const actualCash = Number(formData.get('actualCash'));

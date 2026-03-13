@@ -43,6 +43,13 @@
       "when": 1773413760603,
       "tag": "0005_flowery_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773420882597,
+      "tag": "0006_good_anita_blake",
+      "breakpoints": true
     }
   ]
 }

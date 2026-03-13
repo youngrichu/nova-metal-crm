@@ -1,7 +1,7 @@
 // src/lib/server/pricing/engine.ts
 import { db } from '$lib/server/db';
-import { products, customers, salesOrders, salesOrderItems, priceHistory } from '$lib/server/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { products, customers, salesOrders, salesOrderItems, priceHistory, systemSettings } from '$lib/server/db/schema';
+import { eq, and, inArray } from 'drizzle-orm';
 
 const PRICING_RULES = {
     TIERS: {
@@ -24,11 +24,12 @@ export type PricingResult = {
     lineTotal: number;
 };
 
-export function computePrice(baseCost: number, pricingTier: string, quantity: number): PricingResult {
-    let markupMultiplier = PRICING_RULES.TIERS.RETAIL; // Default
-    
+export function computePrice(baseCost: number, pricingTier: string, quantity: number, tiersOverride?: typeof PRICING_RULES.TIERS): PricingResult {
+    const tiers = tiersOverride ?? PRICING_RULES.TIERS;
+    let markupMultiplier = tiers.RETAIL; // Default
+
     if (pricingTier) {
-        markupMultiplier = PRICING_RULES.TIERS[pricingTier as keyof typeof PRICING_RULES.TIERS] || PRICING_RULES.TIERS.RETAIL;
+        markupMultiplier = tiers[pricingTier as keyof typeof tiers] || tiers.RETAIL;
     }
 
     const unitPriceBeforeDiscount = baseCost * markupMultiplier;
@@ -120,7 +121,20 @@ export async function calculateDynamicPrice(
         }
     }
 
-    return computePrice(baseCost, pricingTier, quantity);
+    // 4. Load markup multipliers from system_settings, falling back to hardcoded defaults
+    const markupKeys = ['markup_retail', 'markup_wholesale', 'markup_vip'];
+    const settingRows = await db.select().from(systemSettings)
+        .where(inArray(systemSettings.key, markupKeys));
+    const settingsMap = Object.fromEntries(settingRows.map(r => [r.key, parseFloat(r.value)]));
+
+    const dynamicTiers = {
+        RETAIL:    settingsMap['markup_retail']    ?? PRICING_RULES.TIERS.RETAIL,
+        WHOLESALE: settingsMap['markup_wholesale'] ?? PRICING_RULES.TIERS.WHOLESALE,
+        VIP:       settingsMap['markup_vip']       ?? PRICING_RULES.TIERS.VIP,
+        PREFERRED: settingsMap['markup_vip']       ?? PRICING_RULES.TIERS.PREFERRED,
+    };
+
+    return computePrice(baseCost, pricingTier, quantity, dynamicTiers);
 }
 
 /**
@@ -137,9 +151,8 @@ export async function recordManualPriceOverride(params: {
         productId: params.productId,
         landingCost: params.landingCost.toFixed(2),
         marketPrice: params.marketPrice.toFixed(2),
-        // Workaround: price_history has no dedicated performedBy column, so the actor is
-        // encoded inline in the reason string for auditability.
-        reason: `${params.reason} [performedBy: ${params.performedBy}]`,
+        reason: params.reason,
+        performedBy: params.performedBy,
         recordedAt: new Date()
     });
 }
