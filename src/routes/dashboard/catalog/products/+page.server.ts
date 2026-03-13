@@ -26,7 +26,8 @@ export const actions = {
 		const name = data.get('name')?.toString();
 		const categoryId = data.get('categoryId')?.toString();
 		const description = data.get('description')?.toString();
-		
+		const barcode = data.get('barcode')?.toString() || null;
+
 		const thickness = data.get('thickness') ? parseFloat(data.get('thickness') as string) : null;
 		const size1 = data.get('size1') ? parseFloat(data.get('size1') as string) : null;
 		const size2 = data.get('size2') ? parseFloat(data.get('size2') as string) : null;
@@ -64,13 +65,17 @@ export const actions = {
 				size2: size2 ? size2.toString() : null,
 				length: length ? length.toString() : null,
 				weightPerPiece: weightPerPiece ? weightPerPiece.toString() : null,
-				minStockLevel
+				minStockLevel,
+				barcode
 			});
 
 			return { success: true };
 		} catch (e: any) {
 			console.error(e)
-			if (e.code === '23505') { // Unique constraint violation (likely SKU)
+			if (e.code === '23505') { // Unique constraint violation (SKU or barcode)
+				if (e.constraint?.includes('barcode')) {
+					return fail(400, { duplicate: true, message: 'A product with this barcode already exists.' });
+				}
 				return fail(400, { duplicate: true, message: 'A product with this identical SKU properties already exists.' });
 			}
 			return fail(500, { error: 'Unknown server error' });
@@ -95,6 +100,7 @@ export const actions = {
 		const name = data.get('name')?.toString();
 		const categoryId = data.get('categoryId')?.toString();
 		const description = data.get('description')?.toString() || null;
+		const barcode = data.get('barcode')?.toString() || null;
 
 		const thickness = data.get('thickness') ? parseFloat(data.get('thickness') as string) : null;
 		const size1 = data.get('size1') ? parseFloat(data.get('size1') as string) : null;
@@ -119,13 +125,19 @@ export const actions = {
 					size2: size2 ? size2.toString() : null,
 					length: length ? length.toString() : null,
 					weightPerPiece: weightPerPiece ? weightPerPiece.toString() : null,
-					minStockLevel
+					minStockLevel,
+					barcode
 				})
 				.where(eq(products.id, id));
 
 			return { success: true };
 		} catch (e: any) {
-			if (e.code === '23505') return fail(400, { duplicate: true, message: 'A product with this identical SKU already exists.' });
+			if (e.code === '23505') {
+				if (e.constraint?.includes('barcode')) {
+					return fail(400, { duplicate: true, message: 'A product with this barcode already exists.' });
+				}
+				return fail(400, { duplicate: true, message: 'A product with this identical SKU already exists.' });
+			}
 			return fail(500, { error: 'Could not update product.' });
 		}
 	}

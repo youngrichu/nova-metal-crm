@@ -154,6 +154,11 @@
 									<Label for="name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Identifier Name *</Label>
 									<Input id="name" name="name" placeholder="Square Tube 40x40" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
 								</div>
+
+								<div class="space-y-2 group">
+									<Label for="barcode" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Barcode / EAN</Label>
+									<Input id="barcode" name="barcode" type="text" placeholder="Scan or type barcode..." class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+								</div>
 							</div>
 
 							<!-- Dimensions -->
@@ -220,6 +225,7 @@
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 w-[110px]">Category</Table.Head>
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 w-[180px]">Automated SKU</Table.Head>
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">Identifier</Table.Head>
+					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden lg:table-cell">Barcode</Table.Head>
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden md:table-cell">Dimensions</Table.Head>
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden lg:table-cell text-right">Min Stock</Table.Head>
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden lg:table-cell text-right">Weight / Pc</Table.Head>
@@ -241,6 +247,9 @@
 						</Table.Cell>
 						<Table.Cell class="px-6 py-4 text-[13px] font-medium text-foreground/80 align-middle">
 							{row.product.name}
+						</Table.Cell>
+						<Table.Cell class="hidden lg:table-cell px-6 py-4 align-middle">
+							<span class="font-mono text-[11px] text-muted-foreground/60">{row.product.barcode ?? '—'}</span>
 						</Table.Cell>
 						<Table.Cell class="hidden md:table-cell px-6 py-4 align-middle">
 							<div class="flex gap-2 items-center flex-wrap">
@@ -293,7 +302,7 @@
 					</Table.Row>
 				{:else}
 					<Table.Row>
-						<Table.Cell colspan={7} class="h-64 text-center align-middle">
+						<Table.Cell colspan={8} class="h-64 text-center align-middle">
 							<div class="flex flex-col items-center justify-center text-muted-foreground/40 gap-4">
 								<Box class="w-12 h-12 opacity-20" />
 								<p class="text-lg font-light tracking-widest uppercase">No materials indexed</p>
@@ -382,6 +391,11 @@
 						<div class="space-y-2 group">
 							<Label for="edit-name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary">Identifier Name *</Label>
 							<Input id="edit-name" name="name" value={editingProduct.product.name} required class="h-14 bg-transparent border-t-0 border-x-0 border-b-2 border-border/50 focus-visible:border-primary focus-visible:ring-0 rounded-none text-lg px-0 transition-all font-bold" />
+						</div>
+
+						<div class="space-y-2 group">
+							<Label for="edit-barcode" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary">Barcode / EAN</Label>
+							<Input id="edit-barcode" name="barcode" type="text" value={editingProduct.product.barcode ?? ''} placeholder="Scan or type barcode..." class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
 						</div>
 					</div>
 
