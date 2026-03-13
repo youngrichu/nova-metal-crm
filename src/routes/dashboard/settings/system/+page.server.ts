@@ -16,7 +16,7 @@ const DEFAULTS: Record<string, string> = {
 
 export const load: PageServerLoad = async ({ locals }) => {
     if (!locals.user) throw redirect(302, '/login');
-    if ((locals.user as any).role !== 'admin') throw redirect(302, '/dashboard');
+    if (locals.user.role !== 'admin') throw redirect(302, '/dashboard');
 
     const rows = await db.select().from(systemSettings);
     const settingsMap: Record<string, string> = { ...DEFAULTS };
@@ -33,7 +33,7 @@ export const actions: Actions = {
         if (!locals.user) return fail(401, { error: 'Unauthorized' });
 
         // Only admins can update system settings
-        if ((locals.user as any).role !== 'admin') {
+        if (locals.user.role !== 'admin') {
             return fail(403, { error: 'Only admins can update system settings' });
         }
 
@@ -53,6 +53,10 @@ export const actions: Actions = {
                 }
                 if (key === 'vat_rate' && num > 1) {
                     return fail(400, { error: 'VAT rate must be between 0 and 1' });
+                }
+                const MARKUP_KEYS = ['markup_retail', 'markup_wholesale', 'markup_vip'];
+                if (MARKUP_KEYS.includes(key) && num < 1) {
+                    return fail(400, { error: `${key} must be at least 1.0 (no negative markups)` });
                 }
             }
 
