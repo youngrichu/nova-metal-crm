@@ -129,7 +129,7 @@
 		<div class="space-y-2 max-w-md">
 			<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">Scan to jump to product row</Label>
 			<Input
-				bind:this={barcodeInputEl}
+				bind:ref={barcodeInputEl}
 				bind:value={barcodeInput}
 				onkeydown={handleBarcodeScan}
 				placeholder="Focus here and scan barcode..."
