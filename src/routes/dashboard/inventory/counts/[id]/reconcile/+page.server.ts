@@ -70,6 +70,11 @@ export const actions: Actions = {
 		const sessionUser = locals.user;
 		if (!sessionUser) return fail(401, { error: 'Unauthorized' });
 
+		const allowedRoles = ['admin', 'warehouse'];
+		if (!allowedRoles.includes(sessionUser.role)) {
+			return fail(403, { error: 'Access denied' });
+		}
+
 		const { id: countId } = params;
 
 		try {
@@ -90,6 +95,13 @@ export const actions: Actions = {
 				})
 				.from(inventoryCountItems)
 				.where(eq(inventoryCountItems.countId, countId));
+
+			const uncountedItems = items.filter(item => item.item.physicalQuantity === null);
+			if (uncountedItems.length > 0) {
+				return fail(400, {
+					error: `${uncountedItems.length} item(s) have not been counted yet. Please complete all entries before closing.`
+				});
+			}
 
 			await db.transaction(async (tx) => {
 				for (const { item } of items) {

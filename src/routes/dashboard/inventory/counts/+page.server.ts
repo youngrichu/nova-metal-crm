@@ -58,10 +58,18 @@ export const actions: Actions = {
 		const sessionUser = locals.user;
 		if (!sessionUser) return fail(401, { error: 'Unauthorized' });
 
+		const allowedRoles = ['admin', 'warehouse'];
+		if (!allowedRoles.includes(sessionUser.role)) {
+			return fail(403, { error: 'Access denied' });
+		}
+
 		const data = await request.formData();
 		const warehouseId = data.get('warehouseId')?.toString();
 
 		if (!warehouseId) return fail(400, { error: 'Warehouse is required' });
+
+		const warehouseRecord = await db.query.warehouses.findFirst({ where: eq(warehouses.id, warehouseId) });
+		if (!warehouseRecord) return fail(400, { error: 'Warehouse not found' });
 
 		try {
 			// Capture current inventory for this warehouse
