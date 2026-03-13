@@ -44,7 +44,10 @@ export const inventoryCounts = pgTable("inventory_counts", {
   startedAt: timestamp('started_at').notNull().defaultNow(),
   completedAt: timestamp('completed_at'),
   performedBy: text('performed_by').notNull().references(() => user.id)
-});
+}, (table) => ({
+  warehouseIdx: index('idx_inventory_counts_warehouse').on(table.warehouseId),
+  statusIdx: index('idx_inventory_counts_status').on(table.status)
+}));
 
 export const inventoryCountItems = pgTable("inventory_count_items", {
   id: uuid('id').primaryKey().defaultRandom(),
