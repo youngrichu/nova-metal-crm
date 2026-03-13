@@ -73,7 +73,7 @@ export const actions = {
 		} catch (e: any) {
 			console.error(e)
 			if (e.code === '23505') { // Unique constraint violation (SKU or barcode)
-				if (e.constraint?.includes('barcode')) {
+				if (e.detail?.includes('barcode') || e.constraint?.includes('barcode')) {
 					return fail(400, { duplicate: true, message: 'A product with this barcode already exists.' });
 				}
 				return fail(400, { duplicate: true, message: 'A product with this identical SKU properties already exists.' });
@@ -133,7 +133,7 @@ export const actions = {
 			return { success: true };
 		} catch (e: any) {
 			if (e.code === '23505') {
-				if (e.constraint?.includes('barcode')) {
+				if (e.detail?.includes('barcode') || e.constraint?.includes('barcode')) {
 					return fail(400, { duplicate: true, message: 'A product with this barcode already exists.' });
 				}
 				return fail(400, { duplicate: true, message: 'A product with this identical SKU already exists.' });

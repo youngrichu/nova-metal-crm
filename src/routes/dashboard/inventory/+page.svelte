@@ -76,7 +76,7 @@
 				selectedProduct = match.id;
 				barcodeError = '';
 			} else {
-				barcodeError = `No product found for barcode: ${code}`;
+				barcodeError = `No product found for barcode: ${code.slice(0, 40)}${code.length > 40 ? '...' : ''}`;
 			}
 			barcodeInput = '';
 		}
