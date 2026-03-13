@@ -1,8 +1,11 @@
+import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
 import { inventory, inventoryTransactions, products, warehouses, salesOrders } from '$lib/server/db/schema';
 import { sql, desc, inArray } from 'drizzle-orm';
 
 export const load = async ({ locals }) => {
+	if (!locals.user) throw redirect(302, '/login');
+
 	// Total product count
 	const [productCountResult] = await db
 		.select({ count: sql<number>`count(*)` })

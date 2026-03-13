@@ -72,32 +72,32 @@ export const actions: Actions = {
 		}
 
 		try {
-			// Verify the count session is still open
-			const [countSession] = await db
-				.select({ status: inventoryCounts.status })
-				.from(inventoryCounts)
-				.where(eq(inventoryCounts.id, countId))
-				.limit(1);
+			// Wrap the status check and the UPDATE in a single transaction to prevent
+			// a TOCTOU race where closeCount completes between the check and the write.
+			await db.transaction(async (tx) => {
+				const [countSession] = await tx
+					.select({ status: inventoryCounts.status })
+					.from(inventoryCounts)
+					.where(eq(inventoryCounts.id, countId))
+					.limit(1);
 
-			if (!countSession) return fail(404, { error: 'Count session not found' });
-			if (countSession.status === 'CLOSED') return fail(400, { error: 'This count session is already closed and cannot be modified' });
+				if (!countSession) throw Object.assign(new Error('Count session not found'), { code: 'NOT_FOUND' });
+				if (countSession.status === 'CLOSED') throw Object.assign(new Error('Already closed'), { code: 'CLOSED' });
 
-			// Verify item belongs to this count session
-			const [item] = await db
-				.select()
-				.from(inventoryCountItems)
-				.where(and(eq(inventoryCountItems.id, itemId), eq(inventoryCountItems.countId, countId)))
-				.limit(1);
+				const [updated] = await tx
+					.update(inventoryCountItems)
+					.set({ physicalQuantity, notes })
+					.where(and(eq(inventoryCountItems.id, itemId), eq(inventoryCountItems.countId, countId)))
+					.returning({ id: inventoryCountItems.id });
 
-			if (!item) return fail(404, { error: 'Count item not found' });
-
-			await db
-				.update(inventoryCountItems)
-				.set({ physicalQuantity, notes })
-				.where(eq(inventoryCountItems.id, itemId));
+				if (!updated) throw Object.assign(new Error('Item not found'), { code: 'ITEM_NOT_FOUND' });
+			});
 
 			return { success: true, itemId };
-		} catch (err) {
+		} catch (err: any) {
+			if (err?.code === 'NOT_FOUND') return fail(404, { error: 'Count session not found' });
+			if (err?.code === 'CLOSED') return fail(400, { error: 'This count session is already closed and cannot be modified' });
+			if (err?.code === 'ITEM_NOT_FOUND') return fail(404, { error: 'Count item not found' });
 			console.error('Failed to save count item:', err);
 			return fail(500, { error: 'Failed to save item' });
 		}

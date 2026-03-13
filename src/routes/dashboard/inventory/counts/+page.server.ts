@@ -7,10 +7,10 @@ import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ locals }: { locals: App.Locals }) => {
 	const sessionUser = locals.user;
-	if (!sessionUser) redirect(302, '/login');
+	if (!sessionUser) throw redirect(302, '/login');
 
 	const allowedRoles = ['admin', 'warehouse'];
-	if (!allowedRoles.includes(sessionUser!.role)) redirect(302, '/dashboard');
+	if (!allowedRoles.includes(sessionUser!.role)) throw redirect(302, '/dashboard');
 
 	try {
 		const counts = await db

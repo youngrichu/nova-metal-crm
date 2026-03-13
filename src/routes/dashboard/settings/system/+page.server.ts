@@ -3,13 +3,14 @@ import { systemSettings } from '$lib/server/db/schema/settings';
 import { redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 
-const SETTING_KEYS = ['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'currency_code', 'currency_locale'] as const;
+const SETTING_KEYS = ['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred', 'currency_code', 'currency_locale'] as const;
 
 const DEFAULTS: Record<string, string> = {
     vat_rate: '0.15',
     markup_retail: '1.15',
     markup_wholesale: '1.05',
     markup_vip: '1.05',
+    markup_preferred: '1.08',
     currency_code: 'ETB',
     currency_locale: 'en-ET'
 };
@@ -46,7 +47,7 @@ export const actions: Actions = {
             if (!raw) continue;
 
             // Validate numeric fields
-            if (['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip'].includes(key)) {
+            if (['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred'].includes(key)) {
                 const num = parseFloat(raw);
                 if (isNaN(num) || num < 0) {
                     return fail(400, { error: `Invalid value for ${key}` });
@@ -54,7 +55,7 @@ export const actions: Actions = {
                 if (key === 'vat_rate' && num > 1) {
                     return fail(400, { error: 'VAT rate must be between 0 and 1' });
                 }
-                const MARKUP_KEYS = ['markup_retail', 'markup_wholesale', 'markup_vip'];
+                const MARKUP_KEYS = ['markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred'];
                 if (MARKUP_KEYS.includes(key) && num < 1) {
                     return fail(400, { error: `${key} must be at least 1.0 (no negative markups)` });
                 }
