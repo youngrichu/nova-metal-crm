@@ -61,8 +61,9 @@ export const GET: RequestHandler = async ({ locals }) => {
         });
         stdout = result.stdout as unknown as Buffer;
     } catch (err: any) {
-        console.error('pg_dump failed:', err.stderr?.toString() || err.message);
-        throw error(500, 'Database export failed');
+        const detail = err.stderr?.toString() || err.message || 'unknown error';
+        console.error('pg_dump failed:', detail);
+        throw error(500, `Database export failed: ${detail}`);
     }
 
     if (!stdout || stdout.length === 0) {
