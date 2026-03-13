@@ -1,10 +1,11 @@
 import { db } from '$lib/server/db';
 import { products, categories } from '$lib/server/db/schema';
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { generateSKU } from '$lib/utils/skuGenerator';
 
-export const load = async () => {
+export const load = async ({ locals }: { locals: App.Locals }) => {
+	if (!locals.user) throw redirect(302, '/login');
 	const allProducts = await db.select({
 		product: products,
 		category: categories
@@ -21,7 +22,8 @@ export const load = async () => {
 };
 
 export const actions = {
-	create: async ({ request }) => {
+	create: async ({ request, locals }) => {
+		if (!locals.user) return fail(401, { error: 'Unauthorized' });
 		const data = await request.formData();
 		const name = data.get('name')?.toString();
 		const categoryId = data.get('categoryId')?.toString();
@@ -81,7 +83,8 @@ export const actions = {
 			return fail(500, { error: 'Unknown server error' });
 		}
 	},
-	delete: async ({ request }) => {
+	delete: async ({ request, locals }) => {
+		if (!locals.user) return fail(401, { error: 'Unauthorized' });
 		const data = await request.formData();
 		const id = data.get('id')?.toString();
 
@@ -94,7 +97,8 @@ export const actions = {
 			return fail(500, { error: 'Could not delete product. Ensure no inventory transactions depend on it.' });
 		}
 	},
-	update: async ({ request }) => {
+	update: async ({ request, locals }) => {
+		if (!locals.user) return fail(401, { error: 'Unauthorized' });
 		const data = await request.formData();
 		const id = data.get('id')?.toString();
 		const name = data.get('name')?.toString();
