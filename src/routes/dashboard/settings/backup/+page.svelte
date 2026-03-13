@@ -1,6 +1,33 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { Database, Download, Shield, HardDrive, Clock } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
+
+	let isDownloading = $state(false);
+
+	async function handleExport() {
+		isDownloading = true;
+		try {
+			const res = await fetch('/api/backup');
+			if (!res.ok) {
+				const text = await res.text();
+				toast.error(`Export failed: ${text}`);
+				return;
+			}
+			const blob = await res.blob();
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `nova_backup_${new Date().toISOString().split('T')[0]}.sql.gz`;
+			a.click();
+			URL.revokeObjectURL(url);
+			toast.success('Backup exported successfully');
+		} catch (e) {
+			toast.error('Export failed: network error');
+		} finally {
+			isDownloading = false;
+		}
+	}
 </script>
 
 <div class="p-4 md:p-8 max-w-[1200px] mx-auto space-y-12">
@@ -37,12 +64,12 @@
 
 			<div>
 				<Button
-					href="/api/backup"
-					download
+					onclick={handleExport}
+					disabled={isDownloading}
 					class="h-14 px-12 rounded-none bg-foreground text-background font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all flex items-center gap-3"
 				>
 					<Download class="w-4 h-4" />
-					Export Full Data Package
+					{isDownloading ? 'Exporting...' : 'Export Full Data Package'}
 				</Button>
 			</div>
 		</div>
