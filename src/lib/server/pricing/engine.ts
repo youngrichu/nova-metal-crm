@@ -1,7 +1,7 @@
 // src/lib/server/pricing/engine.ts
 import { db } from '$lib/server/db';
-import { products, customers } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { products, customers, salesOrders, salesOrderItems, priceHistory } from '$lib/server/db/schema';
+import { eq, and } from 'drizzle-orm';
 
 const PRICING_RULES = {
     TIERS: {
@@ -55,11 +55,13 @@ export function computePrice(baseCost: number, pricingTier: string, quantity: nu
 
 /**
  * Calculates the dynamic price for a product based on customer tier and quantity.
+ * If orderId is provided, checks for a valid quote lock-in and returns the locked price if still valid.
  */
 export async function calculateDynamicPrice(
-    productId: string, 
-    customerId: string | null, 
-    quantity: number = 1
+    productId: string,
+    customerId: string | null,
+    quantity: number = 1,
+    orderId?: string  // optional — for quote lock-in check
 ): Promise<PricingResult> {
     // 1. Fetch Product (Layer 1: Base Cost)
     const product = await db.query.products.findFirst({
@@ -72,17 +74,67 @@ export async function calculateDynamicPrice(
 
     const baseCost = Number(product.averageLandingCost || 0);
 
-    // 2. Fetch Customer Tier
+    // 2. Quote Lock-in Check
+    if (orderId) {
+        const now = new Date();
+        const order = await db.query.salesOrders.findFirst({
+            where: eq(salesOrders.id, orderId)
+        });
+
+        if (order && order.validUntil && order.validUntil >= now) {
+            // Order is still within the valid quote window — look for a locked item price
+            const lockedItem = await db.query.salesOrderItems.findFirst({
+                where: and(
+                    eq(salesOrderItems.orderId, orderId),
+                    eq(salesOrderItems.productId, productId)
+                )
+            });
+
+            if (lockedItem) {
+                const lockedUnitPrice = Number(lockedItem.unitPrice);
+                const lockedLineTotal = Number((lockedUnitPrice * quantity).toFixed(2));
+                return {
+                    baseCost,
+                    unitPriceBeforeDiscount: lockedUnitPrice,
+                    discountPercent: 0,
+                    finalUnitPrice: lockedUnitPrice,
+                    lineTotal: lockedLineTotal
+                };
+            }
+        }
+        // If order not found, expired, or no matching item — fall through to normal calculation
+    }
+
+    // 3. Fetch Customer Tier
     let pricingTier = "RETAIL";
     if (customerId) {
         const customer = await db.query.customers.findFirst({
             where: eq(customers.id, customerId)
         });
-        
+
         if (customer && customer.pricingTier) {
             pricingTier = customer.pricingTier;
         }
     }
 
     return computePrice(baseCost, pricingTier, quantity);
+}
+
+/**
+ * Records a manual price override to the price_history audit table.
+ */
+export async function recordManualPriceOverride(params: {
+    productId: string;
+    landingCost: number;
+    marketPrice: number;
+    reason: string;
+    performedBy: string; // user id
+}): Promise<void> {
+    await db.insert(priceHistory).values({
+        productId: params.productId,
+        landingCost: params.landingCost.toFixed(2),
+        marketPrice: params.marketPrice.toFixed(2),
+        reason: `${params.reason} [performedBy: ${params.performedBy}]`,
+        recordedAt: new Date()
+    });
 }
