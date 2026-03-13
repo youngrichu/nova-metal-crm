@@ -11,6 +11,7 @@
 
     let totalPaid = $derived(data.payments.reduce((sum, p) => sum + Number(p.amount), 0));
     let balanceDue = $derived(Number(data.order.totalAmount) - totalPaid);
+    let isExpired = $derived(data.order.status === 'QUOTE' && data.order.validUntil && new Date(data.order.validUntil) < new Date());
 
     function getStatusColor(status: string) {
 		switch (status) {
@@ -70,6 +71,12 @@
             </div>
             <p class="text-sm font-medium tracking-widest text-muted-foreground uppercase pt-2">
                 Created: {new Date(data.order.createdAt).toLocaleString()}
+                {#if data.order.validUntil}
+                    <span class="mx-2">|</span>
+                    <span class={isExpired ? "text-red-500 font-bold" : ""}>
+                        Valid Until: {new Date(data.order.validUntil).toLocaleDateString()}
+                    </span>
+                {/if}
             </p>
 		</div>
 
@@ -82,6 +89,18 @@
 			</Button>
 		</div>
 	</header>
+    
+    {#if isExpired}
+        <div class="bg-red-500/10 border-l-4 border-red-600 p-4 animate-in fade-in slide-in-from-top-4">
+            <div class="flex items-center gap-3">
+                <XCircle class="w-5 h-5 text-red-600" />
+                <div>
+                    <h3 class="text-sm font-bold tracking-tight text-red-600 uppercase">Quotation Expired</h3>
+                    <p class="text-xs font-medium text-red-600/80">The locked pricing period for this quote has ended. Verify current market rates before confirming.</p>
+                </div>
+            </div>
+        </div>
+    {/if}
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <!-- Main Content -->
@@ -100,6 +119,7 @@
                             <Table.Head class="h-12 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">Product</Table.Head>
                             <Table.Head class="h-12 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right">Qty</Table.Head>
                             <Table.Head class="h-12 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right">Unit Price</Table.Head>
+                            <Table.Head class="h-12 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right">Discount</Table.Head>
                             <Table.Head class="h-12 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right">Total</Table.Head>
                         </Table.Row>
                     </Table.Header>
@@ -109,6 +129,7 @@
                                 <Table.Cell class="px-6 py-4 font-bold">{item.product?.sku} - {item.product?.name}</Table.Cell>
                                 <Table.Cell class="px-6 py-4 text-right font-mono">{Number(item.quantity).toLocaleString()}</Table.Cell>
                                 <Table.Cell class="px-6 py-4 text-right font-mono text-muted-foreground">{formatCurrency(Number(item.unitPrice))}</Table.Cell>
+                                <Table.Cell class="px-6 py-4 text-right font-mono text-amber-500 font-bold">{Number(item.discountPercent) > 0 ? (Number(item.discountPercent) * 100).toFixed(0) + '%' : '-'}</Table.Cell>
                                 <Table.Cell class="px-6 py-4 text-right font-mono font-bold text-primary">{formatCurrency(Number(item.lineTotal))}</Table.Cell>
                             </Table.Row>
                         {/each}
@@ -120,6 +141,12 @@
                         <span>Subtotal</span>
                         <span class="font-mono text-foreground">{formatCurrency(data.order.subtotal)}</span>
                     </div>
+                    {#if Number(data.order.discountAmount) > 0}
+                    <div class="flex justify-between w-full md:w-[300px] text-sm font-bold tracking-widest uppercase text-amber-500">
+                        <span>Discount Saved</span>
+                        <span class="font-mono text-amber-500">-{formatCurrency(data.order.discountAmount)}</span>
+                    </div>
+                    {/if}
                     <div class="flex justify-between w-full md:w-[300px] text-sm font-bold tracking-widest uppercase text-muted-foreground">
                         <span>VAT (15%)</span>
                         <span class="font-mono text-foreground">{formatCurrency(data.order.taxAmount)}</span>

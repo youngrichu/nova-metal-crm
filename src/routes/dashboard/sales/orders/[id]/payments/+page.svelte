@@ -12,11 +12,11 @@
 
     let isSubmitting = $state(false);
 	
-	let totalAmount = Number(data.order.totalAmount);
-    let totalPaid = $derived(data.payments.reduce((sum, p) => sum + Number(p.amount), 0));
+	let totalAmount = $derived(Number(data.order.totalAmount));
+    let totalPaid = $derived(data.payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0));
     let balanceDue = $derived(totalAmount - totalPaid);
 
-    let paymentAmount = $state(balanceDue);
+    let paymentAmount = $state(Number(data.order.totalAmount) - data.payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0));
 
     // Keep payment amount within bounds
     $effect(() => {
