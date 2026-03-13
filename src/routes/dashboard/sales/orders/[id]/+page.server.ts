@@ -18,6 +18,7 @@ export const load: PageServerLoad = async ({ params }) => {
                 taxAmount: salesOrders.taxAmount,
                 totalAmount: salesOrders.totalAmount,
                 discountAmount: salesOrders.discountAmount,
+                validUntil: salesOrders.validUntil,
                 createdAt: salesOrders.createdAt,
 				customer: {
                     id: customers.id,
@@ -41,6 +42,7 @@ export const load: PageServerLoad = async ({ params }) => {
                 id: salesOrderItems.id,
                 quantity: salesOrderItems.quantity,
                 unitPrice: salesOrderItems.unitPrice,
+                discountPercent: salesOrderItems.discountPercent,
                 lineTotal: salesOrderItems.lineTotal,
                 product: {
                     sku: products.sku,

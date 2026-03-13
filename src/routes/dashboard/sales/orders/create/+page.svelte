@@ -47,15 +47,52 @@
 		}
 	}
 
+    async function fetchAndUpdatePrice(index: number, productId: string, quantity: number, customerId: string) {
+        if (!productId) return;
+        try {
+            const res = await fetch('/api/pricing', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId, customerId, quantity })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const newItems = [...items];
+                // Only update if it's still the same product at this index
+                if (newItems[index].productId === productId) {
+                    newItems[index].unitPrice = data.finalUnitPrice;
+                    items = newItems;
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
 	function onProductSelect(index: number, productId: string) {
-		const product = data.products.find(p => p.id === productId);
+		const product = data.products.find((p: any) => p.id === productId);
 		if (product) {
 			const newItems = [...items];
 			newItems[index].productId = product.id;
-			newItems[index].unitPrice = 0; // Price to be entered manually based on market/weight
 			items = newItems;
+            fetchAndUpdatePrice(index, product.id, items[index].quantity, selectedCustomerId);
 		}
 	}
+
+    function onQuantityChange(index: number) {
+        fetchAndUpdatePrice(index, items[index].productId, items[index].quantity, selectedCustomerId);
+    }
+
+    $effect(() => {
+        // When customer changes, recalculate all prices
+        if (selectedCustomerId) {
+            items.forEach((item, index) => {
+                if (item.productId) {
+                    fetchAndUpdatePrice(index, item.productId, item.quantity, selectedCustomerId);
+                }
+            });
+        }
+    });
 
 	function handleSubmit() {
 		isSubmitting = true;
@@ -234,6 +271,7 @@
 								min="1" 
 								step="1"
 								bind:value={item.quantity} 
+                                oninput={() => onQuantityChange(i)}
 								required
 								class="h-12 border-t-0 border-x-0 border-b-2 border-border/50 rounded-none bg-transparent px-2 font-mono font-bold focus-visible:border-primary focus-visible:ring-0 text-center md:text-left" 
 							/>

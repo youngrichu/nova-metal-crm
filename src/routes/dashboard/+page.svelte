@@ -4,6 +4,7 @@
   import * as Select from "$lib/components/ui/select";
   import * as Table from "$lib/components/ui/table";
   import { Button } from "$lib/components/ui/button";
+  import { formatCurrency } from "$lib/utils/currency";
 
   let { data } = $props();
 
@@ -133,11 +134,18 @@
         </div>
       </div>
       
-      <div class="pt-8 mt-4 flex flex-col gap-2">
-        <span class="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{m.total_revenue()}</span>
-        <div class="flex items-center justify-between">
-          <span class="font-mono font-black text-3xl text-muted-foreground/30">ETB 0.00</span>
-          <span class="text-[9px] font-black uppercase tracking-widest bg-foreground text-background px-2 py-1">Phase 3</span>
+      <div class="pt-8 mt-4 flex flex-col gap-4">
+        <div>
+          <span class="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{m.total_revenue()}</span>
+          <div class="flex items-center justify-between">
+            <span class="font-mono font-black text-3xl text-foreground">{formatCurrency(data.totalSales)}</span>
+          </div>
+        </div>
+        <div>
+          <span class="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Total Profit</span>
+          <div class="flex items-center justify-between">
+            <span class="font-mono font-black text-3xl text-emerald-500">{formatCurrency(data.totalProfit)}</span>
+          </div>
         </div>
       </div>
     </div>

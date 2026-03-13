@@ -61,20 +61,37 @@ export const actions: Actions = {
             const orderCount = await db.$count(salesOrders);
             const orderNumber = `SO-${new Date().getFullYear()}-${String(orderCount + 1).padStart(4, '0')}`;
 
-            // Calculate totals
+            // Calculate totals SECURELY via PricingEngine
             let subtotal = 0;
-            const orderItemsData = items.map((item: any) => {
+            let orderDiscountAmount = 0;
+            
+            const { calculateDynamicPrice } = await import('$lib/server/pricing/engine');
+
+            // Process sequentially since we are querying the DB in calculateDynamicPrice
+            const orderItemsData: any[] = [];
+            for (const item of items) {
                 const quantity = Number(item.quantity) || 0;
-                const unitPrice = Number(item.unitPrice) || 0;
-                const lineTotal = quantity * unitPrice;
-                subtotal += lineTotal;
-                return {
+                let submittedUnitPrice = Number(item.unitPrice) || 0;
+                
+                if (quantity <= 0) continue;
+
+                // Call the Pricing Engine to get the correct price & discounts
+                const pricing = await calculateDynamicPrice(item.productId, customerId, quantity);
+                
+                subtotal += pricing.lineTotal;
+                
+                // Track total absolute discount value for the order summary
+                const itemTotalWithoutDiscount = pricing.unitPriceBeforeDiscount * quantity;
+                orderDiscountAmount += (itemTotalWithoutDiscount - pricing.lineTotal);
+
+                orderItemsData.push({
                     productId: item.productId,
                     quantity: quantity.toString(),
-                    unitPrice: unitPrice.toString(),
-                    lineTotal: lineTotal.toString(),
-                };
-            });
+                    unitPrice: pricing.unitPriceBeforeDiscount.toString(),
+                    discountPercent: pricing.discountPercent.toString(),
+                    lineTotal: pricing.lineTotal.toString(),
+                });
+            }
 
             const taxAmount = subtotal * 0.15; // 15% VAT
             const totalAmount = subtotal + taxAmount;
@@ -90,7 +107,7 @@ export const actions: Actions = {
                     subtotal: subtotal.toString(),
                     taxAmount: taxAmount.toString(),
                     totalAmount: totalAmount.toString(),
-                    discountAmount: "0",
+                    discountAmount: orderDiscountAmount.toString(),
                     createdBy: user.id
                 }).returning({ id: salesOrders.id });
 

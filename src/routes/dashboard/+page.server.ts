@@ -13,6 +13,22 @@ export const load = async ({ locals }) => {
 		.select({ count: sql<number>`count(*)` })
 		.from(warehouses);
 
+    // KPIs: Total Sales & Total Profit (Phase 3)
+    const { rows: kpiRows } = await db.execute(sql`
+        SELECT 
+            COALESCE(SUM(so.total_amount), 0) as total_sales,
+            COALESCE(SUM(
+                soi.line_total - (p.average_landing_cost * soi.quantity)
+            ), 0) as total_profit
+        FROM sales_orders so
+        JOIN sales_order_items soi ON so.id = soi.order_id
+        JOIN products p ON soi.product_id = p.id
+        WHERE so.status != 'CANCELLED' AND so.status != 'DRAFT'
+    `);
+
+    const totalSales = Number(kpiRows[0]?.total_sales || 0);
+    const totalProfit = Number(kpiRows[0]?.total_profit || 0);
+
 	// Low stock items: inventory rows where quantity <= product.minStockLevel
 	const lowStockItems = await db
 		.select({
@@ -51,6 +67,8 @@ export const load = async ({ locals }) => {
 		warehouseCount: Number(warehouseCountResult.count),
 		lowStockCount: lowStockItems.length,
 		lowStockItems,
-		recentTransactions
+		recentTransactions,
+        totalSales,
+        totalProfit
 	};
 };

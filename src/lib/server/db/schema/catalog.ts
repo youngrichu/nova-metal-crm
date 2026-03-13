@@ -20,6 +20,7 @@ export const products = pgTable("products", {
   size2: numeric('size_2', { precision: 10, scale: 2 }), // e.g., 30, in mm (optional for square/round)
   length: numeric('length', { precision: 10, scale: 2 }), // e.g., 6000, in mm (6m standard usually)
   weightPerPiece: numeric('weight_per_piece', { precision: 10, scale: 3 }), // Estimated or standard weight in kg
+  averageLandingCost: numeric('average_landing_cost', { precision: 14, scale: 2 }).notNull().default('0.00'), // Layer 1 Base Price
   isActive: boolean('is_active').notNull().default(true),
   minStockLevel: integer('min_stock_level').notNull().default(10),
   createdAt: timestamp('created_at').notNull().defaultNow(),
