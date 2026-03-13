@@ -9,16 +9,24 @@
 	import { goto } from "$app/navigation";
 
 	const navItems = [
-		{ title: m.nav_dashboard, icon: LayoutDashboard, href: '/dashboard' },
-		{ title: m.nav_products, icon: Box, href: '/dashboard/catalog/products' },
-		{ title: m.nav_categories, icon: Tags, href: '/dashboard/catalog/categories' },
-		{ title: m.nav_inventory, icon: Package, href: '/dashboard/inventory' },
-		{ title: m.nav_warehouses, icon: Warehouse, href: '/dashboard/inventory/warehouses' },
-		{ title: m.nav_sales, icon: ShoppingCart, href: '/dashboard/sales/orders' },
-		{ title: () => 'Reconciliation', icon: Calculator, href: '/dashboard/sales/reconciliation' },
-		{ title: m.nav_customers, icon: Users, href: '/dashboard/customers' },
-		{ title: m.nav_settings, icon: Settings, href: '/settings' }
+		{ title: m.nav_dashboard, icon: LayoutDashboard, href: '/dashboard', roles: ['admin', 'sales', 'warehouse'] },
+		{ title: m.nav_products, icon: Box, href: '/dashboard/catalog/products', roles: ['admin', 'warehouse'] },
+		{ title: m.nav_categories, icon: Tags, href: '/dashboard/catalog/categories', roles: ['admin', 'warehouse'] },
+		{ title: m.nav_inventory, icon: Package, href: '/dashboard/inventory', roles: ['admin', 'warehouse'] },
+		{ title: m.nav_warehouses, icon: Warehouse, href: '/dashboard/inventory/warehouses', roles: ['admin', 'warehouse'] },
+		{ title: m.nav_sales, icon: ShoppingCart, href: '/dashboard/sales/orders', roles: ['admin', 'sales'] },
+		{ title: () => 'Reconciliation', icon: Calculator, href: '/dashboard/sales/reconciliation', roles: ['admin', 'sales'] },
+		{ title: m.nav_customers, icon: Users, href: '/dashboard/customers', roles: ['admin', 'sales'] },
+		{ title: m.nav_settings, icon: Settings, href: '/dashboard/settings', roles: ['admin', 'sales', 'warehouse'] }
 	];
+
+	const visibleNavItems = $derived(
+		(() => {
+			const role = page.data.user?.role;
+			if (!role) return navItems;
+			return navItems.filter((item) => item.roles.includes(role));
+		})()
+	);
 
 	async function handleLogout() {
 		await authClient.signOut();
@@ -57,7 +65,7 @@
 			<Sidebar.GroupLabel class="px-3 text-xs font-semibold tracking-wider uppercase text-muted-foreground/60 mb-2">Navigation</Sidebar.GroupLabel>
 			<Sidebar.GroupContent>
 				<Sidebar.Menu>
-					{#each navItems as item}
+					{#each visibleNavItems as item}
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton isActive={page.url.pathname === item.href || (item.href !== '/dashboard' && page.url.pathname.startsWith(item.href))}>
 								{#snippet child({ props })}
