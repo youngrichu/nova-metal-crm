@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
-import { inventory, inventoryTransactions, products, warehouses } from '$lib/server/db/schema';
-import { sql, lte, desc } from 'drizzle-orm';
+import { inventory, inventoryTransactions, products, warehouses, salesOrders } from '$lib/server/db/schema';
+import { sql, desc, inArray } from 'drizzle-orm';
 
 export const load = async ({ locals }) => {
 	// Total product count
@@ -28,6 +28,12 @@ export const load = async ({ locals }) => {
 
     const totalSales = Number(kpiRows[0]?.total_sales || 0);
     const totalProfit = Number(kpiRows[0]?.total_profit || 0);
+
+    // Active orders: PENDING or PROCESSING
+    const [activeOrdersResult] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(salesOrders)
+        .where(inArray(salesOrders.status, ['PENDING', 'PROCESSING']));
 
 	// Low stock items: inventory rows where quantity <= product.minStockLevel
 	const lowStockItems = await db
@@ -105,6 +111,7 @@ export const load = async ({ locals }) => {
 		user: locals.user,
 		productCount: Number(productCountResult.count),
 		warehouseCount: Number(warehouseCountResult.count),
+		activeOrderCount: Number(activeOrdersResult.count),
 		lowStockCount: lowStockItems.length,
 		lowStockItems,
 		recentTransactions,

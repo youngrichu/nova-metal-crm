@@ -190,8 +190,10 @@
         </div>
 
         <div class="flex justify-between items-center border-b-2 border-foreground/5 pb-4 group/item">
-          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground flex items-center gap-3">{m.active_orders()}</span>
-          <span class="font-mono font-bold text-[10px] tracking-widest uppercase border-2 border-muted-foreground/30 px-2 py-1 text-muted-foreground/50">Phase 2 Lock</span>
+          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-3">
+            <Activity class="w-4 h-4 opacity-50" /> {m.active_orders()}
+          </span>
+          <span class="font-mono font-black text-xl text-foreground">{data.activeOrderCount}</span>
         </div>
       </div>
       
