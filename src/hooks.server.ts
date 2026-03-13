@@ -41,13 +41,18 @@ export async function handle({ event, resolve }) {
         const role = event.locals.user?.role;
         const pathname = event.url.pathname;
 
+        const knownRoles = ['admin', 'sales', 'warehouse'];
+        if (!role || !knownRoles.includes(role)) {
+            throw redirect(302, '/dashboard');
+        }
+
         if (role !== 'admin' && pathname.startsWith('/dashboard/')) {
             const blockedPaths: Record<string, string[]> = {
                 sales: ['/dashboard/inventory', '/dashboard/catalog'],
                 warehouse: ['/dashboard/sales', '/dashboard/customers'],
             };
 
-            const blocked = blockedPaths[role as string] ?? [];
+            const blocked = blockedPaths[role] ?? [];
             const isBlocked = blocked.some((prefix) => pathname.startsWith(prefix));
 
             if (isBlocked) {
