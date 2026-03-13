@@ -24,6 +24,7 @@ export const load = async ({ locals }: { locals: App.Locals }) => {
 export const actions = {
 	create: async ({ request, locals }) => {
 		if (!locals.user) return fail(401, { error: 'Unauthorized' });
+		if (!['admin', 'warehouse'].includes(locals.user.role)) return fail(403, { error: 'Access denied' });
 		const data = await request.formData();
 		const name = data.get('name')?.toString();
 		const categoryId = data.get('categoryId')?.toString();
@@ -87,6 +88,7 @@ export const actions = {
 	},
 	delete: async ({ request, locals }) => {
 		if (!locals.user) return fail(401, { error: 'Unauthorized' });
+		if (!['admin', 'warehouse'].includes(locals.user.role)) return fail(403, { error: 'Access denied' });
 		const data = await request.formData();
 		const id = data.get('id')?.toString();
 
@@ -101,6 +103,7 @@ export const actions = {
 	},
 	update: async ({ request, locals }) => {
 		if (!locals.user) return fail(401, { error: 'Unauthorized' });
+		if (!['admin', 'warehouse'].includes(locals.user.role)) return fail(403, { error: 'Access denied' });
 		const data = await request.formData();
 		const id = data.get('id')?.toString();
 		const name = data.get('name')?.toString();
