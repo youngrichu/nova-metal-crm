@@ -16,6 +16,7 @@ const DEFAULTS: Record<string, string> = {
 
 export const load: PageServerLoad = async ({ locals }) => {
     if (!locals.user) throw redirect(302, '/login');
+    if ((locals.user as any).role !== 'admin') throw redirect(302, '/dashboard');
 
     const rows = await db.select().from(systemSettings);
     const settingsMap: Record<string, string> = { ...DEFAULTS };
@@ -49,6 +50,9 @@ export const actions: Actions = {
                 const num = parseFloat(raw);
                 if (isNaN(num) || num < 0) {
                     return fail(400, { error: `Invalid value for ${key}` });
+                }
+                if (key === 'vat_rate' && num > 1) {
+                    return fail(400, { error: 'VAT rate must be between 0 and 1' });
                 }
             }
 
