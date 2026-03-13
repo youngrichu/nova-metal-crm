@@ -5,7 +5,13 @@ import { user } from '$lib/server/db/schema';
 import { eq, desc, inArray, and } from 'drizzle-orm';
 import type { PageServerLoad, Actions } from './$types';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }: { locals: App.Locals }) => {
+	const sessionUser = locals.user;
+	if (!sessionUser) redirect(302, '/login');
+
+	const allowedRoles = ['admin', 'warehouse'];
+	if (!allowedRoles.includes(sessionUser!.role)) redirect(302, '/dashboard');
+
 	try {
 		const counts = await db
 			.select({

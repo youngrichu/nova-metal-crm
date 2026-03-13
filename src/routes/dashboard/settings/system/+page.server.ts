@@ -60,6 +60,13 @@ export const actions: Actions = {
                 }
             }
 
+            if (key === 'currency_code' && !/^[A-Z]{3}$/.test(raw)) {
+                return fail(400, { error: 'Currency code must be a 3-letter uppercase ISO code (e.g. ETB, USD)' });
+            }
+            if (key === 'currency_locale' && raw.length > 20) {
+                return fail(400, { error: 'Currency locale value is too long (max 20 characters)' });
+            }
+
             updates.push({ key, value: raw });
         }
 

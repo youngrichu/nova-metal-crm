@@ -56,4 +56,6 @@ export const inventoryCountItems = pgTable("inventory_count_items", {
   expectedQuantity: integer('expected_quantity').notNull(), // Captured at start of count
   physicalQuantity: integer('physical_quantity'), // Entered by staff
   notes: text('notes')
-});
+}, (table) => ({
+  countIdIdx: index('idx_inventory_count_items_count_id').on(table.countId)
+}));
