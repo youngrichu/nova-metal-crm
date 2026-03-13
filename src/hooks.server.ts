@@ -36,5 +36,25 @@ export async function handle({ event, resolve }) {
         throw redirect(302, '/dashboard');
     }
 
+    // Role-based access control for dashboard routes
+    if (event.locals.session && !building) {
+        const role = event.locals.user?.role;
+        const pathname = event.url.pathname;
+
+        if (role !== 'admin' && pathname.startsWith('/dashboard/')) {
+            const blockedPaths: Record<string, string[]> = {
+                sales: ['/dashboard/inventory', '/dashboard/catalog'],
+                warehouse: ['/dashboard/sales', '/dashboard/customers'],
+            };
+
+            const blocked = blockedPaths[role as string] ?? [];
+            const isBlocked = blocked.some((prefix) => pathname.startsWith(prefix));
+
+            if (isBlocked) {
+                throw redirect(302, '/dashboard');
+            }
+        }
+    }
+
     return svelteKitHandler({ event, resolve, auth, building });
 }
