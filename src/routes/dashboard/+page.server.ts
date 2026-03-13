@@ -1,5 +1,7 @@
 import { db } from '$lib/server/db';
 import { inventory, inventoryTransactions, products, warehouses } from '$lib/server/db/schema';
+import { salesOrders, salesOrderItems } from '$lib/server/db/schema/sales';
+import { categories } from '$lib/server/db/schema/catalog';
 import { sql, lte, desc } from 'drizzle-orm';
 
 export const load = async ({ locals }) => {
@@ -61,6 +63,46 @@ export const load = async ({ locals }) => {
 		.orderBy(desc(inventoryTransactions.createdAt))
 		.limit(5);
 
+    // Sales trend: daily revenue for last 30 days
+    const { rows: trendRows } = await db.execute(sql`
+        SELECT
+            TO_CHAR(DATE(created_at), 'YYYY-MM-DD') as date,
+            SUM(total_amount)::float as revenue
+        FROM sales_orders
+        WHERE status NOT IN ('CANCELLED', 'DRAFT')
+          AND created_at >= NOW() - INTERVAL '30 days'
+        GROUP BY DATE(created_at)
+        ORDER BY date ASC
+    `);
+
+    const salesTrend = trendRows.map((r: any) => ({
+        date: r.date as string,
+        revenue: Number(r.revenue)
+    }));
+
+    // Profit margins by category
+    const { rows: marginRows } = await db.execute(sql`
+        SELECT
+            c.name as category_name,
+            ROUND(
+                SUM(soi.line_total - (p.average_landing_cost * soi.quantity)) /
+                NULLIF(SUM(soi.line_total), 0) * 100,
+                1
+            )::float as margin_percent
+        FROM sales_order_items soi
+        JOIN products p ON soi.product_id = p.id
+        JOIN categories c ON p.category_id = c.id
+        JOIN sales_orders so ON soi.order_id = so.id
+        WHERE so.status NOT IN ('CANCELLED', 'DRAFT')
+        GROUP BY c.id, c.name
+        ORDER BY margin_percent DESC
+    `);
+
+    const marginsByCategory = marginRows.map((r: any) => ({
+        categoryName: r.category_name as string,
+        marginPercent: Number(r.margin_percent)
+    }));
+
 	return {
 		user: locals.user,
 		productCount: Number(productCountResult.count),
@@ -69,6 +111,8 @@ export const load = async ({ locals }) => {
 		lowStockItems,
 		recentTransactions,
         totalSales,
-        totalProfit
+        totalProfit,
+        salesTrend,
+        marginsByCategory
 	};
 };
