@@ -2,6 +2,7 @@ import { exec } from 'child_process';
 import { gzipSync } from 'node:zlib';
 import { promisify } from 'node:util';
 import { error } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import type { RequestHandler } from './$types';
 
 const execAsync = promisify(exec);
@@ -23,7 +24,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 
     const date = new Date().toISOString().split('T')[0];
 
-    const dbUrl = process.env.DATABASE_URL;
+    const dbUrl = env.DATABASE_URL;
     if (!dbUrl) throw error(500, 'DATABASE_URL not configured');
 
     const parsed = new URL(dbUrl);
@@ -47,7 +48,7 @@ export const GET: RequestHandler = async ({ locals }) => {
     ].join(':');
     const augmentedEnv = {
         ...process.env,
-        PATH: `${pgBinDirs}:${process.env.PATH || ''}`,
+        PATH: `${pgBinDirs}:${process.env.PATH || env.PATH || ''}`,
         PGPASSWORD: pgPassword,
     };
 
