@@ -3,7 +3,7 @@
 	import { cn } from '$lib/utils';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as m from '$lib/paraglide/messages';
-	import { LayoutDashboard, Package, Users, ShoppingCart, Settings, Box, Tags, Warehouse, LogOut, ChevronDown, Calculator } from 'lucide-svelte';
+	import { LayoutDashboard, Package, Users, ShoppingCart, Settings, Box, Tags, Warehouse, LogOut, ChevronDown, Calculator, ClipboardList } from 'lucide-svelte';
 	import { page } from '$app/state';
 	import { authClient } from "$lib/auth-client";
 	import { goto } from "$app/navigation";
@@ -14,6 +14,7 @@
 		{ title: m.nav_categories, icon: Tags, href: '/dashboard/catalog/categories', roles: ['admin', 'warehouse'] },
 		{ title: m.nav_inventory, icon: Package, href: '/dashboard/inventory', roles: ['admin', 'warehouse'] },
 		{ title: m.nav_warehouses, icon: Warehouse, href: '/dashboard/inventory/warehouses', roles: ['admin', 'warehouse'] },
+		{ title: () => 'Stock Takes', icon: ClipboardList, href: '/dashboard/inventory/counts', roles: ['admin', 'warehouse'] },
 		{ title: m.nav_sales, icon: ShoppingCart, href: '/dashboard/sales/orders', roles: ['admin', 'sales'] },
 		{ title: () => 'Reconciliation', icon: Calculator, href: '/dashboard/sales/reconciliation', roles: ['admin', 'sales'] },
 		{ title: m.nav_customers, icon: Users, href: '/dashboard/customers', roles: ['admin', 'sales'] },
