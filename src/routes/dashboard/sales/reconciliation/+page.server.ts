@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db';
-import { payments, dailyReconciliations } from '$lib/server/db/schema';
+import { payments, dailyReconciliations, salesOrders, salesOrderItems, products } from '$lib/server/db/schema';
 import { fail, type Actions } from '@sveltejs/kit';
-import { sql, gte, lt, and, eq, desc } from 'drizzle-orm';
+import { sql, gte, lt, and, eq, desc, notInArray } from 'drizzle-orm';
 import { user as usersTable } from '$lib/server/db/schema/users';
 
 export const load = async () => {
@@ -35,6 +35,7 @@ export const load = async () => {
             expectedCash: dailyReconciliations.expectedCash,
             actualCash: dailyReconciliations.actualCash,
             discrepancy: dailyReconciliations.discrepancy,
+            totalProfit: dailyReconciliations.totalProfit,
             notes: dailyReconciliations.notes,
             userName: usersTable.name
         })
@@ -70,12 +71,36 @@ export const actions: Actions = {
 
         const discrepancy = actualCash - expectedCash;
 
+        // Calculate today's profit: revenue - landing cost for non-CANCELLED/DRAFT orders
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const endOfToday = new Date();
+        endOfToday.setHours(23, 59, 59, 999);
+
+        const [profitResult] = await db
+            .select({
+                totalProfit: sql<string>`COALESCE(SUM(${salesOrderItems.lineTotal} - (${products.averageLandingCost} * ${salesOrderItems.quantity})), 0)`
+            })
+            .from(salesOrders)
+            .innerJoin(salesOrderItems, eq(salesOrderItems.orderId, salesOrders.id))
+            .innerJoin(products, eq(products.id, salesOrderItems.productId))
+            .where(
+                and(
+                    notInArray(salesOrders.status, ['CANCELLED', 'DRAFT']),
+                    gte(salesOrders.createdAt, startOfToday),
+                    lt(salesOrders.createdAt, endOfToday)
+                )
+            );
+
+        const totalProfit = profitResult?.totalProfit ?? '0';
+
         try {
             await db.insert(dailyReconciliations).values({
                 date: new Date(),
                 expectedCash: expectedCash.toString(),
                 actualCash: actualCash.toString(),
                 discrepancy: discrepancy.toString(),
+                totalProfit,
                 notes,
                 closedBy: user.id
             });
