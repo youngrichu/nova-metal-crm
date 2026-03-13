@@ -43,7 +43,7 @@ export async function handle({ event, resolve }) {
 
         const knownRoles = ['admin', 'sales', 'warehouse'];
         if (!role || !knownRoles.includes(role)) {
-            throw redirect(302, '/dashboard');
+            throw redirect(302, '/login');
         }
 
         if (role !== 'admin' && pathname.startsWith('/dashboard/')) {

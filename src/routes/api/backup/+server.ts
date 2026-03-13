@@ -1,11 +1,11 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { gzipSync } from 'node:zlib';
 import { promisify } from 'node:util';
 import { error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import type { RequestHandler } from './$types';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 let lastBackupAt: number | null = null;
 const BACKUP_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
@@ -20,7 +20,6 @@ export const GET: RequestHandler = async ({ locals }) => {
         const secondsLeft = Math.ceil((BACKUP_COOLDOWN_MS - (now - lastBackupAt)) / 1000);
         throw error(429, `Please wait ${secondsLeft} seconds before requesting another backup`);
     }
-    lastBackupAt = now;
 
     const date = new Date().toISOString().split('T')[0];
 
@@ -29,11 +28,11 @@ export const GET: RequestHandler = async ({ locals }) => {
 
     const parsed = new URL(dbUrl);
     const pgArgs: string[] = [
-        `-h ${parsed.hostname || 'localhost'}`,
-        `-p ${parsed.port || '5432'}`,
-        `-d ${parsed.pathname.slice(1)}`
+        '-h', parsed.hostname || 'localhost',
+        '-p', parsed.port || '5432',
+        '-d', parsed.pathname.slice(1)
     ];
-    if (parsed.username) pgArgs.push(`-U ${parsed.username}`);
+    if (parsed.username) pgArgs.push('-U', parsed.username);
     const pgPassword = parsed.password ? decodeURIComponent(parsed.password) : (process.env.PGPASSWORD || '');
 
     // pg_dump may not be in the PATH inherited by the Node.js process (e.g. Homebrew on macOS).
@@ -54,7 +53,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 
     let stdout: Buffer;
     try {
-        const result = await execAsync(`pg_dump ${pgArgs.join(' ')}`, {
+        const result = await execFileAsync('pg_dump', pgArgs, {
             env: augmentedEnv,
             maxBuffer: 100 * 1024 * 1024,  // 100MB
             encoding: 'buffer',
@@ -71,6 +70,7 @@ export const GET: RequestHandler = async ({ locals }) => {
         throw error(500, 'Database export produced empty output');
     }
 
+    lastBackupAt = now;
     // Log audit event
     console.log(`[AUDIT] Database backup exported by user ${locals.user.id} at ${new Date().toISOString()}`);
 

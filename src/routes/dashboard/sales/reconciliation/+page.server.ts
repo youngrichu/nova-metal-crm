@@ -6,6 +6,7 @@ import { user as usersTable } from '$lib/server/db/schema/users';
 
 export const load = async ({ locals }: { locals: App.Locals }) => {
     if (!locals.user) throw redirect(302, '/login');
+    if (!['admin', 'sales'].includes(locals.user.role)) throw redirect(302, '/dashboard');
     // Calculate expected cash for today
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
