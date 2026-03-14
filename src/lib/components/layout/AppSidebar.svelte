@@ -1,31 +1,90 @@
 <script lang="ts">
-	import * as Sidebar from '$lib/components/ui/sidebar';
-	import { cn } from '$lib/utils';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import * as m from '$lib/paraglide/messages';
-	import { LayoutDashboard, Package, Users, ShoppingCart, Settings, Box, Tags, Warehouse, LogOut, ChevronUp, Calculator, ClipboardList } from 'lucide-svelte';
-	import { page } from '$app/state';
+	import * as Sidebar from "$lib/components/ui/sidebar";
+	import { cn } from "$lib/utils";
+	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+	import * as m from "$lib/paraglide/messages";
+	import {
+		LayoutDashboard,
+		Package,
+		Users,
+		ShoppingCart,
+		Settings,
+		Box,
+		Tags,
+		Warehouse,
+		LogOut,
+		ChevronUp,
+		Calculator,
+		ClipboardList,
+	} from "lucide-svelte";
+	import { page } from "$app/state";
 	import { authClient } from "$lib/auth-client";
 	import { goto } from "$app/navigation";
 
 	const navItems = [
-		{ title: m.nav_dashboard, icon: LayoutDashboard, href: '/dashboard', roles: ['admin', 'sales', 'warehouse'] },
-		{ title: m.nav_products, icon: Box, href: '/dashboard/catalog/products', roles: ['admin', 'warehouse'] },
-		{ title: m.nav_categories, icon: Tags, href: '/dashboard/catalog/categories', roles: ['admin', 'warehouse'] },
-		{ title: m.nav_inventory, icon: Package, href: '/dashboard/inventory', roles: ['admin', 'warehouse'] },
-		{ title: m.nav_warehouses, icon: Warehouse, href: '/dashboard/inventory/warehouses', roles: ['admin', 'warehouse'] },
-		{ title: () => 'Stock Takes', icon: ClipboardList, href: '/dashboard/inventory/counts', roles: ['admin', 'warehouse'] },
-		{ title: m.nav_sales, icon: ShoppingCart, href: '/dashboard/sales/orders', roles: ['admin', 'sales'] },
-		{ title: () => 'Reconciliation', icon: Calculator, href: '/dashboard/sales/reconciliation', roles: ['admin', 'sales'] },
-		{ title: m.nav_customers, icon: Users, href: '/dashboard/customers', roles: ['admin', 'sales'] },
-		{ title: m.nav_settings, icon: Settings, href: '/dashboard/settings', roles: ['admin', 'sales', 'warehouse'] }
+		{
+			title: m.nav_dashboard,
+			icon: LayoutDashboard,
+			href: "/dashboard",
+			roles: ["admin", "sales", "warehouse"],
+		},
+		{
+			title: m.nav_products,
+			icon: Box,
+			href: "/dashboard/catalog/products",
+			roles: ["admin", "warehouse"],
+		},
+		{
+			title: m.nav_categories,
+			icon: Tags,
+			href: "/dashboard/catalog/categories",
+			roles: ["admin", "warehouse"],
+		},
+		{
+			title: m.nav_inventory,
+			icon: Package,
+			href: "/dashboard/inventory",
+			roles: ["admin", "warehouse"],
+			children: [
+				{ title: m.nav_warehouses, icon: Warehouse, href: "/dashboard/inventory/warehouses" },
+				{ title: () => "Stock Takes", icon: ClipboardList, href: "/dashboard/inventory/counts" },
+			],
+		},
+		{
+			title: m.nav_sales,
+			icon: ShoppingCart,
+			href: "/dashboard/sales/orders",
+			roles: ["admin", "sales"],
+		},
+		{
+			title: () => "Reconciliation",
+			icon: Calculator,
+			href: "/dashboard/sales/reconciliation",
+			roles: ["admin", "sales"],
+		},
+		{
+			title: m.nav_customers,
+			icon: Users,
+			href: "/dashboard/customers",
+			roles: ["admin", "sales"],
+		},
+		{
+			title: m.nav_settings,
+			icon: Settings,
+			href: "/dashboard/settings",
+			roles: ["admin", "sales", "warehouse"],
+		},
 	];
 
 	const visibleNavItems = $derived(
 		page.data.user?.role
-			? navItems.filter((item) => item.roles.includes(page.data.user!.role as string))
-			: navItems
+			? navItems.filter((item) =>
+					item.roles.includes(page.data.user!.role as string),
+				)
+			: navItems,
 	);
+
+	const activeStyle = "background-color: rgb(194 200 211 / 39%) !important;";
 
 	async function handleLogout() {
 		await authClient.signOut();
@@ -33,21 +92,7 @@
 	}
 </script>
 
-<style>
-	:global(#app-sidebar) {
-		--sidebar-background: 220 10% 10%;
-		--sidebar-foreground: 210 40% 96%;
-		--sidebar-primary: var(--primary);
-		--sidebar-primary-foreground: var(--primary-foreground);
-		--sidebar-accent: 220 10% 15%;
-		--sidebar-accent-foreground: 210 40% 96%;
-		--sidebar-border: 220 10% 16%;
-		--sidebar-ring: 212.7 26.8% 83.9%;
-	}
-</style>
-
 <Sidebar.Root id="app-sidebar" class="border-r-0" collapsible="icon">
-
 	<!-- ── HEADER / WORDMARK ── -->
 	<Sidebar.Header class="px-0 pt-0 pb-0 border-b-2 border-white/10">
 		<div class="flex items-center gap-0 group-data-[collapsible=icon]:justify-center h-14">
@@ -68,38 +113,59 @@
 	<!-- ── NAV ── -->
 	<Sidebar.Content class="px-0 py-3">
 		<Sidebar.Group class="px-0">
-			<!-- Section label -->
 			<Sidebar.GroupLabel class="px-6 pb-2 text-[0.6rem] font-black tracking-[0.2em] uppercase text-sidebar-foreground/30 group-data-[collapsible=icon]:hidden">
 				Navigation
 			</Sidebar.GroupLabel>
 			<Sidebar.GroupContent>
 				<Sidebar.Menu class="gap-0">
 					{#each visibleNavItems as item}
-						{@const isActive = page.url.pathname === item.href || (item.href !== '/dashboard' && page.url.pathname.startsWith(item.href))}
+						{@const isActive =
+							page.url.pathname === item.href ||
+							(item.href !== "/dashboard" && page.url.pathname.startsWith(item.href))}
 						<Sidebar.MenuItem>
 							<Sidebar.MenuButton {isActive}>
 								{#snippet child({ props })}
 									<a
 										href={item.href}
 										{...props}
-										style={isActive ? 'background-color: rgb(194 200 211) !important;' : ''}
+										style={isActive ? activeStyle : ""}
 										class={cn(
-											'flex items-center gap-3 h-11 transition-colors',
-											'group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full',
+											"flex items-center gap-3 h-11 transition-colors",
+											"group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full",
 											props.class as string,
-											isActive
-												? 'text-white'
-												: 'text-sidebar-foreground/50 hover:text-sidebar-foreground',
-											'!px-6 group-data-[collapsible=icon]:!px-0'
+											isActive ? "text-white" : "text-sidebar-foreground/50 hover:text-sidebar-foreground",
+											"!px-6 group-data-[collapsible=icon]:!px-0",
 										)}
 									>
 										<item.icon class="shrink-0 size-[1.05rem]" />
 										<span class="text-xs font-bold tracking-[0.12em] uppercase group-data-[collapsible=icon]:hidden truncate">
-											{typeof item.title === 'function' ? item.title() : item.title}
+											{typeof item.title === "function" ? item.title() : item.title}
 										</span>
 									</a>
 								{/snippet}
 							</Sidebar.MenuButton>
+
+							<!-- Sub-items (e.g. Inventory children) -->
+							{#if item.children && isActive}
+								<Sidebar.MenuSub class="border-white/10 mx-6 px-0">
+									{#each item.children as sub}
+										{@const subIsActive = page.url.pathname === sub.href}
+										<Sidebar.MenuSubItem>
+											<a
+												href={sub.href}
+												style={subIsActive ? activeStyle : ""}
+												class={cn(
+													"flex items-center gap-2 h-8 px-3 text-[0.7rem] font-bold tracking-[0.1em] uppercase rounded-none transition-colors w-full",
+													subIsActive ? "text-white" : "text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-white/5",
+												)}
+											>
+												<sub.icon class="shrink-0 size-3.5" />
+												{typeof sub.title === "function" ? sub.title() : sub.title}
+											</a>
+										</Sidebar.MenuSubItem>
+									{/each}
+								</Sidebar.MenuSub>
+							{/if}
 						</Sidebar.MenuItem>
 					{/each}
 				</Sidebar.Menu>
@@ -119,16 +185,14 @@
 								size="lg"
 								class="h-14 rounded-none px-6 data-[state=open]:bg-white/10 outline-none group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center border-b-0"
 							>
-								<!-- Avatar -->
 								<div class="flex shrink-0 items-center justify-center size-8 bg-white/15 border border-white/20">
 									<span class="text-xs font-black text-sidebar-foreground uppercase">
-										{(page.data.user?.name ?? 'A').charAt(0)}
+										{(page.data.user?.name ?? "A").charAt(0)}
 									</span>
 								</div>
-								<!-- Name + role -->
 								<div class="flex flex-col flex-1 text-left leading-none overflow-hidden group-data-[collapsible=icon]:hidden">
-									<span class="truncate text-xs font-black tracking-[0.12em] uppercase text-sidebar-foreground">{page.data.user?.name ?? 'Admin'}</span>
-									<span class="truncate text-[0.65rem] font-bold tracking-[0.15em] uppercase text-sidebar-foreground/40 mt-0.5">{page.data.user?.role ?? 'admin'}</span>
+									<span class="truncate text-xs font-black tracking-[0.12em] uppercase text-sidebar-foreground">{page.data.user?.name ?? "Admin"}</span>
+									<span class="truncate text-[0.65rem] font-bold tracking-[0.15em] uppercase text-sidebar-foreground/40 mt-0.5">{page.data.user?.role ?? "admin"}</span>
 								</div>
 								<ChevronUp class="ml-auto size-3.5 text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden" />
 							</Sidebar.MenuButton>
@@ -141,8 +205,8 @@
 						class="w-56 rounded-none border-2 border-foreground/20 bg-zinc-900 shadow-[4px_-4px_0px_0px_theme(colors.primary.DEFAULT)] p-0 z-[100]"
 					>
 						<div class="px-3 py-2.5 border-b border-white/10">
-							<p class="text-xs font-black tracking-[0.12em] uppercase text-white">{page.data.user?.name ?? 'Admin'}</p>
-							<p class="text-[0.65rem] font-bold tracking-[0.15em] uppercase text-white/40 mt-0.5">{page.data.user?.email ?? ''}</p>
+							<p class="text-xs font-black tracking-[0.12em] uppercase text-white">{page.data.user?.name ?? "Admin"}</p>
+							<p class="text-[0.65rem] font-bold tracking-[0.15em] uppercase text-white/40 mt-0.5">{page.data.user?.email ?? ""}</p>
 						</div>
 						<button
 							onclick={handleLogout}
@@ -164,3 +228,16 @@
 
 	<Sidebar.Rail />
 </Sidebar.Root>
+
+<style>
+	:global(#app-sidebar) {
+		--sidebar-background: 220 10% 10%;
+		--sidebar-foreground: 210 40% 96%;
+		--sidebar-primary: var(--primary);
+		--sidebar-primary-foreground: var(--primary-foreground);
+		--sidebar-accent: 220 10% 15%;
+		--sidebar-accent-foreground: 210 40% 96%;
+		--sidebar-border: 220 10% 16%;
+		--sidebar-ring: 212.7 26.8% 83.9%;
+	}
+</style>
