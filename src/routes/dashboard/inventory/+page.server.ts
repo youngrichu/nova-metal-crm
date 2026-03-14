@@ -55,7 +55,11 @@ export const actions = {
 		const quantityStr = data.get('quantity')?.toString();
 		const referenceDoc = data.get('referenceDoc')?.toString() || null;
 		const notes = data.get('notes')?.toString() || null;
-		const unitCostStr = data.get('unitCost')?.toString() || null;
+		const submittedUnitCost = data.get('unitCost')?.toString().trim() || null;
+		if (type !== 'STOCK_IN' && submittedUnitCost) {
+			return fail(400, { error: 'Purchase cost is only allowed for STOCK_IN' });
+		}
+		const unitCostStr = type === 'STOCK_IN' ? submittedUnitCost : null;
 
 		if (!type || !productId || !warehouseId || !quantityStr) {
 			return fail(400, { missing: true });
@@ -73,8 +77,11 @@ export const actions = {
 		}
 
 		if (type === 'STOCK_IN' && unitCostStr) {
-			const cost = parseFloat(unitCostStr);
-			if (isNaN(cost) || !isFinite(cost) || cost < 0.01) {
+			if (!/^\d+(\.\d{1,2})?$/.test(unitCostStr)) {
+				return fail(400, { error: 'Invalid purchase cost' });
+			}
+			const cost = Number(unitCostStr);
+			if (!Number.isFinite(cost) || cost < 0.01) {
 				return fail(400, { error: 'Invalid purchase cost' });
 			}
 		}

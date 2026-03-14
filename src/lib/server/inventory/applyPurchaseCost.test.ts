@@ -10,8 +10,8 @@ mockInventorySet.mockReturnValue({ where: mockInventoryWhere });
 
 vi.mock('$lib/server/db', () => ({
 	db: {
-		update: vi.fn((table) => {
-			if (table === 'products') {
+		update: vi.fn((table: any) => {
+			if ('id' in table) {
 				return { set: mockProductsSet };
 			}
 			return { set: mockInventorySet };
@@ -20,8 +20,8 @@ vi.mock('$lib/server/db', () => ({
 }));
 
 vi.mock('$lib/server/db/schema', () => ({
-	products: 'products',
-	inventory: 'inventory'
+	products: { id: 'products.id' },
+	inventory: { productId: 'inventory.productId' }
 }));
 
 vi.mock('drizzle-orm', () => ({
@@ -46,11 +46,11 @@ describe('applyPurchaseCost', () => {
 		);
 	});
 
-	it('filters product update by the correct productId', async () => {
+	it('filters product update by the correct productId column', async () => {
 		const { applyPurchaseCost } = await import('./applyPurchaseCost');
 		await applyPurchaseCost('product-123', '250.00');
 
-		expect(mockProductsWhere).toHaveBeenCalledWith({ col: undefined, val: 'product-123' });
+		expect(mockProductsWhere).toHaveBeenCalledWith({ col: 'products.id', val: 'product-123' });
 	});
 
 	it('sets avgCostPerPiece on inventory records with the correct cost', async () => {
@@ -63,11 +63,11 @@ describe('applyPurchaseCost', () => {
 		);
 	});
 
-	it('filters inventory update by the correct productId', async () => {
+	it('filters inventory update by the correct productId column', async () => {
 		const { applyPurchaseCost } = await import('./applyPurchaseCost');
 		await applyPurchaseCost('product-123', '250.00');
 
-		expect(mockInventoryWhere).toHaveBeenCalledWith({ col: undefined, val: 'product-123' });
+		expect(mockInventoryWhere).toHaveBeenCalledWith({ col: 'inventory.productId', val: 'product-123' });
 	});
 
 	it('uses the provided client instead of the default db', async () => {
