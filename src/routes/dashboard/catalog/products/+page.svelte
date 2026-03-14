@@ -88,8 +88,8 @@
 					<div class="bg-muted px-10 py-12 border-b border-border relative overflow-hidden">
 						<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 						<Sheet.Header class="relative z-10">
-							<span class="inline-block px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">New Registration</span>
-							<Sheet.Title class="text-4xl font-black tracking-tight uppercase">Define Product</Sheet.Title>
+							<span class="inline-block px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">New Product</span>
+							<Sheet.Title class="text-4xl font-black tracking-tight uppercase">Add Product</Sheet.Title>
 							<Sheet.Description class="text-base font-medium opacity-70 mt-2">
 								Automated SKU generation based on precise physical dimensions.
 							</Sheet.Description>
@@ -154,6 +154,13 @@
 									<Label for="name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Identifier Name *</Label>
 									<Input id="name" name="name" placeholder="Square Tube 40x40" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
 								</div>
+
+								{#if data.barcodeEnabled}
+								<div class="space-y-2 group">
+									<Label for="barcode" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Barcode / EAN</Label>
+									<Input id="barcode" name="barcode" type="text" placeholder="Scan or type barcode..." class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+								</div>
+								{/if}
 							</div>
 
 							<!-- Dimensions -->
@@ -200,6 +207,15 @@
 							</div>
 						</div>
 
+							<!-- Pricing -->
+							<div class="space-y-6">
+								<h3 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-2">Pricing</h3>
+								<div class="space-y-2 group">
+									<Label for="averageLandingCost" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Purchase Cost (ETB) *</Label>
+									<p class="text-[11px] text-muted-foreground/60 mb-1">What you paid per piece. The selling price is calculated automatically from this using the markup in Settings.</p>
+									<Input id="averageLandingCost" name="averageLandingCost" type="number" step="0.01" min="0" placeholder="e.g. 150.00" required class="h-14 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+								</div>
+							</div>
 						<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
 							<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
 								{isSubmitting ? 'Generating SKU...' : 'Save Product Record'}
@@ -220,9 +236,13 @@
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 w-[110px]">Category</Table.Head>
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 w-[180px]">Automated SKU</Table.Head>
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">Identifier</Table.Head>
+					{#if data.barcodeEnabled}
+					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden lg:table-cell">Barcode</Table.Head>
+					{/if}
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden md:table-cell">Dimensions</Table.Head>
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden lg:table-cell text-right">Min Stock</Table.Head>
 					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden lg:table-cell text-right">Weight / Pc</Table.Head>
+					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right">Cost / Pc</Table.Head>
 					<Table.Head class="w-[80px]"></Table.Head>
 				</Table.Row>
 			</Table.Header>
@@ -242,6 +262,11 @@
 						<Table.Cell class="px-6 py-4 text-[13px] font-medium text-foreground/80 align-middle">
 							{row.product.name}
 						</Table.Cell>
+						{#if data.barcodeEnabled}
+						<Table.Cell class="hidden lg:table-cell px-6 py-4 align-middle">
+							<span class="font-mono text-[11px] text-muted-foreground/60">{row.product.barcode ?? '—'}</span>
+						</Table.Cell>
+						{/if}
 						<Table.Cell class="hidden md:table-cell px-6 py-4 align-middle">
 							<div class="flex gap-2 items-center flex-wrap">
 								{#if row.product.size1 || row.product.size2}
@@ -266,6 +291,9 @@
 						</Table.Cell>
 						<Table.Cell class="hidden lg:table-cell px-6 py-4 text-right align-middle text-sm font-mono text-muted-foreground/50">
 							{row.product.weightPerPiece ? `${row.product.weightPerPiece}kg` : '—'}
+						</Table.Cell>
+						<Table.Cell class="px-6 py-4 text-right align-middle">
+							<span class="font-mono font-black text-sm text-foreground">ETB {Number(row.product.averageLandingCost || 0).toFixed(2)}</span>
 						</Table.Cell>
 						<Table.Cell class="px-6 py-4 text-right">
 							<DropdownMenu.Root>
@@ -293,7 +321,7 @@
 					</Table.Row>
 				{:else}
 					<Table.Row>
-						<Table.Cell colspan={7} class="h-64 text-center align-middle">
+						<Table.Cell colspan={8} class="h-64 text-center align-middle">
 							<div class="flex flex-col items-center justify-center text-muted-foreground/40 gap-4">
 								<Box class="w-12 h-12 opacity-20" />
 								<p class="text-lg font-light tracking-widest uppercase">No materials indexed</p>
@@ -317,7 +345,7 @@
 			<div class="bg-muted px-10 py-12 border-b border-border relative overflow-hidden">
 				<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 				<Sheet.Header class="relative z-10">
-					<span class="inline-block px-3 py-1 bg-foreground text-background text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">Modulation Mode</span>
+					<span class="inline-block px-3 py-1 bg-foreground text-background text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">Edit Product</span>
 					<Sheet.Title class="text-4xl font-black tracking-tight uppercase line-clamp-1">{editingProduct.product.name}</Sheet.Title>
 					<Sheet.Description class="text-base font-medium opacity-70 mt-2">
 						SKU <span class="font-mono text-primary font-bold">{editingProduct.product.sku}</span>
@@ -383,6 +411,13 @@
 							<Label for="edit-name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary">Identifier Name *</Label>
 							<Input id="edit-name" name="name" value={editingProduct.product.name} required class="h-14 bg-transparent border-t-0 border-x-0 border-b-2 border-border/50 focus-visible:border-primary focus-visible:ring-0 rounded-none text-lg px-0 transition-all font-bold" />
 						</div>
+
+						{#if data.barcodeEnabled}
+						<div class="space-y-2 group">
+							<Label for="edit-barcode" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary">Barcode / EAN</Label>
+							<Input id="edit-barcode" name="barcode" type="text" value={editingProduct.product.barcode ?? ''} placeholder="Scan or type barcode..." class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+						</div>
+						{/if}
 					</div>
 
 					<div class="space-y-6">
@@ -428,6 +463,15 @@
 					</div>
 				</div>
 
+				<!-- Pricing -->
+				<div class="space-y-6">
+					<h3 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-2">Pricing</h3>
+					<div class="space-y-2 group">
+						<Label for="edit-landingCost" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary">Purchase Cost (ETB) *</Label>
+						<p class="text-[11px] text-muted-foreground/60 mb-1">What you paid per piece. The selling price is calculated automatically from this using the markup in Settings.</p>
+						<Input id="edit-landingCost" name="averageLandingCost" type="number" step="0.01" min="0" value={editingProduct.product.averageLandingCost ?? '0'} required class="h-14 font-mono bg-transparent border-t-0 border-x-0 border-b-2 border-border/50 focus-visible:border-primary focus-visible:ring-0 rounded-none px-0 text-lg" />
+					</div>
+				</div>
 				<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
 					<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
 						{isSubmitting ? 'Saving...' : 'Commit Changes'}

@@ -8,10 +8,19 @@ export const auth = betterAuth({
         provider: "pg",
         schema
     }),
-    emailAndPassword: {  
+    emailAndPassword: {
         enabled: true
     },
     session: {
         expiresIn: 60 * 60 * 24 * 7, // 7 days
+    },
+    user: {
+        additionalFields: {
+            role: {
+                type: "string",
+                required: true,
+                defaultValue: "sales",
+            }
+        }
     }
 });
