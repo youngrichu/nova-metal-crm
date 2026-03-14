@@ -1,10 +1,10 @@
 import { db } from '$lib/server/db';
 import { customers, salesOrders } from '$lib/server/db/schema/sales';
 import { eq, desc, isNull, and, inArray, notInArray } from 'drizzle-orm';
-import { error, redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
+import type { PageServerLoad, Actions } from './$types';
 
 const normalizePhone = (p: string) => p.replace(/[\s\-().]/g, '');
-import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ params, url }) => {
 	const id = params.id;
