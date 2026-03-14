@@ -1,31 +1,92 @@
 <script lang="ts">
-	import * as Sidebar from '$lib/components/ui/sidebar';
-	import { cn } from '$lib/utils';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import * as m from '$lib/paraglide/messages';
-	import { LayoutDashboard, Package, Users, ShoppingCart, Settings, Box, Tags, Warehouse, LogOut, ChevronDown, Calculator, ClipboardList } from 'lucide-svelte';
-	import { page } from '$app/state';
+	import * as Sidebar from "$lib/components/ui/sidebar";
+	import { cn } from "$lib/utils";
+	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+	import { Collapsible } from "bits-ui";
+	import * as m from "$lib/paraglide/messages";
+	import {
+		LayoutDashboard,
+		Package,
+		Users,
+		ShoppingCart,
+		Settings,
+		Box,
+		Tags,
+		Warehouse,
+		LogOut,
+		ChevronUp,
+		ChevronDown,
+		Calculator,
+		ClipboardList,
+	} from "lucide-svelte";
+	import { page } from "$app/state";
 	import { authClient } from "$lib/auth-client";
 	import { goto } from "$app/navigation";
 
 	const navItems = [
-		{ title: m.nav_dashboard, icon: LayoutDashboard, href: '/dashboard', roles: ['admin', 'sales', 'warehouse'] },
-		{ title: m.nav_products, icon: Box, href: '/dashboard/catalog/products', roles: ['admin', 'warehouse'] },
-		{ title: m.nav_categories, icon: Tags, href: '/dashboard/catalog/categories', roles: ['admin', 'warehouse'] },
-		{ title: m.nav_inventory, icon: Package, href: '/dashboard/inventory', roles: ['admin', 'warehouse'] },
-		{ title: m.nav_warehouses, icon: Warehouse, href: '/dashboard/inventory/warehouses', roles: ['admin', 'warehouse'] },
-		{ title: () => 'Stock Takes', icon: ClipboardList, href: '/dashboard/inventory/counts', roles: ['admin', 'warehouse'] },
-		{ title: m.nav_sales, icon: ShoppingCart, href: '/dashboard/sales/orders', roles: ['admin', 'sales'] },
-		{ title: () => 'Reconciliation', icon: Calculator, href: '/dashboard/sales/reconciliation', roles: ['admin', 'sales'] },
-		{ title: m.nav_customers, icon: Users, href: '/dashboard/customers', roles: ['admin', 'sales'] },
-		{ title: m.nav_settings, icon: Settings, href: '/dashboard/settings', roles: ['admin', 'sales', 'warehouse'] }
+		{
+			title: m.nav_dashboard,
+			icon: LayoutDashboard,
+			href: "/dashboard",
+			roles: ["admin", "sales", "warehouse"],
+		},
+		{
+			title: m.nav_products,
+			icon: Box,
+			href: "/dashboard/catalog/products",
+			roles: ["admin", "warehouse"],
+		},
+		{
+			title: m.nav_categories,
+			icon: Tags,
+			href: "/dashboard/catalog/categories",
+			roles: ["admin", "warehouse"],
+		},
+		{
+			title: m.nav_inventory,
+			icon: Package,
+			href: "/dashboard/inventory",
+			roles: ["admin", "warehouse"],
+			children: [
+				{ title: m.nav_warehouses, icon: Warehouse, href: "/dashboard/inventory/warehouses" },
+				{ title: () => "Stock Takes", icon: ClipboardList, href: "/dashboard/inventory/counts" },
+			],
+		},
+		{
+			title: m.nav_sales,
+			icon: ShoppingCart,
+			href: "/dashboard/sales/orders",
+			roles: ["admin", "sales"],
+		},
+		{
+			title: () => "Reconciliation",
+			icon: Calculator,
+			href: "/dashboard/sales/reconciliation",
+			roles: ["admin", "sales"],
+		},
+		{
+			title: m.nav_customers,
+			icon: Users,
+			href: "/dashboard/customers",
+			roles: ["admin", "sales"],
+		},
+		{
+			title: m.nav_settings,
+			icon: Settings,
+			href: "/dashboard/settings",
+			roles: ["admin", "sales", "warehouse"],
+		},
 	];
 
 	const visibleNavItems = $derived(
 		page.data.user?.role
-			? navItems.filter((item) => item.roles.includes(page.data.user!.role as string))
-			: navItems
+			? navItems.filter((item) =>
+					item.roles.includes(page.data.user!.role as string),
+				)
+			: navItems,
 	);
+
+	const activeStyle = "background-color: rgb(194 200 211 / 39%) !important;";
 
 	async function handleLogout() {
 		await authClient.signOut();
@@ -33,102 +94,191 @@
 	}
 </script>
 
-<style>
-	:global(#invoice-sidebar) {
-		--sidebar-background: 220 10% 12%; /* #1c1d21 */
-		--sidebar-foreground: 210 40% 98%;
-		--sidebar-primary: 210 40% 98%;
-		--sidebar-primary-foreground: 222 47% 11%;
-		--sidebar-accent: 220 10% 18%;
-		--sidebar-accent-foreground: 210 40% 98%;
-		--sidebar-border: 220 10% 16%;
-		--sidebar-ring: 212.7 26.8% 83.9%;
-	}
-</style>
-
-<Sidebar.Root id="invoice-sidebar" class="border-r-0" collapsible="icon">
-	<Sidebar.Header class="pt-6 pb-4 px-4 group-data-[collapsible=icon]:px-0 border-b border-border/10">
-		<div class="flex items-center gap-3 w-full group-data-[collapsible=icon]:justify-center">
-			<div class="bg-white flex aspect-square size-8 shrink-0 items-center justify-center rounded shadow-md group-data-[collapsible=icon]:mx-auto">
-				<span class="text-zinc-900 text-sm font-black tracking-tighter select-none">N</span>
+<Sidebar.Root id="app-sidebar" class="border-r-0" collapsible="icon">
+	<!-- ── HEADER / WORDMARK ── -->
+	<Sidebar.Header class="px-0 pt-0 pb-0 border-b-2 border-white/10">
+		<div class="flex items-center gap-0 group-data-[collapsible=icon]:justify-center h-14">
+			<div class="flex items-center justify-center shrink-0 w-14 h-14 border-r-2 border-white/10 group-data-[collapsible=icon]:border-r-0 group-data-[collapsible=icon]:w-full">
+				<div class="w-8 h-8 bg-white flex items-center justify-center">
+					<span class="text-zinc-900 text-base font-black tracking-tighter select-none leading-none">N</span>
+				</div>
 			</div>
-			<div class="flex flex-col leading-tight group-data-[collapsible=icon]:hidden overflow-hidden flex-1">
-				<span class="text-[0.8rem] font-bold truncate tracking-widest text-sidebar-foreground uppercase">Nova Metal</span>
-				<span class="text-[0.6rem] text-sidebar-foreground/50 font-medium tracking-wider uppercase">ERP System</span>
+			<div class="flex flex-col leading-none px-5 group-data-[collapsible=icon]:hidden overflow-hidden">
+				<span class="text-sm font-black tracking-[0.15em] text-sidebar-foreground uppercase leading-tight">Nova Metal</span>
+				<span class="text-[0.65rem] font-bold tracking-[0.2em] text-sidebar-foreground/40 uppercase mt-0.5">ERP System</span>
 			</div>
 		</div>
 	</Sidebar.Header>
 
-	<Sidebar.Content>
-		<Sidebar.Group>
-			<Sidebar.GroupLabel class="px-3 text-xs font-semibold tracking-wider uppercase text-muted-foreground/60 mb-2">Navigation</Sidebar.GroupLabel>
+	<!-- ── NAV ── -->
+	<Sidebar.Content class="px-0 py-3">
+		<Sidebar.Group class="px-0">
+			<Sidebar.GroupLabel class="px-6 pb-2 text-[0.6rem] font-black tracking-[0.2em] uppercase text-sidebar-foreground/30 group-data-[collapsible=icon]:hidden">
+				Navigation
+			</Sidebar.GroupLabel>
 			<Sidebar.GroupContent>
-				<Sidebar.Menu>
+				<Sidebar.Menu class="gap-0">
 					{#each visibleNavItems as item}
-						<Sidebar.MenuItem>
-							<Sidebar.MenuButton isActive={page.url.pathname === item.href || (item.href !== '/dashboard' && page.url.pathname.startsWith(item.href))}>
-								{#snippet child({ props })}
-									<a href={item.href} {...props} class={cn('flex items-center gap-3 relative transition-all duration-300 group overflow-hidden', props.class as string, 'data-[active=true]:bg-transparent data-[active=true]:text-sidebar-primary')}>
-										<!-- Minimalist Active Indicator -->
-										<div class="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 bg-sidebar-primary rounded-r-md opacity-0 group-data-[active=true]:opacity-100 shadow-[0_0_8px_hsl(var(--sidebar-primary))] transition-all duration-500 ease-out z-10"></div>
-										
-										<!-- Subtle Background Tint -->
-										<div class="absolute inset-0 bg-sidebar-primary/10 opacity-0 group-data-[active=true]:opacity-100 transition-opacity duration-300 rounded-md z-0"></div>
-										
-										<item.icon class="size-[1.125rem] opacity-70 group-data-[active=true]:opacity-100 group-data-[active=true]:stroke-[2.5px] transition-all duration-300 relative z-10" />
-										<span class="text-sm tracking-wide font-medium group-data-[active=true]:font-bold relative z-10 transition-all">{typeof item.title === 'function' ? item.title() : item.title}</span>
-									</a>
-								{/snippet}
-							</Sidebar.MenuButton>
-						</Sidebar.MenuItem>
+						{@const isActive =
+							page.url.pathname === item.href ||
+							(item.href !== "/dashboard" && page.url.pathname.startsWith(item.href))}
+
+						{#if item.children}
+							<!-- Collapsible parent: link navigates, chevron toggles -->
+							<Collapsible.Root open={isActive}>
+								<Sidebar.MenuItem>
+									<div
+										style={isActive ? activeStyle : ""}
+										class={cn(
+											"flex items-center h-11 transition-colors group-data-[collapsible=icon]:justify-center",
+											isActive ? "text-sidebar-foreground" : "text-sidebar-foreground/50",
+										)}
+									>
+										<!-- Link takes up all the space except the chevron -->
+										<a
+											href={item.href}
+											class={cn(
+												"flex items-center gap-3 flex-1 h-full pl-6 pr-2 group-data-[collapsible=icon]:hidden",
+												isActive ? "text-sidebar-foreground" : "hover:text-sidebar-foreground",
+											)}
+										>
+											<item.icon class="shrink-0 size-[1.05rem]" />
+											<span class="text-xs font-bold tracking-[0.12em] uppercase truncate">
+												{typeof item.title === "function" ? item.title() : item.title}
+											</span>
+										</a>
+										<!-- Chevron toggles the sub-menu -->
+										<Collapsible.Trigger>
+											{#snippet child({ props: triggerProps })}
+												<button
+													{...triggerProps}
+													class="flex items-center justify-center h-full w-10 shrink-0 text-sidebar-foreground/40 hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+												>
+													<ChevronDown class="size-3 transition-transform data-[state=open]:rotate-180" />
+												</button>
+											{/snippet}
+										</Collapsible.Trigger>
+									</div>
+
+									<Collapsible.Content>
+										<Sidebar.MenuSub class="border-white/10 mx-6 px-0">
+											{#each item.children as sub}
+												{@const subIsActive = page.url.pathname === sub.href}
+												<Sidebar.MenuSubItem>
+													<a
+														href={sub.href}
+														style={subIsActive ? activeStyle : ""}
+														class={cn(
+															"flex items-center gap-3 h-11 px-6 text-xs font-bold tracking-[0.12em] uppercase rounded-none transition-colors w-full",
+															subIsActive ? "text-sidebar-foreground" : "text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-white/5",
+														)}
+													>
+														<sub.icon class="shrink-0 size-[1.05rem]" />
+														{typeof sub.title === "function" ? sub.title() : sub.title}
+													</a>
+												</Sidebar.MenuSubItem>
+											{/each}
+										</Sidebar.MenuSub>
+									</Collapsible.Content>
+								</Sidebar.MenuItem>
+							</Collapsible.Root>
+						{:else}
+							<!-- Regular item -->
+							<Sidebar.MenuItem>
+								<Sidebar.MenuButton {isActive}>
+									{#snippet child({ props })}
+										<a
+											href={item.href}
+											{...props}
+											style={isActive ? activeStyle : ""}
+											class={cn(
+												"flex items-center gap-3 h-11 transition-colors",
+												"group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full",
+												props.class as string,
+												isActive ? "text-sidebar-foreground" : "text-sidebar-foreground/50 hover:text-sidebar-foreground",
+												"!px-6 group-data-[collapsible=icon]:!px-0",
+											)}
+										>
+											<item.icon class="shrink-0 size-[1.05rem]" />
+											<span class="text-xs font-bold tracking-[0.12em] uppercase group-data-[collapsible=icon]:hidden truncate">
+												{typeof item.title === "function" ? item.title() : item.title}
+											</span>
+										</a>
+									{/snippet}
+								</Sidebar.MenuButton>
+							</Sidebar.MenuItem>
+						{/if}
 					{/each}
 				</Sidebar.Menu>
 			</Sidebar.GroupContent>
 		</Sidebar.Group>
 	</Sidebar.Content>
 
-	<Sidebar.Footer class="p-2 border-t border-border/40">
-		<Sidebar.Menu>
-			<!-- Combine user profile and collapse trigger in footer -->
+	<!-- ── FOOTER / USER ── -->
+	<Sidebar.Footer class="px-0 pb-0 border-t-2 border-white/10">
+		<Sidebar.Menu class="gap-0">
 			<Sidebar.MenuItem>
 				<DropdownMenu.Root>
 					<DropdownMenu.Trigger>
 						{#snippet child({ props })}
-							<Sidebar.MenuButton {...props} size="lg" class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground outline-none">
-								<div class="bg-sidebar-accent border border-border/30 flex aspect-square size-8 items-center justify-center rounded-sm">
-									<Users class="size-4" />
+							<Sidebar.MenuButton
+								{...props}
+								size="lg"
+								class="h-14 rounded-none px-6 data-[state=open]:bg-white/10 outline-none group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center border-b-0"
+							>
+								<div class="flex shrink-0 items-center justify-center size-8 bg-white/15 border border-white/20">
+									<span class="text-xs font-black text-sidebar-foreground uppercase">
+										{(page.data.user?.name ?? "A").charAt(0)}
+									</span>
 								</div>
-								<div class="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden overflow-hidden">
-									<span class="truncate font-semibold">{page.data.user?.name ?? 'Admin'}</span>
-									<span class="truncate text-xs text-muted-foreground">{page.data.user?.email ?? 'Guest'}</span>
+								<div class="flex flex-col flex-1 text-left leading-none overflow-hidden group-data-[collapsible=icon]:hidden">
+									<span class="truncate text-xs font-black tracking-[0.12em] uppercase text-sidebar-foreground">{page.data.user?.name ?? "Admin"}</span>
+									<span class="truncate text-[0.65rem] font-bold tracking-[0.15em] uppercase text-sidebar-foreground/40 mt-0.5">{page.data.user?.role ?? "admin"}</span>
 								</div>
-								<ChevronDown class="ml-auto size-4 group-data-[collapsible=icon]:hidden" />
+								<ChevronUp class="ml-auto size-3.5 text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden" />
 							</Sidebar.MenuButton>
 						{/snippet}
 					</DropdownMenu.Trigger>
-					<DropdownMenu.Content side="right" align="end" sideOffset={4} class="w-56 rounded-lg bg-card shadow-lg z-[100]">
-						<DropdownMenu.Label class="p-2 font-normal">
-							<div class="flex flex-col space-y-1">
-								<p class="text-sm font-medium leading-none">{page.data.user?.name ?? 'Admin'}</p>
-								<p class="text-xs leading-none text-muted-foreground">{page.data.user?.email ?? 'Guest'}</p>
-							</div>
-						</DropdownMenu.Label>
-						<DropdownMenu.Separator />
-						<DropdownMenu.Item onclick={handleLogout} class="px-2 py-2 cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive">
-							<LogOut class="mr-2 size-4" />
+					<DropdownMenu.Content
+						side="top"
+						align="start"
+						sideOffset={0}
+						class="w-56 rounded-none border-2 border-foreground/20 bg-zinc-900 shadow-[4px_-4px_0px_0px_theme(colors.primary.DEFAULT)] p-0 z-[100]"
+					>
+						<div class="px-3 py-2.5 border-b border-white/10">
+							<p class="text-xs font-black tracking-[0.12em] uppercase text-white">{page.data.user?.name ?? "Admin"}</p>
+							<p class="text-[0.65rem] font-bold tracking-[0.15em] uppercase text-white/40 mt-0.5">{page.data.user?.email ?? ""}</p>
+						</div>
+						<button
+							onclick={handleLogout}
+							class="w-full flex items-center gap-3 px-3 py-3 text-xs font-bold tracking-[0.12em] uppercase text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors cursor-pointer"
+						>
+							<LogOut class="size-4" />
 							{m.sign_out()}
-						</DropdownMenu.Item>
+						</button>
 					</DropdownMenu.Content>
 				</DropdownMenu.Root>
 			</Sidebar.MenuItem>
 		</Sidebar.Menu>
-		
-		<!-- Desktop Toggle button at the very bottom -->
-		<Sidebar.Menu class="hidden md:block mt-2">
-			<Sidebar.MenuItem class="flex items-center group-data-[collapsible=icon]:justify-center">
-				<Sidebar.Trigger class="h-8 w-8 opacity-70 hover:opacity-100 text-sidebar-foreground group-data-[collapsible=icon]:mx-auto" />
-			</Sidebar.MenuItem>
-		</Sidebar.Menu>
+
+		<!-- Collapse toggle -->
+		<div class="hidden md:flex items-center justify-end px-3 py-2 border-t border-white/10 group-data-[collapsible=icon]:justify-center">
+			<Sidebar.Trigger class="h-7 w-7 rounded-none border border-white/10 hover:border-white/30 hover:bg-white/5 text-sidebar-foreground/40 hover:text-sidebar-foreground transition-colors" />
+		</div>
 	</Sidebar.Footer>
+
 	<Sidebar.Rail />
 </Sidebar.Root>
+
+<style>
+	:global(#app-sidebar) {
+		--sidebar-background: 220 10% 10%;
+		--sidebar-foreground: 210 40% 96%;
+		--sidebar-primary: var(--primary);
+		--sidebar-primary-foreground: var(--primary-foreground);
+		--sidebar-accent: 220 10% 15%;
+		--sidebar-accent-foreground: 210 40% 96%;
+		--sidebar-border: 220 10% 16%;
+		--sidebar-ring: 212.7 26.8% 83.9%;
+	}
+</style>

@@ -6,6 +6,7 @@ import { generateSKU } from '$lib/utils/skuGenerator';
 
 export const load = async ({ locals }: { locals: App.Locals }) => {
 	if (!locals.user) throw redirect(302, '/login');
+	if (!['admin', 'warehouse'].includes(locals.user.role)) throw redirect(302, '/dashboard');
 	const allProducts = await db.select({
 		product: products,
 		category: categories
@@ -41,6 +42,9 @@ export const actions = {
 
 		if (!name || !categoryId) {
 			return fail(400, { missing: true });
+		}
+		if (!isFinite(averageLandingCost) || averageLandingCost < 0) {
+			return fail(400, { error: 'Purchase cost must be a non-negative number' });
 		}
 
 		try {
@@ -109,6 +113,9 @@ export const actions = {
 		const name = data.get('name')?.toString();
 		const categoryId = data.get('categoryId')?.toString();
 		const description = data.get('description')?.toString() || null;
+		// Only update barcode if the field was present in the form (i.e. barcodeEnabled=true).
+		// When the barcode input is hidden, data.has('barcode') is false and we preserve the existing value.
+		const barcodeFieldPresent = data.has('barcode');
 		const barcode = data.get('barcode')?.toString() || null;
 
 		const thickness = data.get('thickness') ? parseFloat(data.get('thickness') as string) : null;
@@ -120,6 +127,9 @@ export const actions = {
 		const averageLandingCost = data.get('averageLandingCost') ? parseFloat(data.get('averageLandingCost') as string) : 0;
 
 		if (!id || !name || !categoryId) return fail(400, { missing: true });
+		if (!isFinite(averageLandingCost) || averageLandingCost < 0) {
+			return fail(400, { error: 'Purchase cost must be a non-negative number' });
+		}
 
 		try {
 			const category = await db.query.categories.findFirst({ where: eq(categories.id, categoryId) });
@@ -136,7 +146,7 @@ export const actions = {
 					length: length ? length.toString() : null,
 					weightPerPiece: weightPerPiece ? weightPerPiece.toString() : null,
 					minStockLevel,
-					barcode,
+					...(barcodeFieldPresent && { barcode }),
 					averageLandingCost: averageLandingCost.toFixed(2)
 				})
 				.where(eq(products.id, id));
