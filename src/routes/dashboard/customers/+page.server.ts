@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db';
 import { customers, salesOrders } from '$lib/server/db/schema/sales';
 import { isNull, eq, and, desc, ilike, or, notInArray } from 'drizzle-orm';
-import { fail } from '@sveltejs/kit';
+import { fail, error } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { customerSchema } from '$lib/server/schemas/customer';
 
@@ -19,7 +19,8 @@ export const load: PageServerLoad = async ({ url }) => {
 }
 
 export const actions: Actions = {
-	create: async ({ request }) => {
+	create: async ({ request, locals }) => {
+		if (!locals.user) throw error(401, 'Unauthorized');
 		const formData = await request.formData();
 		const data = Object.fromEntries(formData);
 
@@ -64,7 +65,8 @@ export const actions: Actions = {
 		}
 	},
 
-	update: async ({ request }) => {
+	update: async ({ request, locals }) => {
+		if (!locals.user) throw error(401, 'Unauthorized');
 		const formData = await request.formData();
 		const id = formData.get('id') as string;
 		const data = Object.fromEntries(formData);
@@ -90,7 +92,8 @@ export const actions: Actions = {
 		}
 	},
 
-	delete: async ({ request }) => {
+	delete: async ({ request, locals }) => {
+		if (!locals.user) throw error(401, 'Unauthorized');
 		const formData = await request.formData();
 		const id = formData.get('id') as string;
 

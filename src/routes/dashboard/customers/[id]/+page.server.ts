@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { customers, salesOrders } from '$lib/server/db/schema/sales';
-import { eq, desc, isNull, and, inArray } from 'drizzle-orm';
+import { eq, desc, isNull, and, inArray, notInArray } from 'drizzle-orm';
 import { error, redirect } from '@sveltejs/kit';
 
 const normalizePhone = (p: string) => p.replace(/[\s\-().]/g, '');
@@ -37,7 +37,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
 				.where(
 					and(
 						isNull(salesOrders.customerId),
-						eq(salesOrders.walkInPhone, normalizedPhone)
+						eq(salesOrders.walkInPhone, normalizedPhone),
+						notInArray(salesOrders.status, ['CANCELLED'])
 					)
 				)
 				.orderBy(desc(salesOrders.createdAt));
