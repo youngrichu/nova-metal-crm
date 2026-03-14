@@ -39,14 +39,10 @@
 		--sidebar-foreground: 210 40% 96%;
 		--sidebar-primary: var(--primary);
 		--sidebar-primary-foreground: var(--primary-foreground);
-		--sidebar-accent: 220 10% 20%;
+		--sidebar-accent: 220 10% 15%;
 		--sidebar-accent-foreground: 210 40% 96%;
 		--sidebar-border: 220 10% 16%;
 		--sidebar-ring: 212.7 26.8% 83.9%;
-	}
-
-	:global(#app-sidebar [data-sidebar="menu-button"][data-active="true"]) {
-		background-color: rgba(255, 255, 255, 0.12);
 	}
 </style>
 
@@ -86,12 +82,13 @@
 									<a
 										href={item.href}
 										{...props}
+										style={isActive ? 'background-color: rgba(255,255,255,0.10) !important;' : ''}
 										class={cn(
 											'flex items-center gap-3 h-11 transition-colors',
 											'group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full',
 											props.class as string,
 											isActive
-												? 'text-sidebar-foreground'
+												? 'text-white'
 												: 'text-sidebar-foreground/50 hover:text-sidebar-foreground',
 											'!px-6 group-data-[collapsible=icon]:!px-0'
 										)}
