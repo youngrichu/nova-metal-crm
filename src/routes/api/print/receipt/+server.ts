@@ -80,7 +80,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		const config = await getPrinterSettings();
 		// 80mm paper = 48 chars wide; 58mm paper = 32 chars wide
+		// 80mm = 48 chars, 58mm = 32 chars. Name column is 0.55 of line width.
 		const lineWidth = config.paperWidth === 58 ? 32 : 48;
+		const nameColWidth = Math.floor(lineWidth * 0.55);
 
 		let device: any;
 		if (config.type === 'usb') {
@@ -131,7 +133,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						.align('lt')
 						.text(`Receipt: ${o.orderNumber}`)
 						.text(`Date:    ${new Date(o.createdAt).toLocaleString(config.currencyLocale)}`)
-						.text(`Cashier: ${user.name}`)
+						.text(`Cashier: ${user.name ?? user.email ?? 'Staff'}`)
 						.text(`Customer: ${c?.name ?? 'Walk-in'}`)
 						.drawLine()
 
@@ -140,7 +142,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						.style('normal');
 
 					for (const item of items) {
-						const name = (item.product?.name ?? item.product?.sku ?? 'Item').substring(0, lineWidth - 16);
+						const name = (item.product?.name ?? item.product?.sku ?? 'Item').substring(0, nameColWidth);
 						printer.tableCustom([
 							{ text: name,                                    align: 'LEFT',   width: 0.55 },
 							{ text: `x${item.quantity}`,                     align: 'CENTER', width: 0.15 },
