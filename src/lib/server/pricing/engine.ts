@@ -57,6 +57,8 @@ export function computePrice(baseCost: number, pricingTier: string, quantity: nu
 /**
  * Calculates the dynamic price for a product based on customer tier and quantity.
  * If orderId is provided, checks for a valid quote lock-in and returns the locked price if still valid.
+ * If pricingTierOverride is provided, it takes precedence over the customer's CRM tier (used for walk-in orders).
+ * Tier resolution order: quote lock-in → pricingTierOverride → customer tier lookup → RETAIL default.
  */
 export async function calculateDynamicPrice(
     productId: string,
