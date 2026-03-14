@@ -10,6 +10,7 @@
 
 	let isSubmitting = $state(false);
 	let printerType = $state(data.settings.printer_type ?? 'network');
+	let paperWidth = $state(data.settings.paper_width ?? '80');
 
 	function handleEnhance() {
 		isSubmitting = true;
@@ -268,10 +269,11 @@
 						<select
 							id="paper_width"
 							name="paper_width"
+							bind:value={paperWidth}
 							class="w-full h-14 bg-muted/30 border-2 border-transparent focus:bg-transparent focus:border-primary focus:outline-none rounded-lg text-base px-4 transition-all font-mono"
 						>
-							<option value="80" selected={data.settings.paper_width === '80'}>80mm</option>
-							<option value="58" selected={data.settings.paper_width === '58'}>58mm</option>
+							<option value="80">80mm</option>
+							<option value="58">58mm</option>
 						</select>
 					</div>
 				</div>

@@ -20,11 +20,11 @@ try {
 	console.warn('ESC/POS drivers not available:', e);
 }
 
-async function getPrinterSettings(): Promise<{ type: string; address: string; paperWidth: number }> {
+async function getPrinterSettings(): Promise<{ type: string; address: string; paperWidth: number; vatRate: number }> {
 	const rows = await db
 		.select()
 		.from(systemSettings)
-		.where(inArray(systemSettings.key, ['printer_type', 'printer_address', 'paper_width']));
+		.where(inArray(systemSettings.key, ['printer_type', 'printer_address', 'paper_width', 'vat_rate']));
 
 	const map: Record<string, string> = {};
 	for (const row of rows) map[row.key] = row.value;
@@ -32,7 +32,8 @@ async function getPrinterSettings(): Promise<{ type: string; address: string; pa
 	return {
 		type: map.printer_type ?? 'network',
 		address: map.printer_address ?? '192.168.1.100',
-		paperWidth: parseInt(map.paper_width ?? '80', 10)
+		paperWidth: parseInt(map.paper_width ?? '80', 10),
+		vatRate: parseFloat(map.vat_rate ?? '0.15')
 	};
 }
 
@@ -93,56 +94,73 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const o = order.sales_orders;
 		const c = order.customers;
 
+		const PRINT_TIMEOUT_MS = 15000;
+
 		await new Promise<void>((resolve, reject) => {
+			const timeout = setTimeout(() => {
+				reject(new Error('Print timed out after 15 seconds'));
+			}, PRINT_TIMEOUT_MS);
+
 			device.open((err: any) => {
-				if (err) return reject(err);
-
-				printer
-					.font('a')
-					.align('ct')
-					.style('b')
-					.size(2, 2)
-					.text('NOVA METAL PLC')
-					.size(1, 1)
-					.style('normal')
-					.text('Addis Ababa, Ethiopia')
-					.drawLine()
-
-					.align('lt')
-					.text(`Receipt: ${o.orderNumber}`)
-					.text(`Date:    ${new Date(o.createdAt).toLocaleString('en-ET')}`)
-					.text(`Cashier: ${user.name}`)
-					.text(`Customer: ${c?.name ?? 'Walk-in'}`)
-					.drawLine()
-
-					.style('b')
-					.text('ITEMS')
-					.style('normal');
-
-				for (const item of items) {
-					const name = (item.product?.name ?? item.product?.sku ?? 'Item').substring(0, lineWidth - 16);
-					printer.tableCustom([
-						{ text: name,                                       align: 'LEFT',  width: 0.55 },
-						{ text: `x${item.quantity}`,                        align: 'CENTER', width: 0.15 },
-						{ text: `${Number(item.lineTotal).toFixed(2)}`,     align: 'RIGHT', width: 0.30 }
-					]);
+				if (err) {
+					clearTimeout(timeout);
+					return reject(err);
 				}
 
-				printer
-					.drawLine()
-					.align('rt')
-					.text(`Subtotal: ETB ${Number(o.subtotal).toFixed(2)}`)
-					.text(`VAT 15%:  ETB ${Number(o.taxAmount).toFixed(2)}`)
-					.style('b')
-					.text(`TOTAL:    ETB ${Number(o.totalAmount).toFixed(2)}`)
-					.style('normal')
-					.drawLine()
-					.align('ct')
-					.text('Thank you for your business!')
-					.cut()
-					.close();
+				try {
+					const vatLabel = `VAT ${Math.round(config.vatRate * 100)}%:`;
 
-				resolve();
+					printer
+						.font('a')
+						.align('ct')
+						.style('b')
+						.size(2, 2)
+						.text('NOVA METAL PLC')
+						.size(1, 1)
+						.style('normal')
+						.text('Addis Ababa, Ethiopia')
+						.drawLine()
+
+						.align('lt')
+						.text(`Receipt: ${o.orderNumber}`)
+						.text(`Date:    ${new Date(o.createdAt).toLocaleString('en-ET')}`)
+						.text(`Cashier: ${user.name}`)
+						.text(`Customer: ${c?.name ?? 'Walk-in'}`)
+						.drawLine()
+
+						.style('b')
+						.text('ITEMS')
+						.style('normal');
+
+					for (const item of items) {
+						const name = (item.product?.name ?? item.product?.sku ?? 'Item').substring(0, lineWidth - 16);
+						printer.tableCustom([
+							{ text: name,                                    align: 'LEFT',   width: 0.55 },
+							{ text: `x${item.quantity}`,                     align: 'CENTER', width: 0.15 },
+							{ text: `${Number(item.lineTotal).toFixed(2)}`,  align: 'RIGHT',  width: 0.30 }
+						]);
+					}
+
+					printer
+						.drawLine()
+						.align('rt')
+						.text(`Subtotal:  ETB ${Number(o.subtotal).toFixed(2)}`)
+						.text(`${vatLabel.padEnd(10)} ETB ${Number(o.taxAmount).toFixed(2)}`)
+						.style('b')
+						.text(`TOTAL:     ETB ${Number(o.totalAmount).toFixed(2)}`)
+						.style('normal')
+						.drawLine()
+						.align('ct')
+						.text('Thank you for your business!')
+						.cut()
+						.close(() => {
+							clearTimeout(timeout);
+							resolve();
+						});
+				} catch (printErr) {
+					clearTimeout(timeout);
+					reject(printErr);
+				}
 			});
 		});
 
