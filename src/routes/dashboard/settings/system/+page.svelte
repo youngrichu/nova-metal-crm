@@ -13,6 +13,13 @@
 	let paperWidth = $state(data.settings.paper_width ?? '80');
 	let printerAddress = $state(data.settings.printer_address ?? '192.168.1.100');
 
+	// Re-sync printer state from server after form submission (handles failed saves)
+	$effect(() => {
+		printerType = data.settings.printer_type ?? 'network';
+		paperWidth = data.settings.paper_width ?? '80';
+		printerAddress = data.settings.printer_address ?? '192.168.1.100';
+	});
+
 	function handleEnhance() {
 		isSubmitting = true;
 		return async ({ result, update }: any) => {
@@ -227,6 +234,36 @@
 				</h2>
 			</div>
 			<div class="p-6 md:p-8 space-y-6">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div class="space-y-2 group">
+						<Label for="company_name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
+							Company Name
+						</Label>
+						<Input
+							id="company_name"
+							name="company_name"
+							type="text"
+							value={data.settings.company_name}
+							placeholder="NOVA METAL PLC"
+							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all"
+						/>
+						<p class="text-xs text-muted-foreground/60">Printed in the receipt header</p>
+					</div>
+					<div class="space-y-2 group">
+						<Label for="company_address" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
+							Company Address
+						</Label>
+						<Input
+							id="company_address"
+							name="company_address"
+							type="text"
+							value={data.settings.company_address}
+							placeholder="Addis Ababa, Ethiopia"
+							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all"
+						/>
+						<p class="text-xs text-muted-foreground/60">Printed below company name</p>
+					</div>
+				</div>
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 					<div class="space-y-2 group">
 						<Label for="printer_type" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">

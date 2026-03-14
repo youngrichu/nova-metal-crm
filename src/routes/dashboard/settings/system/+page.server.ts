@@ -4,7 +4,7 @@ import { redirect, fail } from '@sveltejs/kit';
 import { invalidateBarcodeCache } from '$lib/server/barcodeCache';
 import type { PageServerLoad, Actions } from './$types';
 
-const SETTING_KEYS = ['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred', 'currency_code', 'currency_locale', 'barcode_enabled', 'printer_type', 'printer_address', 'paper_width'] as const;
+const SETTING_KEYS = ['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred', 'currency_code', 'currency_locale', 'barcode_enabled', 'printer_type', 'printer_address', 'paper_width', 'company_name', 'company_address'] as const;
 
 const DEFAULTS: Record<string, string> = {
     vat_rate: '0.15',
@@ -17,7 +17,9 @@ const DEFAULTS: Record<string, string> = {
     barcode_enabled: 'false',
     printer_type: 'network',
     printer_address: '192.168.1.100',
-    paper_width: '80'
+    paper_width: '80',
+    company_name: 'NOVA METAL PLC',
+    company_address: 'Addis Ababa, Ethiopia'
 };
 
 export const load: PageServerLoad = async ({ locals }) => {

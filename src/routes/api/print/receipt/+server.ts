@@ -20,11 +20,11 @@ try {
 	if (escpos) escpos.Network = escposNetwork;
 } catch (e) { console.warn('escpos-network not available:', e); }
 
-async function getPrinterSettings(): Promise<{ type: string; address: string; paperWidth: number; vatRate: number; currencyCode: string; currencyLocale: string }> {
+async function getPrinterSettings(): Promise<{ type: string; address: string; paperWidth: number; vatRate: number; currencyCode: string; currencyLocale: string; companyName: string; companyAddress: string }> {
 	const rows = await db
 		.select()
 		.from(systemSettings)
-		.where(inArray(systemSettings.key, ['printer_type', 'printer_address', 'paper_width', 'vat_rate', 'currency_code', 'currency_locale']));
+		.where(inArray(systemSettings.key, ['printer_type', 'printer_address', 'paper_width', 'vat_rate', 'currency_code', 'currency_locale', 'company_name', 'company_address']));
 
 	const map: Record<string, string> = {};
 	for (const row of rows) map[row.key] = row.value;
@@ -35,7 +35,9 @@ async function getPrinterSettings(): Promise<{ type: string; address: string; pa
 		paperWidth: parseInt(map.paper_width ?? '80', 10),
 		vatRate: parseFloat(map.vat_rate ?? '0.15'),
 		currencyCode: map.currency_code ?? 'ETB',
-		currencyLocale: map.currency_locale ?? 'en-ET'
+		currencyLocale: map.currency_locale ?? 'en-ET',
+		companyName: map.company_name ?? 'NOVA METAL PLC',
+		companyAddress: map.company_address ?? 'Addis Ababa, Ethiopia'
 	};
 }
 
@@ -98,6 +100,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			device = new escpos.Network(host, port ? parseInt(port, 10) : 9100);
 		}
 
+		if (typeof escpos.Printer !== 'function') {
+			return json({ success: false, error: 'Printer class not available — check escpos package version' }, { status: 500 });
+		}
 		const printer = new escpos.Printer(device);
 		const o = order.sales_orders;
 		const c = order.customers;
@@ -136,10 +141,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						.align('ct')
 						.style('b')
 						.size(2, 2)
-						.text('NOVA METAL PLC')
+						.text(config.companyName)
 						.size(1, 1)
 						.style('normal')
-						.text('Addis Ababa, Ethiopia')
+						.text(config.companyAddress)
 						.drawLine()
 
 						.align('lt')
