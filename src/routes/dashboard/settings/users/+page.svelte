@@ -1,15 +1,27 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
 	import * as Table from '$lib/components/ui/table';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import * as Select from '$lib/components/ui/select';
 	import { enhance } from '$app/forms';
-	import { Users, ChevronDown, Shield, CheckCircle, XCircle } from 'lucide-svelte';
+	import { Users, ChevronDown, Shield, CheckCircle, XCircle, Plus } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let { data, form } = $props();
 
+	let createDialogOpen = $state(false);
+	let newRole = $state('sales');
+
 	$effect(() => {
-		if (form?.success) toast.success('User updated');
+		if (form?.success && form?.created) {
+			toast.success('User created successfully');
+			createDialogOpen = false;
+		} else if (form?.success) {
+			toast.success('User updated');
+		}
 		if (form?.error) toast.error(form.error);
 	});
 
@@ -34,6 +46,62 @@
 				{data.users.length} registered {data.users.length === 1 ? 'user' : 'users'}
 			</p>
 		</div>
+		<Dialog.Root bind:open={createDialogOpen}>
+			<Dialog.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						class="h-12 px-6 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] whitespace-nowrap"
+					>
+						<Plus class="w-4 h-4 mr-2" /> Add User
+					</Button>
+				{/snippet}
+			</Dialog.Trigger>
+			<Dialog.Content class="rounded-none border-2 border-foreground sm:max-w-md">
+				<Dialog.Header>
+					<Dialog.Title class="text-xl font-black tracking-tighter uppercase">Create New User</Dialog.Title>
+					<Dialog.Description class="text-xs text-muted-foreground tracking-widest uppercase">
+						Add a new user account to the system.
+					</Dialog.Description>
+				</Dialog.Header>
+				<form method="POST" action="?/createUser" use:enhance class="space-y-4 pt-2">
+					<div class="space-y-1.5">
+						<Label for="new-name" class="text-xs font-bold uppercase tracking-widest">Full Name</Label>
+						<Input id="new-name" name="name" placeholder="John Doe" required class="rounded-none border-2 h-11" />
+					</div>
+					<div class="space-y-1.5">
+						<Label for="new-email" class="text-xs font-bold uppercase tracking-widest">Email</Label>
+						<Input id="new-email" name="email" type="email" placeholder="john@example.com" required class="rounded-none border-2 h-11" />
+					</div>
+					<div class="space-y-1.5">
+						<Label for="new-password" class="text-xs font-bold uppercase tracking-widest">Password</Label>
+						<Input id="new-password" name="password" type="password" placeholder="Min. 8 characters" required class="rounded-none border-2 h-11" />
+					</div>
+					<div class="space-y-1.5">
+						<Label class="text-xs font-bold uppercase tracking-widest">Role</Label>
+						<input type="hidden" name="role" value={newRole} />
+						<Select.Root type="single" bind:value={newRole}>
+							<Select.Trigger class="rounded-none border-2 h-11 w-full font-bold uppercase tracking-widest text-xs">
+								{newRole}
+							</Select.Trigger>
+							<Select.Content class="rounded-none border-2 border-foreground/10">
+								<Select.Item value="sales" class="font-bold uppercase tracking-widest text-xs">Sales</Select.Item>
+								<Select.Item value="warehouse" class="font-bold uppercase tracking-widest text-xs">Warehouse</Select.Item>
+								<Select.Item value="admin" class="font-bold uppercase tracking-widest text-xs">Admin</Select.Item>
+							</Select.Content>
+						</Select.Root>
+					</div>
+					<Dialog.Footer class="pt-2">
+						<Button type="button" variant="outline" onclick={() => (createDialogOpen = false)} class="rounded-none border-2 font-bold uppercase tracking-widest text-xs h-11">
+							Cancel
+						</Button>
+						<Button type="submit" class="rounded-none font-bold uppercase tracking-widest text-xs h-11 bg-foreground text-background hover:bg-primary">
+							Create User
+						</Button>
+					</Dialog.Footer>
+				</form>
+			</Dialog.Content>
+		</Dialog.Root>
 	</header>
 
 	<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
