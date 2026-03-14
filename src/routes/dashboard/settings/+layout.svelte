@@ -19,7 +19,7 @@
 <div class="flex flex-col min-h-full">
 	<!-- Settings Sub-Navigation -->
 	<nav class="border-b border-foreground/10 bg-muted/20 px-4 md:px-8">
-		<div class="max-w-[1200px] mx-auto flex items-center gap-1 overflow-x-auto">
+		<div class="max-w-[1200px] mx-auto flex items-center gap-1">
 			{#each visibleNav as item}
 				{@const isActive = page.url.pathname === item.href || page.url.pathname.startsWith(item.href + '/')}
 				<a

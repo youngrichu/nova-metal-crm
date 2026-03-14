@@ -21,8 +21,8 @@
 	let highlightedProductId = $state<string | null>(null);
 
 	$effect(() => {
-		// Focus barcode input on load
-		tick().then(() => barcodeInputEl?.focus());
+		// Focus barcode input on load (only when barcode feature is enabled)
+		if (data.barcodeEnabled) tick().then(() => barcodeInputEl?.focus());
 	});
 
 	function handleBarcodeScan(e: KeyboardEvent) {

@@ -68,6 +68,9 @@ export const actions: Actions = {
             if (key === 'currency_locale' && raw.length > 20) {
                 return fail(400, { error: 'Currency locale value is too long (max 20 characters)' });
             }
+            if (key === 'barcode_enabled' && !['true', 'false'].includes(raw)) {
+                return fail(400, { error: 'Invalid value for barcode_enabled' });
+            }
 
             updates.push({ key, value: raw });
         }
