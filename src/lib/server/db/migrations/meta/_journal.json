@@ -64,6 +64,13 @@
       "when": 1773480863841,
       "tag": "0008_set_email_verified_default",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1773476114655,
+      "tag": "0009_slim_zarek",
+      "breakpoints": true
     }
   ]
 }

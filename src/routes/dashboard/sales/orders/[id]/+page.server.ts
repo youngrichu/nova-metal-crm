@@ -1,4 +1,4 @@
-import { error, redirect } from "@sveltejs/kit";
+import { error, redirect, fail } from "@sveltejs/kit";
 import { db } from "$lib/server/db";
 import { salesOrders, salesOrderItems, customers, products, payments } from "$lib/server/db/schema";
 import { eq } from "drizzle-orm";
@@ -20,7 +20,9 @@ export const load: PageServerLoad = async ({ params }) => {
                 discountAmount: salesOrders.discountAmount,
                 validUntil: salesOrders.validUntil,
                 createdAt: salesOrders.createdAt,
-				customer: {
+				walkInPhone: salesOrders.walkInPhone,
+                walkInPricingTier: salesOrders.walkInPricingTier,
+                customer: {
                     id: customers.id,
                     name: customers.name,
                     companyName: customers.companyName,
@@ -60,7 +62,10 @@ export const load: PageServerLoad = async ({ params }) => {
             .where(eq(payments.orderId, orderId));
 
 		return {
-			order,
+			order: {
+                ...order,
+                customer: order.customer?.id ? order.customer : null
+            },
             items,
             payments: orderPayments
 		};
@@ -78,17 +83,20 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const newStatus = formData.get("status")?.toString();
 
-        if (!newStatus) return { error: "Status is required" };
+        const VALID_STATUSES = ['DRAFT', 'QUOTE', 'CONFIRMED', 'INVOICED', 'CANCELLED'] as const;
+        if (!newStatus || !VALID_STATUSES.includes(newStatus as any)) {
+            return fail(400, { error: "Invalid or missing status" });
+        }
 
         try {
             await db.update(salesOrders)
-                .set({ status: newStatus as any, updatedAt: new Date() })
+                .set({ status: newStatus, updatedAt: new Date() })
                 .where(eq(salesOrders.id, params.id));
 
             return { success: true };
         } catch (err) {
             console.error("Failed to update status:", err);
-            return { error: "Could not update status" };
+            return fail(500, { error: "Could not update status" });
         }
 	}
 };

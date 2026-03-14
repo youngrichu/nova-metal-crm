@@ -1,4 +1,5 @@
 import { pgTable, text, timestamp, uuid, numeric, index } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { user } from "./users";
 import { products } from "./catalog";
 
@@ -22,13 +23,15 @@ export const customers = pgTable("customers", {
 export const salesOrders = pgTable("sales_orders", {
   id: uuid('id').primaryKey().defaultRandom(),
   orderNumber: text('order_number').notNull().unique(), // E.g., SO-2026-0001
-  customerId: uuid('customer_id').notNull().references(() => customers.id),
+  customerId: uuid('customer_id').references(() => customers.id),
   status: text('status').notNull().default('DRAFT'), // DRAFT, QUOTE, CONFIRMED, INVOICED, CANCELLED
   validUntil: timestamp('valid_until'), // For Quotations lock-in period
   subtotal: numeric('subtotal', { precision: 14, scale: 2 }).notNull().default('0.00'),
   taxAmount: numeric('tax_amount', { precision: 14, scale: 2 }).notNull().default('0.00'), // 15% VAT usually
   totalAmount: numeric('total_amount', { precision: 14, scale: 2 }).notNull().default('0.00'),
   discountAmount: numeric('discount_amount', { precision: 14, scale: 2 }).notNull().default('0.00'),
+  walkInPhone: text('walk_in_phone'),
+  walkInPricingTier: text('walk_in_pricing_tier'), // pricing engine tier: 'RETAIL' | 'WHOLESALE' | 'VIP' | 'PREFERRED'
   createdBy: text('created_by').notNull().references(() => user.id),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow()
@@ -36,7 +39,8 @@ export const salesOrders = pgTable("sales_orders", {
   return {
     customerIdx: index('idx_sales_customer').on(table.customerId),
     statusIdx: index('idx_sales_status').on(table.status),
-    createdAtIdx: index('idx_sales_created_at').on(table.createdAt)
+    createdAtIdx: index('idx_sales_created_at').on(table.createdAt),
+    walkInPhoneIdx: index('idx_sales_orders_walk_in_phone').on(table.walkInPhone).where(sql`"walk_in_phone" IS NOT NULL`)
   };
 });
 

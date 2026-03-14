@@ -1,5 +1,27 @@
-import { describe, it, expect } from 'vitest';
-import { computePrice } from './engine';
+import { describe, it, expect, vi } from 'vitest';
+import { computePrice, calculateDynamicPrice } from './engine';
+
+// Mock the DB module — must be placed before any test that calls calculateDynamicPrice
+vi.mock('$lib/server/db', () => ({
+    db: {
+        query: {
+            products: {
+                findFirst: vi.fn().mockResolvedValue({
+                    id: 'test-product-id',
+                    averageLandingCost: '100.00'
+                })
+            },
+            salesOrders: {
+                findFirst: vi.fn().mockResolvedValue(null) // no quote lock-in
+            }
+        },
+        select: vi.fn().mockReturnValue({
+            from: vi.fn().mockReturnValue({
+                where: vi.fn().mockResolvedValue([]) // no system settings overrides → use hardcoded defaults
+            })
+        })
+    }
+}));
 
 describe('Pricing Engine', () => {
     it('calculates Retail pricing correctly (15% markup)', () => {
@@ -54,5 +76,18 @@ describe('Pricing Engine', () => {
         expect(result.baseCost).toBe(100);
         expect(result.unitPriceBeforeDiscount).toBe(115);
         expect(result.finalUnitPrice).toBe(115);
+    });
+});
+
+describe('calculateDynamicPrice with pricingTierOverride', () => {
+    it('applies WHOLESALE markup when pricingTierOverride is WHOLESALE and customerId is null', async () => {
+        const result = await calculateDynamicPrice('test-product-id', null, 1, undefined, 'WHOLESALE');
+        expect(result.unitPriceBeforeDiscount).toBe(105); // 100 * 1.05
+        expect(result.finalUnitPrice).toBe(105);
+    });
+
+    it('falls back to RETAIL when an unknown override is passed', async () => {
+        const result = await calculateDynamicPrice('test-product-id', null, 1, undefined, 'GARBAGE_TIER');
+        expect(result.unitPriceBeforeDiscount).toBe(115); // 100 * 1.15 (RETAIL)
     });
 });
