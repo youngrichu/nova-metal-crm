@@ -76,6 +76,9 @@ export const actions: Actions = {
         if (password.length < 8) {
             return fail(400, { error: 'Password must be at least 8 characters' });
         }
+        if (password.length > 128) {
+            return fail(400, { error: 'Password must be 128 characters or fewer' });
+        }
 
         // Check email uniqueness
         const existing = await db.select({ id: usersTable.id })

@@ -14,12 +14,22 @@
 
 	let createDialogOpen = $state(false);
 	let newRole = $state('sales');
+	let newName = $state('');
+	let newEmail = $state('');
+	let newPassword = $state('');
+
+	function closeCreateDialog() {
+		createDialogOpen = false;
+		newRole = 'sales';
+		newName = '';
+		newEmail = '';
+		newPassword = '';
+	}
 
 	$effect(() => {
 		if (form?.success && form?.created) {
 			toast.success('User created successfully');
-			createDialogOpen = false;
-			newRole = 'sales';
+			closeCreateDialog();
 		} else if (form?.success) {
 			toast.success('User updated');
 		}
@@ -58,7 +68,7 @@
 					</Button>
 				{/snippet}
 			</Dialog.Trigger>
-			<Dialog.Content class="rounded-none border-2 border-foreground sm:max-w-md">
+			<Dialog.Content class="rounded-none border-2 border-foreground sm:max-w-md" onInteractOutside={closeCreateDialog}>
 				<Dialog.Header>
 					<Dialog.Title class="text-xl font-black tracking-tighter uppercase">Create New User</Dialog.Title>
 					<Dialog.Description class="text-xs text-muted-foreground tracking-widest uppercase">
@@ -68,15 +78,15 @@
 				<form method="POST" action="?/createUser" use:enhance class="space-y-4 pt-2">
 					<div class="space-y-1.5">
 						<Label for="new-name" class="text-xs font-bold uppercase tracking-widest">Full Name</Label>
-						<Input id="new-name" name="name" placeholder="John Doe" required class="rounded-none border-2 h-11" />
+						<Input id="new-name" name="name" bind:value={newName} placeholder="John Doe" required class="rounded-none border-2 h-11" />
 					</div>
 					<div class="space-y-1.5">
 						<Label for="new-email" class="text-xs font-bold uppercase tracking-widest">Email</Label>
-						<Input id="new-email" name="email" type="email" placeholder="john@example.com" required class="rounded-none border-2 h-11" />
+						<Input id="new-email" name="email" type="email" bind:value={newEmail} placeholder="john@example.com" required class="rounded-none border-2 h-11" />
 					</div>
 					<div class="space-y-1.5">
 						<Label for="new-password" class="text-xs font-bold uppercase tracking-widest">Password</Label>
-						<Input id="new-password" name="password" type="password" placeholder="Min. 8 characters" required class="rounded-none border-2 h-11" />
+						<Input id="new-password" name="password" type="password" bind:value={newPassword} placeholder="Min. 8 characters" required minlength={8} maxlength={128} class="rounded-none border-2 h-11" />
 					</div>
 					<div class="space-y-1.5">
 						<Label class="text-xs font-bold uppercase tracking-widest">Role</Label>
@@ -93,7 +103,7 @@
 						</Select.Root>
 					</div>
 					<Dialog.Footer class="pt-2">
-						<Button type="button" variant="outline" onclick={() => (createDialogOpen = false)} class="rounded-none border-2 font-bold uppercase tracking-widest text-xs h-11">
+						<Button type="button" variant="outline" onclick={closeCreateDialog} class="rounded-none border-2 font-bold uppercase tracking-widest text-xs h-11">
 							Cancel
 						</Button>
 						<Button type="submit" class="rounded-none font-bold uppercase tracking-widest text-xs h-11 bg-foreground text-background hover:bg-primary">
