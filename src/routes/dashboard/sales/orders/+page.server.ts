@@ -19,7 +19,8 @@ export const load: PageServerLoad = async ({ url }) => {
 					id: customers.id,
 					name: customers.name,
 					companyName: customers.companyName,
-				}
+				},
+				walkInPhone: salesOrders.walkInPhone,
 			})
 			.from(salesOrders)
 			.leftJoin(customers, eq(salesOrders.customerId, customers.id))

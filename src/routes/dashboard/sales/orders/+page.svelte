@@ -79,7 +79,7 @@
 								{#if order.customer}
 									<span class="font-bold text-foreground/90">{order.customer.name}</span>
 								{:else}
-									<span class="font-bold text-muted-foreground italic">Walk-In</span>
+									<span class="font-bold text-muted-foreground italic">Walk-In{order.walkInPhone ? ` · ${order.walkInPhone}` : ''}</span>
 								{/if}
 								{#if order.customer?.companyName}
 									<span class="text-xs font-medium text-muted-foreground uppercase mt-1">{order.customer.companyName}</span>

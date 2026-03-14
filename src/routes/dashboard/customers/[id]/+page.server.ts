@@ -68,7 +68,11 @@ export const actions: Actions = {
 			const orderIdsJson = formData.get('orderIds')?.toString();
 			if (!orderIdsJson) return { error: 'No orders to link' };
 
-			const orderIds: string[] = JSON.parse(orderIdsJson);
+			const parsed = JSON.parse(orderIdsJson);
+			if (!Array.isArray(parsed) || !parsed.every((id: unknown) => typeof id === 'string')) {
+				return { error: 'Invalid order IDs' };
+			}
+			const orderIds: string[] = parsed;
 			if (!orderIds.length) return { error: 'No orders to link' };
 
 			// AND customer_id IS NULL guard prevents race condition.
