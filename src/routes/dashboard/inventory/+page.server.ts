@@ -1,5 +1,6 @@
 import { db } from '$lib/server/db';
 import { inventory, inventoryTransactions, products, warehouses } from '$lib/server/db/schema';
+import { applyPurchaseCost } from '$lib/server/inventory/applyPurchaseCost';
 import { fail } from '@sveltejs/kit';
 import { eq, sql, and, desc } from 'drizzle-orm';
 
@@ -14,7 +15,7 @@ export const load = async () => {
 		.from(inventory)
 		.innerJoin(products, eq(inventory.productId, products.id))
 		.innerJoin(warehouses, eq(inventory.warehouseId, warehouses.id));
-		
+
 	// Load data for the transaction dropdowns
 	const allProducts = await db.select().from(products).orderBy(products.sku);
 	const allWarehouses = await db.select().from(warehouses).orderBy(warehouses.name);
@@ -54,6 +55,11 @@ export const actions = {
 		const quantityStr = data.get('quantity')?.toString();
 		const referenceDoc = data.get('referenceDoc')?.toString() || null;
 		const notes = data.get('notes')?.toString() || null;
+		const submittedUnitCost = data.get('unitCost')?.toString().trim() || null;
+		if (type !== 'STOCK_IN' && submittedUnitCost) {
+			return fail(400, { error: 'Purchase cost is only allowed for STOCK_IN' });
+		}
+		const unitCostStr = type === 'STOCK_IN' ? submittedUnitCost : null;
 
 		if (!type || !productId || !warehouseId || !quantityStr) {
 			return fail(400, { missing: true });
@@ -70,6 +76,16 @@ export const actions = {
 			quantityChange = Math.abs(quantityChange);
 		}
 
+		if (type === 'STOCK_IN' && unitCostStr) {
+			if (!/^\d{1,12}(\.\d{1,2})?$/.test(unitCostStr)) {
+				return fail(400, { error: 'Invalid purchase cost' });
+			}
+			const cost = Number(unitCostStr);
+			if (!Number.isFinite(cost) || cost < 0.01) {
+				return fail(400, { error: 'Invalid purchase cost' });
+			}
+		}
+
 		try {
 			await db.transaction(async (tx) => {
 				// 1. Upsert or get existing inventory record
@@ -81,32 +97,30 @@ export const actions = {
 				});
 
 				let currentInventoryId;
-				
+
 				if (!invRecord) {
 					// Disallow stock-out from non-existent inventory
 					if (quantityChange < 0) throw new Error('Cannot reduce stock below 0');
-					
+
 					const newInv = await tx.insert(inventory).values({
 						productId,
 						warehouseId,
 						quantity: quantityChange
 					}).returning();
-					
+
 					currentInventoryId = newInv[0].id;
 				} else {
 					const newQuantity = invRecord.quantity + quantityChange;
-					
-					// Optional: Disallow negative stock? (Depending on business rules, sometimes allowed temporarily)
-					// Let's enforce >= 0 for strict tracking.
+
 					if (newQuantity < 0) throw new Error(`Insufficient stock. Current: ${invRecord.quantity}`);
 
 					await tx.update(inventory)
-						.set({ 
+						.set({
 							quantity: newQuantity,
 							lastUpdated: sql`now()`
 						})
 						.where(eq(inventory.id, invRecord.id));
-						
+
 					currentInventoryId = invRecord.id;
 				}
 
@@ -115,10 +129,16 @@ export const actions = {
 					inventoryId: currentInventoryId,
 					transactionType: type,
 					quantityChange,
+					unitCost: unitCostStr ?? undefined,
 					referenceDoc,
 					notes,
 					performedBy: sessionUser.id
 				});
+
+				// 3. Apply new purchase cost inside the same transaction for atomicity
+				if (type === 'STOCK_IN' && unitCostStr) {
+					await applyPurchaseCost(productId, unitCostStr, tx);
+				}
 			});
 
 			return { success: true };

@@ -10,13 +10,14 @@
 	import * as Popover from "$lib/components/ui/popover";
 	import * as Command from "$lib/components/ui/command";
 	import { cn } from "$lib/utils";
-	
+
 	let { data, form } = $props();
-	
+
 	let isTransactOpen = $state(false);
 	let isSubmitting = $state(false);
 
 	let selectedType = $state('STOCK_IN');
+	let priceChangeEnabled = $state(false);
 	let typeOpen = $state(false);
 	let selectedProduct = $state('');
 	let prodOpen = $state(false);
@@ -49,6 +50,7 @@
 				selectedProduct = '';
 				barcodeInput = '';
 				barcodeError = '';
+				priceChangeEnabled = false;
 			}
 			isSubmitting = false;
 			await update();
@@ -173,6 +175,7 @@
 																value={type.label}
 																onSelect={() => {
 																	selectedType = type.value;
+																	priceChangeEnabled = false;
 																	typeOpen = false;
 																}}
 																class="cursor-pointer py-2"
@@ -282,11 +285,47 @@
 										<Input id="referenceDoc" name="referenceDoc" placeholder="Bill of landing, invoice #" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
 									</div>
 								</div>
-								
+
 								<div class="space-y-2 group">
 									<Label for="notes" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Internal Remarks</Label>
 									<Input id="notes" name="notes" placeholder="Condition details, auditor tags..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
 								</div>
+
+								{#if selectedType === 'STOCK_IN'}
+								<div class="space-y-4 border-t border-border/50 pt-6">
+									<div class="flex items-center justify-between">
+										<div>
+											<p class="text-xs font-bold tracking-wider uppercase text-foreground/70">Price Change?</p>
+											<p class="text-[11px] text-muted-foreground/60 mt-0.5">Apply a new purchase cost to all units of this product</p>
+										</div>
+										<button
+											type="button"
+											role="switch"
+											aria-checked={priceChangeEnabled}
+											onclick={() => { priceChangeEnabled = !priceChangeEnabled; }}
+											class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 {priceChangeEnabled ? 'bg-primary' : 'bg-muted'}"
+										>
+											<span class="pointer-events-none inline-block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform {priceChangeEnabled ? 'translate-x-5' : 'translate-x-0'}"></span>
+										</button>
+									</div>
+
+									{#if priceChangeEnabled}
+									<div class="space-y-2 group animate-in fade-in slide-in-from-top-1 duration-150">
+										<Label for="unitCost" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Purchase Cost (ETB) *</Label>
+										<Input
+											id="unitCost"
+											name="unitCost"
+											type="number"
+											min="0.01"
+											step="0.01"
+											placeholder="e.g. 250.00"
+											required
+											class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg transition-all"
+										/>
+									</div>
+									{/if}
+								</div>
+								{/if}
 							</div>
 						</div>
 
@@ -375,7 +414,7 @@
 						{#each data.recentTransactions as tx}
 							<Table.Row class="hover:bg-muted/30 border-b border-border/50 transition-colors">
 								<Table.Cell class="px-6 py-4 align-middle">
-									<span class="inline-flex items-center justify-center rounded-none px-2 py-1 text-[9px] font-black uppercase tracking-widest 
+									<span class="inline-flex items-center justify-center rounded-none px-2 py-1 text-[9px] font-black uppercase tracking-widest
 										{tx.tx.transactionType === 'STOCK_IN' ? 'bg-emerald-500/10 text-emerald-700' :
 										tx.tx.transactionType === 'STOCK_OUT' ? 'bg-rose-500/10 text-rose-700' :
 										'bg-amber-500/10 text-amber-700'}">
