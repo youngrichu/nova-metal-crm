@@ -1,29 +1,75 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
-	import { ArrowLeft, Edit3, MapPin, Phone, Mail, FileText, ShoppingCart, Calendar, Building2, User } from 'lucide-svelte';
-	
+	import { ArrowLeft, Edit3, MapPin, Phone, Mail, FileText, ShoppingCart, Calendar, Building2, User, Link } from 'lucide-svelte';
+	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+
 	let { data } = $props();
 	let customer = $derived(data.customer);
 	let orders = $derived(data.orders);
-	
+	let pendingWalkInOrders = $derived(data.pendingWalkInOrders);
+	let bannerDismissed = $state(false);
+	let showBanner = $derived(pendingWalkInOrders.length > 0 && !bannerDismissed);
+
+	function handleLinkOrders() {
+		return async ({ result, update }: any) => {
+			if (result.type === 'success') {
+				await goto(`/dashboard/customers/${data.customer.id}`, { invalidateAll: true });
+			}
+			await update();
+		};
+	}
+
 	import * as m from '$lib/paraglide/messages';
 </script>
 
 <div class="p-4 md:p-8 max-w-[1400px] mx-auto space-y-12">
-	
+
 	<!-- Top Navigation -->
 	<div class="flex items-center justify-between">
 		<Button href="/dashboard/customers" variant="ghost" class="gap-2 h-10 px-4 rounded-none uppercase tracking-widest text-xs font-bold hover:bg-foreground hover:text-background transition-colors">
 			<ArrowLeft class="w-4 h-4" /> {m.customer_details_back()}
 		</Button>
-		
+
 		<div class="flex items-center gap-4">
 			<Button class="rounded-none bg-primary text-primary-foreground font-bold uppercase tracking-widest text-xs h-10 px-6 hover:opacity-90 transition-opacity">
 				<Edit3 class="w-4 h-4 mr-2" /> {m.customer_details_modify()}
 			</Button>
 		</div>
 	</div>
+
+	{#if showBanner}
+		<div class="bg-primary/10 border-2 border-primary p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+			<div class="space-y-1">
+				<p class="font-black tracking-tight uppercase text-sm flex items-center gap-2">
+					<Link class="w-4 h-4" />
+					{pendingWalkInOrders.length} walk-in {pendingWalkInOrders.length === 1 ? 'order' : 'orders'} found with this phone number
+				</p>
+				<p class="text-xs text-muted-foreground">Link them to this customer to see them in the order history.</p>
+			</div>
+			<div class="flex items-center gap-3 shrink-0">
+				<Button
+					variant="ghost"
+					size="sm"
+					onclick={() => { bannerDismissed = true; }}
+					class="rounded-none text-xs font-bold uppercase tracking-widest"
+				>
+					Dismiss
+				</Button>
+				<form method="POST" action="?/linkOrders" use:enhance={handleLinkOrders}>
+					<input type="hidden" name="orderIds" value={JSON.stringify(pendingWalkInOrders.map(o => o.id))} />
+					<Button
+						type="submit"
+						size="sm"
+						class="rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary"
+					>
+						Link Orders
+					</Button>
+				</form>
+			</div>
+		</div>
+	{/if}
 
 	<!-- Brutalist Identity Header -->
 	<div class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-12 items-end border-b-4 border-foreground pb-8">
@@ -40,7 +86,7 @@
 				</p>
 			{/if}
 		</div>
-		
+
 		<div class="bg-muted p-6 border-l-4 border-primary space-y-4 self-stretch flex flex-col justify-end">
 			<div class="flex justify-between items-center border-b border-border/50 pb-2">
 				<span class="text-[10px] font-bold tracking-widest uppercase text-foreground/50">{m.customer_details_category()}</span>
@@ -59,15 +105,15 @@
 
 	<!-- Two-column content layout -->
 	<div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
-		
+
 		<!-- Left Col: Profile Details -->
 		<div class="col-span-1 space-y-12">
-			
+
 			<section class="space-y-6">
 				<h2 class="text-sm font-bold tracking-widest uppercase text-muted-foreground flex items-center gap-4">
 					<div class="w-8 h-[2px] bg-primary"></div> {m.customer_details_contact()}
 				</h2>
-				
+
 				<ul class="space-y-4">
 					{#if customer.phone}
 						<li class="flex items-start gap-4 p-4 bg-muted/30 border border-border/50 rounded-lg group hover:border-foreground/30 transition-colors">
@@ -80,7 +126,7 @@
 							</div>
 						</li>
 					{/if}
-					
+
 					{#if customer.whatsapp}
 						<li class="flex items-start gap-4 p-4 bg-muted/30 border border-[var(--color-whatsapp,#25D366)]/20 rounded-lg group hover:border-[var(--color-whatsapp,#25D366)]/60 transition-colors">
 							<div class="bg-[#25D366]/10 p-2 rounded shadow-sm">
@@ -104,7 +150,7 @@
 							</div>
 						</li>
 					{/if}
-					
+
 					{#if customer.tinNumber}
 						<li class="flex items-start gap-4 p-4 bg-primary/5 border border-primary/20 rounded-lg">
 							<div class="bg-primary p-2 rounded shadow-sm">
@@ -116,7 +162,7 @@
 							</div>
 						</li>
 					{/if}
-					
+
 					{#if customer.address}
 						<li class="flex items-start gap-4 p-4 bg-muted/30 border border-border/50 rounded-lg">
 							<div class="bg-card p-2 rounded shadow-sm mt-1">
@@ -141,7 +187,7 @@
 
 		<!-- Right Col: History & Orders -->
 		<div class="col-span-1 lg:col-span-2 space-y-12">
-			
+
 			<section class="space-y-6">
 				<div class="flex items-center justify-between border-b-2 border-foreground/10 pb-4">
 					<h2 class="text-xl font-black tracking-widest uppercase flex items-center gap-3">
@@ -151,13 +197,13 @@
 						{m.customer_ledger_invoice()}
 					</Button>
 				</div>
-				
+
 				{#if orders.length > 0}
 					<div class="grid grid-cols-1 gap-4">
 						{#each orders as order}
-							<a href="/dashboard/sales/{order.id}" class="group block bg-card border-2 border-border/50 hover:border-foreground transition-colors p-6 relative overflow-hidden">
+							<a href="/dashboard/sales/orders/{order.id}" class="group block bg-card border-2 border-border/50 hover:border-foreground transition-colors p-6 relative overflow-hidden">
 								<div class="absolute right-0 top-0 w-2 h-full bg-primary transform scale-y-0 group-hover:scale-y-100 transition-transform origin-top"></div>
-								
+
 								<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
 									<div class="space-y-1">
 										<div class="flex items-center gap-3">
@@ -170,7 +216,7 @@
 											<Calendar class="w-3 h-3" /> {new Date(order.createdAt).toLocaleString()}
 										</p>
 									</div>
-									
+
 									<div class="flex items-center gap-8">
 										<div class="text-right">
 											<span class="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{m.customer_ledger_total()}</span>
@@ -196,7 +242,7 @@
 					</div>
 				{/if}
 			</section>
-			
+
 		</div>
 	</div>
 
