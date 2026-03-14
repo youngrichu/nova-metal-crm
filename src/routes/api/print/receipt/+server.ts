@@ -20,11 +20,11 @@ try {
 	console.warn('ESC/POS drivers not available:', e);
 }
 
-async function getPrinterSettings(): Promise<{ type: string; address: string; paperWidth: number; vatRate: number }> {
+async function getPrinterSettings(): Promise<{ type: string; address: string; paperWidth: number; vatRate: number; currencyCode: string; currencyLocale: string }> {
 	const rows = await db
 		.select()
 		.from(systemSettings)
-		.where(inArray(systemSettings.key, ['printer_type', 'printer_address', 'paper_width', 'vat_rate']));
+		.where(inArray(systemSettings.key, ['printer_type', 'printer_address', 'paper_width', 'vat_rate', 'currency_code', 'currency_locale']));
 
 	const map: Record<string, string> = {};
 	for (const row of rows) map[row.key] = row.value;
@@ -33,7 +33,9 @@ async function getPrinterSettings(): Promise<{ type: string; address: string; pa
 		type: map.printer_type ?? 'network',
 		address: map.printer_address ?? '192.168.1.100',
 		paperWidth: parseInt(map.paper_width ?? '80', 10),
-		vatRate: parseFloat(map.vat_rate ?? '0.15')
+		vatRate: parseFloat(map.vat_rate ?? '0.15'),
+		currencyCode: map.currency_code ?? 'ETB',
+		currencyLocale: map.currency_locale ?? 'en-ET'
 	};
 }
 
@@ -123,7 +125,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 						.align('lt')
 						.text(`Receipt: ${o.orderNumber}`)
-						.text(`Date:    ${new Date(o.createdAt).toLocaleString('en-ET')}`)
+						.text(`Date:    ${new Date(o.createdAt).toLocaleString(config.currencyLocale)}`)
 						.text(`Cashier: ${user.name}`)
 						.text(`Customer: ${c?.name ?? 'Walk-in'}`)
 						.drawLine()
@@ -144,10 +146,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					printer
 						.drawLine()
 						.align('rt')
-						.text(`Subtotal:  ETB ${Number(o.subtotal).toFixed(2)}`)
-						.text(`${vatLabel.padEnd(10)} ETB ${Number(o.taxAmount).toFixed(2)}`)
+						.text(`Subtotal:  ${config.currencyCode} ${Number(o.subtotal).toFixed(2)}`)
+						.text(`${vatLabel.padEnd(10)} ${config.currencyCode} ${Number(o.taxAmount).toFixed(2)}`)
 						.style('b')
-						.text(`TOTAL:     ETB ${Number(o.totalAmount).toFixed(2)}`)
+						.text(`TOTAL:     ${config.currencyCode} ${Number(o.totalAmount).toFixed(2)}`)
 						.style('normal')
 						.drawLine()
 						.align('ct')
