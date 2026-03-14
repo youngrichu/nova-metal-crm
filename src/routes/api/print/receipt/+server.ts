@@ -98,7 +98,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const PRINT_TIMEOUT_MS = 15000;
 
 		await new Promise<void>((resolve, reject) => {
+			let deviceOpened = false;
+
 			const timeout = setTimeout(() => {
+				if (deviceOpened) {
+					try { printer.close(); } catch (_) { /* ignore */ }
+				}
 				reject(new Error('Print timed out after 15 seconds'));
 			}, PRINT_TIMEOUT_MS);
 
@@ -107,6 +112,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 					clearTimeout(timeout);
 					return reject(err);
 				}
+				deviceOpened = true;
 
 				try {
 					const vatLabel = `VAT ${Math.round(config.vatRate * 100)}%:`;
@@ -169,6 +175,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	} catch (err: any) {
 		console.error('Thermal printing failed:', err);
-		return json({ success: false, error: err.message ?? 'Failed to communicate with printer' }, { status: 500 });
+		return json({ success: false, error: 'Failed to communicate with printer' }, { status: 500 });
 	}
 };
