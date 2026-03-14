@@ -35,7 +35,6 @@
 
 <style>
 	:global(#app-sidebar) {
-		--sidebar-width: 13rem;
 		--sidebar-background: 220 10% 10%;
 		--sidebar-foreground: 210 40% 96%;
 		--sidebar-primary: var(--primary);
@@ -59,7 +58,7 @@
 				</div>
 			</div>
 			<!-- Wordmark -->
-			<div class="flex flex-col leading-none px-4 group-data-[collapsible=icon]:hidden overflow-hidden">
+			<div class="flex flex-col leading-none px-5 group-data-[collapsible=icon]:hidden overflow-hidden">
 				<span class="text-sm font-black tracking-[0.15em] text-sidebar-foreground uppercase leading-tight">Nova Metal</span>
 				<span class="text-[0.65rem] font-bold tracking-[0.2em] text-sidebar-foreground/40 uppercase mt-0.5">ERP System</span>
 			</div>
@@ -70,7 +69,7 @@
 	<Sidebar.Content class="px-0 py-3">
 		<Sidebar.Group class="px-0">
 			<!-- Section label -->
-			<Sidebar.GroupLabel class="px-4 pb-2 text-[0.6rem] font-black tracking-[0.2em] uppercase text-sidebar-foreground/30 group-data-[collapsible=icon]:hidden">
+			<Sidebar.GroupLabel class="px-6 pb-2 text-[0.6rem] font-black tracking-[0.2em] uppercase text-sidebar-foreground/30 group-data-[collapsible=icon]:hidden">
 				Navigation
 			</Sidebar.GroupLabel>
 			<Sidebar.GroupContent>
@@ -84,7 +83,7 @@
 										href={item.href}
 										{...props}
 										class={cn(
-											'flex items-center gap-3 relative h-11 px-4 transition-colors',
+											'flex items-center gap-3 relative h-11 px-6 transition-colors',
 											'group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:w-full',
 											props.class as string,
 											isActive
@@ -116,7 +115,7 @@
 							<Sidebar.MenuButton
 								{...props}
 								size="lg"
-								class="h-14 rounded-none px-4 data-[state=open]:bg-white/10 outline-none group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center border-b-0"
+								class="h-14 rounded-none px-6 data-[state=open]:bg-white/10 outline-none group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center border-b-0"
 							>
 								<!-- Avatar -->
 								<div class="flex shrink-0 items-center justify-center size-8 bg-white/15 border border-white/20">
