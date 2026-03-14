@@ -6,6 +6,7 @@ import { generateSKU } from '$lib/utils/skuGenerator';
 
 export const load = async ({ locals }: { locals: App.Locals }) => {
 	if (!locals.user) throw redirect(302, '/login');
+	if (!['admin', 'warehouse'].includes(locals.user.role)) throw redirect(302, '/dashboard');
 	const allProducts = await db.select({
 		product: products,
 		category: categories

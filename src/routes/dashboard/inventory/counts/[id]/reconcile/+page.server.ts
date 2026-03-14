@@ -171,6 +171,7 @@ export const actions: Actions = {
 			return { success: true, skippedProducts };
 		} catch (err: any) {
 			if (err?.message === 'Count session not found') return fail(404, { error: 'Count session not found' });
+			if (err?.message === 'Count session is already closed or no longer available') return fail(409, { error: 'This count session was already closed by another user.' });
 			console.error('Failed to close count:', err);
 			return fail(500, { error: 'Failed to close count and apply adjustments' });
 		}

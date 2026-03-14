@@ -72,15 +72,18 @@ export const actions: Actions = {
             updates.push({ key, value: raw });
         }
 
+        const userId = locals.user.id;
         try {
-            for (const { key, value } of updates) {
-                await db.insert(systemSettings)
-                    .values({ key, value, updatedAt: new Date(), updatedBy: locals.user.id })
-                    .onConflictDoUpdate({
-                        target: systemSettings.key,
-                        set: { value, updatedAt: new Date(), updatedBy: locals.user.id }
-                    });
-            }
+            await db.transaction(async (tx) => {
+                for (const { key, value } of updates) {
+                    await tx.insert(systemSettings)
+                        .values({ key, value, updatedAt: new Date(), updatedBy: userId })
+                        .onConflictDoUpdate({
+                            target: systemSettings.key,
+                            set: { value, updatedAt: new Date(), updatedBy: userId }
+                        });
+                }
+            });
             return { success: true };
         } catch (e) {
             console.error('System settings update error:', e);
