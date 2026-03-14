@@ -84,6 +84,9 @@ export const actions: Actions = {
                 .set({ emailVerified: !currentValue, updatedAt: new Date() })
                 .where(eq(usersTable.id, targetUserId));
 
+            // Revoke sessions so deactivated users lose access immediately
+            await db.delete(sessionsTable).where(eq(sessionsTable.userId, targetUserId));
+
             return { success: true };
         } catch (e) {
             console.error(e);

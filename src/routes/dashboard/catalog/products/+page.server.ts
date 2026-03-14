@@ -43,6 +43,9 @@ export const actions = {
 		if (!name || !categoryId) {
 			return fail(400, { missing: true });
 		}
+		if (!isFinite(averageLandingCost) || averageLandingCost < 0) {
+			return fail(400, { error: 'Purchase cost must be a non-negative number' });
+		}
 
 		try {
 			// Find the category prefix to generate the SKU
@@ -121,6 +124,9 @@ export const actions = {
 		const averageLandingCost = data.get('averageLandingCost') ? parseFloat(data.get('averageLandingCost') as string) : 0;
 
 		if (!id || !name || !categoryId) return fail(400, { missing: true });
+		if (!isFinite(averageLandingCost) || averageLandingCost < 0) {
+			return fail(400, { error: 'Purchase cost must be a non-negative number' });
+		}
 
 		try {
 			const category = await db.query.categories.findFirst({ where: eq(categories.id, categoryId) });

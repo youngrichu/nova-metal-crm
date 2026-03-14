@@ -3,7 +3,8 @@ import { systemSettings } from '$lib/server/db/schema/settings';
 import { eq } from 'drizzle-orm';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async () => {
+export const load: LayoutServerLoad = async ({ locals }) => {
+	if (!locals.user) return { barcodeEnabled: false };
 	try {
 		const row = await db
 			.select()

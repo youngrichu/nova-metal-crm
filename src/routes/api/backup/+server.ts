@@ -71,11 +71,13 @@ export const GET: RequestHandler = async ({ locals }) => {
         throw error(500, 'Database export produced empty output');
     }
 
-    lastBackupAt = now;
     // Log audit event
     console.log(`[AUDIT] Database backup exported by user ${locals.user.id} at ${new Date().toISOString()}`);
 
     const compressed = await gzipAsync(stdout);
+
+    // Stamp rate limiter only after compression succeeds so a gzip failure doesn't block retries
+    lastBackupAt = now;
 
     return new Response(compressed, {
         headers: {
