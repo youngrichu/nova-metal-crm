@@ -36,18 +36,26 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-	create: async ({ request, locals }) => {
-		const user = locals.user;
-		if (!user) {
-			throw error(401, "Unauthorized");
-		}
+    create: async ({ request, locals }) => {
+        const user = locals.user;
+        if (!user) {
+            throw error(401, "Unauthorized");
+        }
 
-		try {
-			const formData = await request.formData();
-			const customerId = formData.get("customerId")?.toString();
-			const itemsJson = formData.get("items")?.toString();
+        try {
+            const formData = await request.formData();
+            const customerId = formData.get("customerId")?.toString() || null;
+            const isWalkIn = formData.get("isWalkIn") === "true";
+            const walkInPhone = formData.get("walkInPhone")?.toString() || null;
+            const walkInPricingTier = formData.get("walkInPricingTier")?.toString() || null;
+            const itemsJson = formData.get("items")?.toString();
 
-            if (!customerId || !itemsJson) {
+            // Validation: need either a customer or walk-in mode
+            if (!customerId && !isWalkIn) {
+                return { error: "Please select a customer or use walk-in mode" };
+            }
+
+            if (!itemsJson) {
                 return { error: "Missing required fields" };
             }
 
@@ -56,31 +64,32 @@ export const actions: Actions = {
                 return { error: "Order must have at least one valid item" };
             }
 
-            // Generate an order number (e.g., SO-2026-XXXX)
-            // In a real system, you'd use a sequence or transaction-safe generator
+            // Resolve the effective pricing tier override for walk-in orders.
+            // If customerId is present, the engine will look up the customer tier — no override needed.
+            const tierOverride = customerId ? undefined : (walkInPricingTier || 'RETAIL');
+
             const orderCount = await db.$count(salesOrders);
             const orderNumber = `SO-${new Date().getFullYear()}-${String(orderCount + 1).padStart(4, '0')}`;
 
-            // Calculate totals SECURELY via PricingEngine
             let subtotal = 0;
             let orderDiscountAmount = 0;
-            
+
             const { calculateDynamicPrice } = await import('$lib/server/pricing/engine');
 
-            // Process sequentially since we are querying the DB in calculateDynamicPrice
             const orderItemsData: any[] = [];
             for (const item of items) {
                 const quantity = Number(item.quantity) || 0;
-                let submittedUnitPrice = Number(item.unitPrice) || 0;
-                
                 if (quantity <= 0) continue;
 
-                // Call the Pricing Engine to get the correct price & discounts
-                const pricing = await calculateDynamicPrice(item.productId, customerId, quantity);
-                
+                const pricing = await calculateDynamicPrice(
+                    item.productId,
+                    customerId,
+                    quantity,
+                    undefined,
+                    tierOverride
+                );
+
                 subtotal += pricing.lineTotal;
-                
-                // Track total absolute discount value for the order summary
                 const itemTotalWithoutDiscount = pricing.unitPriceBeforeDiscount * quantity;
                 orderDiscountAmount += (itemTotalWithoutDiscount - pricing.lineTotal);
 
@@ -93,16 +102,17 @@ export const actions: Actions = {
                 });
             }
 
-            const taxAmount = subtotal * 0.15; // 15% VAT
+            const taxAmount = subtotal * 0.15;
             const totalAmount = subtotal + taxAmount;
 
             let newOrderId = "";
 
             await db.transaction(async (tx) => {
-                // Insert order
                 const [order] = await tx.insert(salesOrders).values({
                     orderNumber,
-                    customerId,
+                    customerId: customerId || null,
+                    walkInPhone: isWalkIn ? (walkInPhone || null) : null,
+                    walkInPricingTier: isWalkIn ? (walkInPricingTier || 'RETAIL') : null,
                     status: 'DRAFT',
                     subtotal: subtotal.toString(),
                     taxAmount: taxAmount.toString(),
@@ -113,7 +123,6 @@ export const actions: Actions = {
 
                 newOrderId = order.id;
 
-                // Insert items
                 const insertItems = orderItemsData.map((item: any) => ({
                     orderId: newOrderId,
                     ...item
@@ -124,9 +133,9 @@ export const actions: Actions = {
 
             return { success: true, orderId: newOrderId };
 
-		} catch (err) {
-			console.error("Order creation error:", err);
-			return { error: "An unexpected error occurred during order creation." };
-		}
-	}
+        } catch (err) {
+            console.error("Order creation error:", err);
+            return { error: "An unexpected error occurred during order creation." };
+        }
+    }
 };
