@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db';
 import { systemSettings } from '$lib/server/db/schema/settings';
 import { redirect, fail } from '@sveltejs/kit';
-import { invalidateBarcodeCache } from '../+layout.server';
+import { _invalidateBarcodeCache } from '../+layout.server';
 import type { PageServerLoad, Actions } from './$types';
 
 const SETTING_KEYS = ['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred', 'currency_code', 'currency_locale', 'barcode_enabled'] as const;
@@ -88,7 +88,7 @@ export const actions: Actions = {
                         });
                 }
             });
-            invalidateBarcodeCache();
+            _invalidateBarcodeCache();
             return { success: true };
         } catch (e) {
             console.error('System settings update error:', e);
