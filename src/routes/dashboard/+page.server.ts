@@ -6,6 +6,8 @@ import { sql, desc, inArray } from 'drizzle-orm';
 export const load = async ({ locals }) => {
 	if (!locals.user) throw redirect(302, '/login');
 
+	const isFinancialRole = ['admin', 'sales'].includes(locals.user.role);
+
 	// Total product count
 	const [productCountResult] = await db
 		.select({ count: sql<number>`count(*)` })
@@ -15,22 +17,6 @@ export const load = async ({ locals }) => {
 	const [warehouseCountResult] = await db
 		.select({ count: sql<number>`count(*)` })
 		.from(warehouses);
-
-    // KPIs: Total Sales & Total Profit (Phase 3) — tables: sales_orders, sales_order_items, products
-    const { rows: kpiRows } = await db.execute(sql`
-        SELECT 
-            COALESCE(SUM(so.total_amount), 0) as total_sales,
-            COALESCE(SUM(
-                soi.line_total - (p.average_landing_cost * soi.quantity)
-            ), 0) as total_profit
-        FROM sales_orders so
-        JOIN sales_order_items soi ON so.id = soi.order_id
-        JOIN products p ON soi.product_id = p.id
-        WHERE so.status != 'CANCELLED' AND so.status != 'DRAFT'
-    `);
-
-    const totalSales = Number(kpiRows[0]?.total_sales || 0);
-    const totalProfit = Number(kpiRows[0]?.total_profit || 0);
 
     // Active orders: PENDING or PROCESSING
     const [activeOrdersResult] = await db
@@ -70,47 +56,66 @@ export const load = async ({ locals }) => {
 		.orderBy(desc(inventoryTransactions.createdAt))
 		.limit(5);
 
-    // Sales trend: daily revenue for last 30 days — table: sales_orders
-    const { rows: trendRows } = await db.execute(sql`
-        SELECT
-            TO_CHAR(DATE(created_at), 'YYYY-MM-DD') as date,
-            SUM(total_amount)::float as revenue
-        FROM sales_orders
-        WHERE status NOT IN ('CANCELLED', 'DRAFT')
-          AND created_at >= NOW() - INTERVAL '30 days'
-        GROUP BY DATE(created_at)
-        ORDER BY date ASC
-    `);
+	// Financial queries only run for admin/sales roles — skip for warehouse users
+	let totalSales = 0;
+	let totalProfit = 0;
+	let salesTrend: { date: string; revenue: number }[] = [];
+	let marginsByCategory: { categoryName: string; marginPercent: number }[] = [];
 
-    const salesTrend = trendRows.map((r: any) => ({
-        date: r.date as string,
-        revenue: Number(r.revenue)
-    }));
+	if (isFinancialRole) {
+		// KPIs: Total Sales & Total Profit
+		const { rows: kpiRows } = await db.execute(sql`
+			SELECT
+				COALESCE(SUM(so.total_amount), 0) as total_sales,
+				COALESCE(SUM(
+					soi.line_total - (p.average_landing_cost * soi.quantity)
+				), 0) as total_profit
+			FROM sales_orders so
+			JOIN sales_order_items soi ON so.id = soi.order_id
+			JOIN products p ON soi.product_id = p.id
+			WHERE so.status != 'CANCELLED' AND so.status != 'DRAFT'
+		`);
+		totalSales = Number(kpiRows[0]?.total_sales || 0);
+		totalProfit = Number(kpiRows[0]?.total_profit || 0);
 
-    // Profit margins by category — tables: sales_order_items, products, categories, sales_orders
-    const { rows: marginRows } = await db.execute(sql`
-        SELECT
-            c.name as category_name,
-            ROUND(
-                (SUM(soi.line_total - (p.average_landing_cost * soi.quantity)) /
-                 NULLIF(SUM(soi.line_total), 0)) * 100,
-                1
-            )::float as margin_percent
-        FROM sales_order_items soi
-        JOIN products p ON soi.product_id = p.id
-        JOIN categories c ON p.category_id = c.id
-        JOIN sales_orders so ON soi.order_id = so.id
-        WHERE so.status NOT IN ('CANCELLED', 'DRAFT')
-        GROUP BY c.id, c.name
-        ORDER BY margin_percent DESC
-    `);
+		// Sales trend: daily revenue for last 30 days
+		const { rows: trendRows } = await db.execute(sql`
+			SELECT
+				TO_CHAR(DATE(created_at), 'YYYY-MM-DD') as date,
+				SUM(total_amount)::float as revenue
+			FROM sales_orders
+			WHERE status NOT IN ('CANCELLED', 'DRAFT')
+			  AND created_at >= NOW() - INTERVAL '30 days'
+			GROUP BY DATE(created_at)
+			ORDER BY date ASC
+		`);
+		salesTrend = trendRows.map((r: any) => ({
+			date: r.date as string,
+			revenue: Number(r.revenue)
+		}));
 
-    const marginsByCategory = marginRows.map((r: any) => ({
-        categoryName: r.category_name as string,
-        marginPercent: Number(r.margin_percent)
-    }));
-
-	const isFinancialRole = ['admin', 'sales'].includes(locals.user.role);
+		// Profit margins by category
+		const { rows: marginRows } = await db.execute(sql`
+			SELECT
+				c.name as category_name,
+				ROUND(
+					(SUM(soi.line_total - (p.average_landing_cost * soi.quantity)) /
+					 NULLIF(SUM(soi.line_total), 0)) * 100,
+					1
+				)::float as margin_percent
+			FROM sales_order_items soi
+			JOIN products p ON soi.product_id = p.id
+			JOIN categories c ON p.category_id = c.id
+			JOIN sales_orders so ON soi.order_id = so.id
+			WHERE so.status NOT IN ('CANCELLED', 'DRAFT')
+			GROUP BY c.id, c.name
+			ORDER BY margin_percent DESC
+		`);
+		marginsByCategory = marginRows.map((r: any) => ({
+			categoryName: r.category_name as string,
+			marginPercent: Number(r.margin_percent)
+		}));
+	}
 
 	return {
 		user: locals.user,
@@ -120,9 +125,9 @@ export const load = async ({ locals }) => {
 		lowStockCount: lowStockItems.length,
 		lowStockItems,
 		recentTransactions,
-        totalSales:        isFinancialRole ? totalSales : null,
-        totalProfit:       isFinancialRole ? totalProfit : null,
-        salesTrend:        isFinancialRole ? salesTrend : [],
-        marginsByCategory: isFinancialRole ? marginsByCategory : []
+		totalSales:        isFinancialRole ? totalSales : null,
+		totalProfit:       isFinancialRole ? totalProfit : null,
+		salesTrend,
+		marginsByCategory
 	};
 };
