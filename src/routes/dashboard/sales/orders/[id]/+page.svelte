@@ -164,6 +164,7 @@
             <!-- Customer Card -->
             <section class="bg-card border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] p-6">
                 <h2 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-4 mb-4">Customer Details</h2>
+                {#if data.order.customer}
                 <div class="space-y-4">
                     <div>
                         <p class="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 mb-1">Name</p>
@@ -188,6 +189,18 @@
                         </div>
                     {/if}
                 </div>
+                {:else}
+                <div class="space-y-1">
+                    <p class="text-xs font-bold tracking-widest uppercase text-muted-foreground">Customer</p>
+                    <p class="font-black text-lg uppercase tracking-tight">Walk-In</p>
+                    {#if data.order.walkInPricingTier}
+                        <p class="text-xs font-bold tracking-widest uppercase text-primary">{data.order.walkInPricingTier} Pricing</p>
+                    {/if}
+                    {#if data.order.walkInPhone}
+                        <p class="text-sm text-muted-foreground font-mono">{data.order.walkInPhone}</p>
+                    {/if}
+                </div>
+                {/if}
             </section>
 
             <!-- Status Actions -->
