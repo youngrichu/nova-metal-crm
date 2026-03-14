@@ -121,39 +121,52 @@ export const actions: Actions = {
 
             let newOrderId = "";
 
-            await db.transaction(async (tx) => {
-                // Generate order number inside the transaction for atomicity.
-                // Using MAX(cast(split_part(...))) scoped to the current year avoids the
-                // race condition of reading a count outside the transaction.
-                const year = new Date().getFullYear();
-                const [{ maxNum }] = await tx
-                    .select({ maxNum: sql<number>`coalesce(max(cast(split_part(order_number, '-', 3) as int)), 0)` })
-                    .from(salesOrders)
-                    .where(sql`order_number like ${'SO-' + year + '-%'}`);
-                const orderNumber = `SO-${year}-${String((maxNum ?? 0) + 1).padStart(4, '0')}`;
+            // Retry loop: under READ COMMITTED, two concurrent transactions can both
+            // read the same MAX and attempt to insert the same order number. The UNIQUE
+            // constraint on order_number catches the collision; we retry up to 5 times.
+            // Each retry re-reads MAX inside a fresh transaction so it sees the committed value.
+            for (let attempt = 0; attempt < 5; attempt++) {
+                try {
+                    await db.transaction(async (tx) => {
+                        const year = new Date().getFullYear();
+                        const [{ maxNum }] = await tx
+                            .select({ maxNum: sql<number>`coalesce(max(cast(split_part(order_number, '-', 3) as int)), 0)` })
+                            .from(salesOrders)
+                            .where(sql`order_number like ${'SO-' + year + '-%'}`);
+                        const orderNumber = `SO-${year}-${String((maxNum ?? 0) + 1).padStart(4, '0')}`;
 
-                const [order] = await tx.insert(salesOrders).values({
-                    orderNumber,
-                    customerId: customerId || null,
-                    walkInPhone: effectiveIsWalkIn ? (walkInPhone || null) : null,
-                    walkInPricingTier: effectiveIsWalkIn ? effectiveWalkInTier : null,
-                    status: 'DRAFT',
-                    subtotal: subtotal.toString(),
-                    taxAmount: taxAmount.toString(),
-                    totalAmount: totalAmount.toString(),
-                    discountAmount: orderDiscountAmount.toString(),
-                    createdBy: user.id
-                }).returning({ id: salesOrders.id });
+                        const [order] = await tx.insert(salesOrders).values({
+                            orderNumber,
+                            customerId: customerId || null,
+                            walkInPhone: effectiveIsWalkIn ? (walkInPhone || null) : null,
+                            walkInPricingTier: effectiveIsWalkIn ? effectiveWalkInTier : null,
+                            status: 'DRAFT',
+                            subtotal: subtotal.toString(),
+                            taxAmount: taxAmount.toString(),
+                            totalAmount: totalAmount.toString(),
+                            discountAmount: orderDiscountAmount.toString(),
+                            createdBy: user.id
+                        }).returning({ id: salesOrders.id });
 
-                newOrderId = order.id;
+                        newOrderId = order.id;
 
-                const insertItems = orderItemsData.map((item: any) => ({
-                    orderId: newOrderId,
-                    ...item
-                }));
+                        const insertItems = orderItemsData.map((item: any) => ({
+                            orderId: newOrderId,
+                            ...item
+                        }));
 
-                await tx.insert(salesOrderItems).values(insertItems);
-            });
+                        await tx.insert(salesOrderItems).values(insertItems);
+                    });
+                    break; // success — exit retry loop
+                } catch (e: any) {
+                    const isOrderNumberCollision = e.code === '23505' &&
+                        (e.message ?? '').includes('order_number');
+                    if (attempt < 4 && isOrderNumberCollision) {
+                        continue; // retry with fresh MAX read
+                    }
+                    throw e; // rethrow on non-collision error or final attempt
+                }
+            }
 
             return { success: true, orderId: newOrderId };
 
