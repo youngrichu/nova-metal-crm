@@ -106,9 +106,11 @@ export const actions: Actions = {
                     updatedAt: now
                 });
 
+                // Better Auth's credential provider looks up accounts by accountId = email.
+                // Using userId here would cause login to silently fail with "Invalid credentials".
                 await tx.insert(accountTable).values({
                     id: crypto.randomUUID(),
-                    accountId: userId,
+                    accountId: email,
                     providerId: 'credential',
                     userId,
                     password: hashedPassword,
