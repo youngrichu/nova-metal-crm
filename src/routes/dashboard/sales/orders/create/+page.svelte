@@ -128,6 +128,7 @@
 		if (isWalkIn) {
 			// Reading walkInPricingTier forces Svelte to track it as a reactive dependency.
 			// Do NOT remove this line — without it, tier changes won't trigger price re-fetches.
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			const _trackTier = walkInPricingTier;
 			items.forEach((item, index) => {
 				if (item.productId) {
