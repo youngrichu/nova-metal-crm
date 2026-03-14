@@ -19,6 +19,7 @@
 		if (form?.success && form?.created) {
 			toast.success('User created successfully');
 			createDialogOpen = false;
+			newRole = 'sales';
 		} else if (form?.success) {
 			toast.success('User updated');
 		}
@@ -194,7 +195,6 @@
 
 										<form method="POST" action="?/toggleVerified" use:enhance>
 											<input type="hidden" name="userId" value={u.id} />
-											<input type="hidden" name="emailVerified" value={String(u.emailVerified)} />
 											<button
 												type="submit"
 												class="w-full flex items-center text-xs font-bold uppercase tracking-wider cursor-pointer h-9 px-3 hover:bg-muted focus:bg-muted outline-none text-left gap-2 {u.emailVerified ? 'text-red-600 hover:bg-red-50' : 'text-emerald-600 hover:bg-emerald-50'}"
