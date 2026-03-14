@@ -54,19 +54,19 @@
 			<!-- Logo mark -->
 			<div class="flex items-center justify-center shrink-0 w-14 h-14 border-r-2 border-white/10 group-data-[collapsible=icon]:border-r-0 group-data-[collapsible=icon]:w-full">
 				<div class="w-8 h-8 bg-white flex items-center justify-center">
-					<span class="text-zinc-900 text-sm font-black tracking-tighter select-none leading-none">N</span>
+					<span class="text-zinc-900 text-base font-black tracking-tighter select-none leading-none">N</span>
 				</div>
 			</div>
 			<!-- Wordmark -->
 			<div class="flex flex-col leading-none px-4 group-data-[collapsible=icon]:hidden overflow-hidden">
-				<span class="text-[0.7rem] font-black tracking-[0.2em] text-sidebar-foreground uppercase leading-tight">Nova Metal</span>
-				<span class="text-[0.55rem] font-bold tracking-[0.25em] text-sidebar-foreground/40 uppercase mt-0.5">ERP System</span>
+				<span class="text-sm font-black tracking-[0.15em] text-sidebar-foreground uppercase leading-tight">Nova Metal</span>
+				<span class="text-[0.65rem] font-bold tracking-[0.2em] text-sidebar-foreground/40 uppercase mt-0.5">ERP System</span>
 			</div>
 		</div>
 	</Sidebar.Header>
 
 	<!-- ── NAV ── -->
-	<Sidebar.Content class="px-0 py-4">
+	<Sidebar.Content class="px-0 py-3">
 		<Sidebar.Group class="px-0">
 			<!-- Section label -->
 			<Sidebar.GroupLabel class="px-4 pb-2 text-[0.6rem] font-black tracking-[0.2em] uppercase text-sidebar-foreground/30 group-data-[collapsible=icon]:hidden">
@@ -83,7 +83,7 @@
 										href={item.href}
 										{...props}
 										class={cn(
-											'flex items-center gap-3 relative h-10 px-4 transition-colors',
+											'flex items-center gap-3 relative h-11 px-4 transition-colors',
 											'group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:w-full',
 											props.class as string,
 											isActive
@@ -91,8 +91,8 @@
 												: 'text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/5 border-l-2 border-transparent'
 										)}
 									>
-										<item.icon class={cn('shrink-0', isActive ? 'size-4' : 'size-4')} />
-										<span class="text-[0.65rem] font-bold tracking-[0.15em] uppercase group-data-[collapsible=icon]:hidden truncate">
+										<item.icon class="shrink-0 size-[1.05rem]" />
+										<span class="text-xs font-bold tracking-[0.12em] uppercase group-data-[collapsible=icon]:hidden truncate">
 											{typeof item.title === 'function' ? item.title() : item.title}
 										</span>
 									</a>
@@ -118,17 +118,17 @@
 								class="h-14 rounded-none px-4 data-[state=open]:bg-white/10 outline-none group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center border-b-0"
 							>
 								<!-- Avatar -->
-								<div class="flex shrink-0 items-center justify-center size-7 bg-white/15 border border-white/20">
-									<span class="text-[0.6rem] font-black text-sidebar-foreground uppercase">
+								<div class="flex shrink-0 items-center justify-center size-8 bg-white/15 border border-white/20">
+									<span class="text-xs font-black text-sidebar-foreground uppercase">
 										{(page.data.user?.name ?? 'A').charAt(0)}
 									</span>
 								</div>
 								<!-- Name + role -->
 								<div class="flex flex-col flex-1 text-left leading-none overflow-hidden group-data-[collapsible=icon]:hidden">
-									<span class="truncate text-[0.65rem] font-black tracking-widest uppercase text-sidebar-foreground">{page.data.user?.name ?? 'Admin'}</span>
-									<span class="truncate text-[0.55rem] font-bold tracking-widest uppercase text-sidebar-foreground/40 mt-0.5">{page.data.user?.role ?? 'admin'}</span>
+									<span class="truncate text-xs font-black tracking-[0.12em] uppercase text-sidebar-foreground">{page.data.user?.name ?? 'Admin'}</span>
+									<span class="truncate text-[0.65rem] font-bold tracking-[0.15em] uppercase text-sidebar-foreground/40 mt-0.5">{page.data.user?.role ?? 'admin'}</span>
 								</div>
-								<ChevronUp class="ml-auto size-3 text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden" />
+								<ChevronUp class="ml-auto size-3.5 text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden" />
 							</Sidebar.MenuButton>
 						{/snippet}
 					</DropdownMenu.Trigger>
@@ -138,15 +138,15 @@
 						sideOffset={0}
 						class="w-56 rounded-none border-2 border-foreground/20 bg-zinc-900 shadow-[4px_-4px_0px_0px_theme(colors.primary.DEFAULT)] p-0 z-[100]"
 					>
-						<div class="px-3 py-2 border-b border-white/10">
-							<p class="text-[0.65rem] font-black tracking-widest uppercase text-white">{page.data.user?.name ?? 'Admin'}</p>
-							<p class="text-[0.55rem] font-bold tracking-widest uppercase text-white/40 mt-0.5">{page.data.user?.email ?? ''}</p>
+						<div class="px-3 py-2.5 border-b border-white/10">
+							<p class="text-xs font-black tracking-[0.12em] uppercase text-white">{page.data.user?.name ?? 'Admin'}</p>
+							<p class="text-[0.65rem] font-bold tracking-[0.15em] uppercase text-white/40 mt-0.5">{page.data.user?.email ?? ''}</p>
 						</div>
 						<button
 							onclick={handleLogout}
-							class="w-full flex items-center gap-3 px-3 py-2.5 text-[0.65rem] font-bold tracking-widest uppercase text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors cursor-pointer"
+							class="w-full flex items-center gap-3 px-3 py-3 text-xs font-bold tracking-[0.12em] uppercase text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors cursor-pointer"
 						>
-							<LogOut class="size-3.5" />
+							<LogOut class="size-4" />
 							{m.sign_out()}
 						</button>
 					</DropdownMenu.Content>
