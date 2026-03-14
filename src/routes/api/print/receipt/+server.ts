@@ -5,20 +5,20 @@ import { salesOrders, salesOrderItems, customers, products, systemSettings } fro
 import { eq, inArray } from "drizzle-orm";
 import type { RequestHandler } from "./$types";
 
-// Dynamic require to avoid Vite bundling native USB/network modules
+// Dynamic require to avoid Vite bundling native USB/network modules.
+// Each driver is loaded independently so a missing sub-module doesn't
+// silently leave escpos.USB / escpos.Network undefined.
 let escpos: any;
-let escposUsb: any;
-let escposNetwork: any;
 
+try { escpos = require('escpos'); } catch (e) { console.warn('escpos not available:', e); }
 try {
-	escpos = require('escpos');
-	escposUsb = require('escpos-usb');
-	escposNetwork = require('escpos-network');
-	escpos.USB = escposUsb;
-	escpos.Network = escposNetwork;
-} catch (e) {
-	console.warn('ESC/POS drivers not available:', e);
-}
+	const escposUsb = require('escpos-usb');
+	if (escpos) escpos.USB = escposUsb;
+} catch (e) { console.warn('escpos-usb not available:', e); }
+try {
+	const escposNetwork = require('escpos-network');
+	if (escpos) escpos.Network = escposNetwork;
+} catch (e) { console.warn('escpos-network not available:', e); }
 
 async function getPrinterSettings(): Promise<{ type: string; address: string; paperWidth: number; vatRate: number; currencyCode: string; currencyLocale: string }> {
 	const rows = await db
@@ -79,15 +79,20 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		}
 
 		const config = await getPrinterSettings();
-		// 80mm paper = 48 chars wide; 58mm paper = 32 chars wide
 		// 80mm = 48 chars, 58mm = 32 chars. Name column is 0.55 of line width.
 		const lineWidth = config.paperWidth === 58 ? 32 : 48;
 		const nameColWidth = Math.floor(lineWidth * 0.55);
 
 		let device: any;
 		if (config.type === 'usb') {
+			if (!escpos.USB) {
+				return json({ success: false, error: 'USB printer driver failed to load on this server' }, { status: 500 });
+			}
 			device = new escpos.USB();
 		} else {
+			if (!escpos.Network) {
+				return json({ success: false, error: 'Network printer driver failed to load on this server' }, { status: 500 });
+			}
 			// address may include port as "ip:port", default to 9100
 			const [host, port] = config.address.split(':');
 			device = new escpos.Network(host, port ? parseInt(port, 10) : 9100);
@@ -101,8 +106,10 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		await new Promise<void>((resolve, reject) => {
 			let deviceOpened = false;
+			let cancelled = false;
 
 			const timeout = setTimeout(() => {
+				cancelled = true;
 				if (deviceOpened) {
 					try { printer.close(); } catch (_) { /* ignore */ }
 				}
@@ -110,6 +117,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			}, PRINT_TIMEOUT_MS);
 
 			device.open((err: any) => {
+				// Timeout already fired — close device immediately to prevent ghost print
+				if (cancelled) {
+					try { printer.close(); } catch (_) { /* ignore */ }
+					return;
+				}
 				if (err) {
 					clearTimeout(timeout);
 					return reject(err);
