@@ -14,10 +14,11 @@
 
 	function handleLinkOrders() {
 		return async ({ result, update }: any) => {
-			if (result.type === 'success') {
+			if (result.type === 'success' && result.data?.success) {
 				await goto(`/dashboard/customers/${data.customer.id}`, { invalidateAll: true });
+				return; // navigation handles reload — skip update()
 			}
-			await update();
+			await update(); // re-renders with error data if action returned { error: '...' }
 		};
 	}
 

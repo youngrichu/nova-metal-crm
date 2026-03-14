@@ -63,6 +63,10 @@ export const actions: Actions = {
 			return { error: 'Customer not found' };
 		}
 
+		if (!customer.phone) {
+			return { error: 'Customer has no phone number — cannot link walk-in orders' };
+		}
+
 		try {
 			const formData = await request.formData();
 			const orderIdsJson = formData.get('orderIds')?.toString();
@@ -75,7 +79,10 @@ export const actions: Actions = {
 			const orderIds: string[] = parsed;
 			if (!orderIds.length) return { error: 'No orders to link' };
 
-			// AND customer_id IS NULL guard prevents race condition.
+			// WHERE guards:
+			// - inArray(id, orderIds): only the submitted IDs
+			// - isNull(customerId): race-condition guard (order not already linked)
+			// - eq(walkInPhone, customer.phone): prevent cross-customer linking if orderIds were tampered
 			// walkInPhone and walkInPricingTier are intentionally cleared on link:
 			// - walkInPhone is now redundant (the customer record holds the phone)
 			// - walkInPricingTier was the anonymous pricing tier; the actual prices are
@@ -91,7 +98,8 @@ export const actions: Actions = {
 				.where(
 					and(
 						inArray(salesOrders.id, orderIds),
-						isNull(salesOrders.customerId)
+						isNull(salesOrders.customerId),
+						eq(salesOrders.walkInPhone, customer.phone)
 					)
 				);
 
