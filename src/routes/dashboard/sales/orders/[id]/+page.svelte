@@ -168,7 +168,7 @@
                 <div class="space-y-4">
                     <div>
                         <p class="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 mb-1">Name</p>
-                        <p class="font-bold text-lg">{data.order.customer?.name || 'Unknown'}</p>
+                        <p class="font-bold text-lg">{data.order.customer.name}</p>
                     </div>
                     {#if data.order.customer?.companyName}
                         <div>
