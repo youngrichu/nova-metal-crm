@@ -124,35 +124,41 @@
 							(item.href !== "/dashboard" && page.url.pathname.startsWith(item.href))}
 
 						{#if item.children}
-							<!-- Collapsible parent item -->
+							<!-- Collapsible parent: link navigates, chevron toggles -->
 							<Collapsible.Root open={isActive}>
 								<Sidebar.MenuItem>
-									<Collapsible.Trigger>
-										{#snippet child({ props: triggerProps })}
-											<Sidebar.MenuButton {isActive}>
-												{#snippet child({ props })}
-													<button
-														{...triggerProps}
-														{...props}
-														style={isActive ? activeStyle : ""}
-														class={cn(
-															"flex items-center gap-3 h-11 w-full transition-colors",
-															"group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full",
-															props.class as string,
-															isActive ? "text-white" : "text-sidebar-foreground/50 hover:text-sidebar-foreground",
-															"!px-6 group-data-[collapsible=icon]:!px-0",
-														)}
-													>
-														<item.icon class="shrink-0 size-[1.05rem]" />
-														<span class="text-xs font-bold tracking-[0.12em] uppercase group-data-[collapsible=icon]:hidden truncate flex-1 text-left">
-															{typeof item.title === "function" ? item.title() : item.title}
-														</span>
-														<ChevronDown class="size-3 shrink-0 text-sidebar-foreground/40 transition-transform group-data-[collapsible=icon]:hidden data-[state=open]:rotate-180" />
-													</button>
-												{/snippet}
-											</Sidebar.MenuButton>
-										{/snippet}
-									</Collapsible.Trigger>
+									<div
+										style={isActive ? activeStyle : ""}
+										class={cn(
+											"flex items-center h-11 transition-colors group-data-[collapsible=icon]:justify-center",
+											isActive ? "text-white" : "text-sidebar-foreground/50",
+										)}
+									>
+										<!-- Link takes up all the space except the chevron -->
+										<a
+											href={item.href}
+											class={cn(
+												"flex items-center gap-3 flex-1 h-full pl-6 pr-2 group-data-[collapsible=icon]:hidden",
+												isActive ? "text-white" : "hover:text-sidebar-foreground",
+											)}
+										>
+											<item.icon class="shrink-0 size-[1.05rem]" />
+											<span class="text-xs font-bold tracking-[0.12em] uppercase truncate">
+												{typeof item.title === "function" ? item.title() : item.title}
+											</span>
+										</a>
+										<!-- Chevron toggles the sub-menu -->
+										<Collapsible.Trigger>
+											{#snippet child({ props: triggerProps })}
+												<button
+													{...triggerProps}
+													class="flex items-center justify-center h-full w-10 shrink-0 text-sidebar-foreground/40 hover:text-sidebar-foreground group-data-[collapsible=icon]:hidden"
+												>
+													<ChevronDown class="size-3 transition-transform data-[state=open]:rotate-180" />
+												</button>
+											{/snippet}
+										</Collapsible.Trigger>
+									</div>
 
 									<Collapsible.Content>
 										<Sidebar.MenuSub class="border-white/10 mx-6 px-0">
