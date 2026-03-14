@@ -18,7 +18,8 @@ export const load = async ({ locals }) => {
 		.select({ count: sql<number>`count(*)` })
 		.from(warehouses);
 
-    // Active orders: PENDING or PROCESSING
+    // Active orders: PENDING or PROCESSING — intentionally shown to all roles (including warehouse)
+    // so staff can see how many pick-lists are queued without accessing revenue figures.
     const [activeOrdersResult] = await db
         .select({ count: sql<number>`count(*)` })
         .from(salesOrders)

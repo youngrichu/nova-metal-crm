@@ -105,7 +105,7 @@ export const actions: Actions = {
 					.where(eq(inventoryCounts.id, countId))
 					.limit(1);
 
-				if (!countMeta) throw new Error('Count session not found');
+				if (!countMeta) throw Object.assign(new Error('Count session not found'), { code: 'COUNT_NOT_FOUND' });
 
 				const items = await tx
 					.select({ item: inventoryCountItems })
@@ -120,7 +120,7 @@ export const actions: Actions = {
 					.returning({ id: inventoryCounts.id });
 
 				if (!updatedCount) {
-					throw new Error('Count session is already closed or no longer available');
+					throw Object.assign(new Error('Count session is already closed or no longer available'), { code: 'COUNT_ALREADY_CLOSED' });
 				}
 
 				for (const { item } of items) {
@@ -170,8 +170,8 @@ export const actions: Actions = {
 
 			return { success: true, skippedProducts };
 		} catch (err: any) {
-			if (err?.message === 'Count session not found') return fail(404, { error: 'Count session not found' });
-			if (err?.message === 'Count session is already closed or no longer available') return fail(409, { error: 'This count session was already closed by another user.' });
+			if (err?.code === 'COUNT_NOT_FOUND') return fail(404, { error: 'Count session not found' });
+			if (err?.code === 'COUNT_ALREADY_CLOSED') return fail(409, { error: 'This count session was already closed by another user.' });
 			console.error('Failed to close count:', err);
 			return fail(500, { error: 'Failed to close count and apply adjustments' });
 		}
