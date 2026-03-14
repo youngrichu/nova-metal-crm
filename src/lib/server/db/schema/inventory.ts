@@ -40,7 +40,7 @@ export const inventoryTransactions = pgTable("inventory_transactions", {
 export const inventoryCounts = pgTable("inventory_counts", {
   id: uuid('id').primaryKey().defaultRandom(),
   warehouseId: uuid('warehouse_id').notNull().references(() => warehouses.id),
-  status: text('status').notNull(), // 'DRAFT', 'IN_PROGRESS', 'RECONCILED', 'CLOSED'
+  status: text('status').notNull(), // 'IN_PROGRESS' | 'CLOSED' | 'CANCELLED' — enforced by CHECK constraint in migration 0007
   startedAt: timestamp('started_at').notNull().defaultNow(),
   completedAt: timestamp('completed_at'),
   performedBy: text('performed_by').notNull().references(() => user.id)

@@ -65,7 +65,7 @@ export const actions: Actions = {
                 body: {
                     currentPassword: existingCredential,
                     newPassword: updatedCredential,
-                    revokeOtherSessions: false
+                    revokeOtherSessions: true
                 }
             });
 

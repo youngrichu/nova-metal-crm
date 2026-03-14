@@ -1,4 +1,5 @@
 import { pgTable, text, timestamp, uuid, numeric, index } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { user } from "./users";
 import { products } from "./catalog";
 
@@ -38,7 +39,8 @@ export const salesOrders = pgTable("sales_orders", {
   return {
     customerIdx: index('idx_sales_customer').on(table.customerId),
     statusIdx: index('idx_sales_status').on(table.status),
-    createdAtIdx: index('idx_sales_created_at').on(table.createdAt)
+    createdAtIdx: index('idx_sales_created_at').on(table.createdAt),
+    walkInPhoneIdx: index('idx_sales_orders_walk_in_phone').on(table.walkInPhone).where(sql`"walk_in_phone" IS NOT NULL`)
   };
 });
 
