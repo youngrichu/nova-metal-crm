@@ -60,7 +60,7 @@
 							toast.success('Reconciliation saved successfully!');
 							actualCashStr = '';
 						} else if (result.type === 'failure') {
-							toast.error(result.data?.error || 'Failed to save');
+							toast.error(String(result.data?.error || 'Failed to save'));
 						}
 						update();
 					};
@@ -159,14 +159,14 @@
 										<p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">by {entry.user?.name || 'Unknown'}</p>
 									</div>
 									<div class="text-right">
-										<p class="font-mono font-black text-sm {getDiscrepancyColor(Number(entry.discrepancyAmount))}">
-											{Number(entry.discrepancyAmount) > 0 ? '+' : ''}{formatCurrency(Number(entry.discrepancyAmount))} var
+										<p class="font-mono font-black text-sm {getDiscrepancyColor(Number(entry.discrepancy))}">
+											{Number(entry.discrepancy) > 0 ? '+' : ''}{formatCurrency(Number(entry.discrepancy))} var
 										</p>
 									</div>
 								</div>
 								<div class="flex justify-between items-center text-xs font-mono text-muted-foreground border-t border-border/30 pt-2 mt-2">
-									<span>Exp: {formatCurrency(Number(entry.expectedAmount))}</span>
-									<span>Act: {formatCurrency(Number(entry.actualAmount))}</span>
+									<span>Exp: {formatCurrency(Number(entry.expectedCash))}</span>
+									<span>Act: {formatCurrency(Number(entry.actualCash))}</span>
 								</div>
 								{#if entry.notes}
 									<p class="text-xs italic text-muted-foreground/70 mt-2 bg-muted/50 p-2 border-l-2 border-foreground/20">"{entry.notes}"</p>

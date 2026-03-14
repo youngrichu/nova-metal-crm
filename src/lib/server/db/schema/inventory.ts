@@ -36,3 +36,26 @@ export const inventoryTransactions = pgTable("inventory_transactions", {
     createdAtIdx: index('idx_transactions_created_at').on(table.createdAt)
   };
 });
+
+export const inventoryCounts = pgTable("inventory_counts", {
+  id: uuid('id').primaryKey().defaultRandom(),
+  warehouseId: uuid('warehouse_id').notNull().references(() => warehouses.id),
+  status: text('status').notNull(), // 'IN_PROGRESS' | 'CLOSED' | 'CANCELLED' — enforced by CHECK constraint in migration 0007
+  startedAt: timestamp('started_at').notNull().defaultNow(),
+  completedAt: timestamp('completed_at'),
+  performedBy: text('performed_by').notNull().references(() => user.id)
+}, (table) => ({
+  warehouseIdx: index('idx_inventory_counts_warehouse').on(table.warehouseId),
+  statusIdx: index('idx_inventory_counts_status').on(table.status)
+}));
+
+export const inventoryCountItems = pgTable("inventory_count_items", {
+  id: uuid('id').primaryKey().defaultRandom(),
+  countId: uuid('count_id').notNull().references(() => inventoryCounts.id),
+  productId: uuid('product_id').notNull().references(() => products.id),
+  expectedQuantity: integer('expected_quantity').notNull(), // Captured at start of count
+  physicalQuantity: integer('physical_quantity'), // Entered by staff
+  notes: text('notes')
+}, (table) => ({
+  countIdIdx: index('idx_inventory_count_items_count_id').on(table.countId)
+}));

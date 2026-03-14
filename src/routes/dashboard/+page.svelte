@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Activity, Package, Warehouse, AlertTriangle, Settings, CalendarDays } from "lucide-svelte";
+  import { Activity, Package, Warehouse, AlertTriangle, Settings, CalendarDays, TrendingUp } from "lucide-svelte";
   import * as m from '$lib/paraglide/messages';
   import * as Select from "$lib/components/ui/select";
   import * as Table from "$lib/components/ui/table";
@@ -11,21 +11,82 @@
   let activePeriod = $state<'day' | 'week' | 'month'>('month');
   let selectedRange = $state('this-month');
 
-  // Build a simple SVG bar chart from low stock items (up to 6)
-  const chartItems = $derived(data.lowStockItems.slice(0, 6));
-  const maxQty = $derived(Math.max(...chartItems.map((i: any) => i.quantity), 1));
-
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening';
   const todayLabel = new Date().toLocaleDateString('en-ET', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  
+
   // Use name if real, otherwise extract from email
-  const displayName = $derived(() => {
-    const name = data.user?.name;
-    if (name && name !== 'System' && name !== 'Admin') return name.split(' ')[0];
-    const email = data.user?.email ?? '';
-    return email.split('@')[0] ?? 'Operator';
-  });
+  const displayName = $derived(
+    (() => {
+      const name = data.user?.name;
+      if (name && name !== 'System' && name !== 'Admin') return name.split(' ')[0];
+      const email = data.user?.email ?? '';
+      return email.split('@')[0] ?? 'Operator';
+    })()
+  );
+
+  // --- Sales Trend Chart ---
+  const chartW = 600;
+  const chartH = 200;
+  const padLeft = 60;
+  const padRight = 20;
+  const padTop = 16;
+  const padBottom = 40;
+
+  const trendData = $derived(data.salesTrend ?? []);
+
+  const maxRevenue = $derived(
+    trendData.length > 0 ? Math.max(...trendData.map((d: any) => d.revenue), 1) : 1
+  );
+
+  function toX(index: number, total: number) {
+    return padLeft + (index / Math.max(total - 1, 1)) * (chartW - padLeft - padRight);
+  }
+
+  function toY(revenue: number) {
+    return padTop + (1 - revenue / maxRevenue) * (chartH - padTop - padBottom);
+  }
+
+  const linePath = $derived(
+    trendData.length === 0
+      ? ''
+      : trendData
+          .map((d: any, i: number) => `${i === 0 ? 'M' : 'L'} ${toX(i, trendData.length).toFixed(1)} ${toY(d.revenue).toFixed(1)}`)
+          .join(' ')
+  );
+
+  const areaPath = $derived(
+    (() => {
+      if (trendData.length === 0) return '';
+      const baseline = (chartH - padBottom).toFixed(1);
+      const line = trendData
+        .map((d: any, i: number) => `${i === 0 ? 'M' : 'L'} ${toX(i, trendData.length).toFixed(1)} ${toY(d.revenue).toFixed(1)}`)
+        .join(' ');
+      const firstX = toX(0, trendData.length).toFixed(1);
+      const lastX = toX(trendData.length - 1, trendData.length).toFixed(1);
+      return `${line} L ${lastX} ${baseline} L ${firstX} ${baseline} Z`;
+    })()
+  );
+
+  // X-axis tick labels: show every ~5 days
+  const xAxisLabels = $derived(
+    trendData.length === 0
+      ? []
+      : (() => {
+          const step = Math.max(1, Math.floor(trendData.length / 6));
+          return trendData
+            .map((d: any, i: number) => ({ ...d, i }))
+            .filter((_: any, i: number) => i % step === 0 || i === trendData.length - 1);
+        })()
+  );
+
+  // Y-axis tick values
+  const yAxisTicks = $derived(
+    [0, 0.25, 0.5, 0.75, 1].map(f => ({
+      value: maxRevenue * f,
+      y: toY(maxRevenue * f)
+    }))
+  );
 </script>
 
 <div class="p-4 md:p-8 max-w-[1600px] mx-auto space-y-12">
@@ -41,7 +102,7 @@
       </div>
 
       <h1 class="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.8]">
-        {greeting},<br/><span class="text-muted-foreground/40 italic">{displayName()}</span>
+        {greeting},<br/><span class="text-muted-foreground/40 italic">{displayName}</span>
       </h1>
     </div>
     
@@ -129,8 +190,10 @@
         </div>
 
         <div class="flex justify-between items-center border-b-2 border-foreground/5 pb-4 group/item">
-          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground flex items-center gap-3">{m.active_orders()}</span>
-          <span class="font-mono font-bold text-[10px] tracking-widest uppercase border-2 border-muted-foreground/30 px-2 py-1 text-muted-foreground/50">Phase 2 Lock</span>
+          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-3">
+            <Activity class="w-4 h-4 opacity-50" /> {m.active_orders()}
+          </span>
+          <span class="font-mono font-black text-xl text-foreground">{data.activeOrderCount}</span>
         </div>
       </div>
       
@@ -148,65 +211,115 @@
           </div>
         </div>
       </div>
+
+      <!-- Margins by Category -->
+      {#if data.marginsByCategory && data.marginsByCategory.length > 0}
+        <div class="mt-6 pt-6 border-t-2 border-foreground/5">
+          <span class="text-[10px] font-black tracking-widest text-muted-foreground uppercase block mb-3">Margin by Category</span>
+          <div class="space-y-2">
+            {#each data.marginsByCategory as cat}
+              {@const isLow = cat.marginPercent < 10}
+              {@const isGood = cat.marginPercent > 20}
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] font-bold tracking-tight text-foreground truncate flex-1">{cat.categoryName}</span>
+                <span class="font-mono text-[11px] font-black px-1.5 py-0.5 {isLow ? 'text-amber-500 bg-amber-500/10' : isGood ? 'text-emerald-500 bg-emerald-500/10' : 'text-foreground bg-muted/40'} shrink-0">
+                  {cat.marginPercent.toFixed(1)}%
+                </span>
+              </div>
+            {/each}
+          </div>
+        </div>
+      {/if}
     </div>
     
-    <!-- Low Stock Bar Chart -->
+    <!-- Sales Trend Chart -->
     <div class="col-span-1 lg:col-span-2 border-2 border-foreground/10 bg-card p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col min-h-[400px]">
-      
+
       <div class="flex justify-between items-start mb-8 border-b-2 border-foreground/5 pb-6">
         <div>
-          <h3 class="font-black text-sm tracking-widest uppercase text-foreground mb-1">Threshold Matrix</h3>
-          <p class="text-xs font-medium text-muted-foreground/60 tracking-wider">Visual cross-section of lowest performing stock levels.</p>
+          <h3 class="font-black text-sm tracking-widest uppercase text-foreground mb-1 flex items-center gap-3">
+            <TrendingUp class="w-4 h-4 text-primary" /> Revenue Trajectory
+          </h3>
+          <p class="text-xs font-medium text-muted-foreground/60 tracking-wider">Daily revenue — last 30 days (excl. draft &amp; cancelled).</p>
         </div>
-        <Button variant="outline" size="sm" href="/dashboard/inventory" class="h-8 rounded-none border-2 border-foreground/20 text-[10px] font-bold tracking-widest uppercase shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
-          View Ledger
+        <Button variant="outline" size="sm" href="/dashboard/sales/orders" class="h-8 rounded-none border-2 border-foreground/20 text-[10px] font-bold tracking-widest uppercase shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
+          View Orders
         </Button>
       </div>
 
-      {#if chartItems.length === 0}
+      {#if trendData.length === 0}
         <div class="flex-1 flex items-center justify-center flex-col gap-4 bg-muted/20 border-2 border-dashed border-border/50 m-4">
-          <Package class="w-12 h-12 text-muted-foreground/20" />
-          <p class="text-xs font-bold tracking-widest uppercase text-muted-foreground/50">Matrix Stable — No Warnings</p>
+          <TrendingUp class="w-12 h-12 text-muted-foreground/20" />
+          <p class="text-xs font-bold tracking-widest uppercase text-muted-foreground/50">No Revenue Data Yet</p>
         </div>
       {:else}
-        <div class="flex-1 flex items-end gap-6 pb-6 border-b-2 border-foreground/10 relative px-4 pt-10">
-          
-          <!-- Y-Axis Grid Lines -->
-          <div class="absolute inset-0 flex flex-col justify-between pointer-events-none pb-6 pt-10 px-4">
-            <div class="w-full border-t border-border/40 border-dashed"></div>
-            <div class="w-full border-t border-border/40 border-dashed"></div>
-            <div class="w-full border-t border-border/40 border-dashed"></div>
-            <div class="w-full border-t border-border/40 border-dashed"></div>
-          </div>
+        <div class="flex-1 relative min-h-[260px]">
+          <svg viewBox="0 0 {chartW} {chartH}" class="w-full h-full" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="hsl(var(--primary))" stop-opacity="0.35"/>
+                <stop offset="100%" stop-color="hsl(var(--primary))" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
 
-          {#each chartItems as item}
-            {@const heightPct = Math.max((item.quantity / maxQty) * 100, 4)}
-            {@const isLow = item.quantity <= item.minStockLevel}
-            
-            <div class="flex-1 flex flex-col items-center gap-3 relative z-10 group cursor-crosshair">
-              
-              <!-- Hover Tooltip -->
-              <div class="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-foreground text-background px-3 py-2 text-[10px] font-bold tracking-widest uppercase whitespace-nowrap z-20 pointer-events-none">
-                {item.quantity} Units <span class="opacity-50 mx-1">/</span> Min {item.minStockLevel}
-                <!-- Tooltip Caret -->
-                <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-foreground rotate-45"></div>
-              </div>
+            <!-- Y-axis grid lines + labels -->
+            {#each yAxisTicks as tick}
+              <line
+                x1={padLeft} y1={tick.y}
+                x2={chartW - padRight} y2={tick.y}
+                stroke="currentColor" stroke-opacity="0.06" stroke-dasharray="4 4"
+              />
+              <text
+                x={padLeft - 6} y={tick.y + 4}
+                text-anchor="end"
+                class="fill-muted-foreground/50"
+                style="font-size: 9px; font-family: monospace; font-weight: 700;"
+              >{tick.value >= 1000 ? (tick.value / 1000).toFixed(0) + 'K' : tick.value.toFixed(0)}</text>
+            {/each}
 
-              <div class="w-full relative bg-muted/30 border-2 {isLow ? 'border-rose-500/20' : 'border-emerald-500/20'} transition-all duration-700 overflow-hidden group-hover:border-foreground/40" style="height: {heightPct}%">
-                <!-- Fill Level -->
-                <div class="absolute bottom-0 left-0 right-0 transition-all duration-1000 ease-out {isLow ? 'bg-rose-500' : 'bg-emerald-500'} opacity-80 group-hover:opacity-100" style="height: 100%"></div>
-              </div>
-            </div>
-          {/each}
-        </div>
-        
-        <!-- X-Axis Labels -->
-        <div class="flex gap-6 pt-4 px-4">
-          {#each chartItems as item}
-            <div class="flex-1 text-center group cursor-crosshair">
-              <span class="text-[10px] font-bold text-foreground uppercase tracking-widest leading-tight block truncate group-hover:text-primary transition-colors" title={item.sku}>{item.sku}</span>
-            </div>
-          {/each}
+            <!-- Area fill -->
+            <path d={areaPath} fill="url(#areaGradient)" />
+
+            <!-- Line -->
+            <path
+              d={linePath}
+              fill="none"
+              stroke="hsl(var(--primary))"
+              stroke-width="2"
+              stroke-linejoin="round"
+              stroke-linecap="round"
+            />
+
+            <!-- Data point dots -->
+            {#each trendData as d, i}
+              <circle
+                cx={toX(i, trendData.length)}
+                cy={toY(d.revenue)}
+                r="3"
+                fill="hsl(var(--primary))"
+                stroke="hsl(var(--background))"
+                stroke-width="1.5"
+              />
+            {/each}
+
+            <!-- X-axis labels -->
+            {#each xAxisLabels as tick}
+              <text
+                x={toX(tick.i, trendData.length)}
+                y={chartH - padBottom + 16}
+                text-anchor="middle"
+                class="fill-muted-foreground/50"
+                style="font-size: 9px; font-family: monospace; font-weight: 700;"
+              >{tick.date.slice(5)}</text>
+            {/each}
+
+            <!-- X-axis baseline -->
+            <line
+              x1={padLeft} y1={chartH - padBottom}
+              x2={chartW - padRight} y2={chartH - padBottom}
+              stroke="currentColor" stroke-opacity="0.12"
+            />
+          </svg>
         </div>
       {/if}
     </div>
@@ -252,7 +365,13 @@
                   <div class="flex justify-between items-start gap-2 mb-1">
                     <p class="text-sm font-bold text-foreground tracking-tight line-clamp-1">{tx.productName}</p>
                     <span class="text-[9px] font-mono font-bold text-muted-foreground whitespace-nowrap">
-                      {new Date(tx.createdAt).toLocaleTimeString('en-ET', { hour: '2-digit', minute: '2-digit' })}
+                      {(() => {
+                        const d = new Date(tx.createdAt);
+                        const isToday = d.toDateString() === new Date().toDateString();
+                        return isToday
+                          ? d.toLocaleTimeString('en-ET', { hour: '2-digit', minute: '2-digit' })
+                          : d.toLocaleDateString('en-ET', { month: 'short', day: 'numeric' }) + ', ' + d.toLocaleTimeString('en-ET', { hour: '2-digit', minute: '2-digit' });
+                      })()}
                     </span>
                   </div>
                   

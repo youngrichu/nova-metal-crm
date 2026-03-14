@@ -5,6 +5,7 @@
 	import * as Sheet from '$lib/components/ui/sheet';
 	import * as Table from '$lib/components/ui/table';
 	import { enhance } from '$app/forms';
+	import { tick } from 'svelte';
 	import { ArrowDownUp, AlertTriangle, PackageSearch, Activity, Check, ChevronsUpDown } from 'lucide-svelte';
 	import * as Popover from "$lib/components/ui/popover";
 	import * as Command from "$lib/components/ui/command";
@@ -46,10 +47,39 @@
 			if (result.type === 'success') {
 				isTransactOpen = false;
 				selectedProduct = '';
+				barcodeInput = '';
+				barcodeError = '';
 			}
 			isSubmitting = false;
 			await update();
 		};
+	}
+
+	let barcodeInputEl = $state<HTMLInputElement | null>(null);
+	let barcodeInput = $state('');
+	let barcodeError = $state('');
+
+	// Auto-focus the barcode input when the sheet opens
+	$effect(() => {
+		if (isTransactOpen && barcodeInputEl) {
+			tick().then(() => barcodeInputEl?.focus());
+		}
+	});
+
+	function handleBarcodeScan(e: KeyboardEvent) {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			const code = barcodeInput.trim();
+			if (!code) return;
+			const match = data.products.find((p: any) => p.barcode === code);
+			if (match) {
+				selectedProduct = match.id;
+				barcodeError = '';
+			} else {
+				barcodeError = `No product found for barcode: ${code.slice(0, 40)}${code.length > 40 ? '...' : ''}`;
+			}
+			barcodeInput = '';
+		}
 	}
 </script>
 
@@ -94,6 +124,25 @@
 								<div class="p-4 text-sm font-medium bg-red-500/10 text-red-600 border-l-4 border-red-600 shadow-sm animate-in fade-in">
 									<p class="flex items-center gap-2"><AlertTriangle class="w-4 h-4 shrink-0" /> {form.error}</p>
 								</div>
+							{/if}
+
+							{#if data.barcodeEnabled}
+							<!-- Barcode Scanner Input -->
+							<div class="space-y-2">
+								<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">Scan Barcode</Label>
+								<div class="relative">
+									<Input
+										bind:ref={barcodeInputEl}
+										bind:value={barcodeInput}
+										onkeydown={handleBarcodeScan}
+										placeholder="Focus here and scan barcode..."
+										class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg font-mono transition-all"
+									/>
+									{#if barcodeError}
+										<p class="text-xs text-rose-500 mt-1 font-medium">{barcodeError}</p>
+									{/if}
+								</div>
+							</div>
 							{/if}
 
 							<!-- Flow Properties -->

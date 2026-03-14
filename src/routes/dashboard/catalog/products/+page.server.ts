@@ -1,10 +1,12 @@
 import { db } from '$lib/server/db';
 import { products, categories } from '$lib/server/db/schema';
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { generateSKU } from '$lib/utils/skuGenerator';
 
-export const load = async () => {
+export const load = async ({ locals }: { locals: App.Locals }) => {
+	if (!locals.user) throw redirect(302, '/login');
+	if (!['admin', 'warehouse'].includes(locals.user.role)) throw redirect(302, '/dashboard');
 	const allProducts = await db.select({
 		product: products,
 		category: categories
@@ -21,21 +23,28 @@ export const load = async () => {
 };
 
 export const actions = {
-	create: async ({ request }) => {
+	create: async ({ request, locals }) => {
+		if (!locals.user) return fail(401, { error: 'Unauthorized' });
+		if (!['admin', 'warehouse'].includes(locals.user.role)) return fail(403, { error: 'Access denied' });
 		const data = await request.formData();
 		const name = data.get('name')?.toString();
 		const categoryId = data.get('categoryId')?.toString();
 		const description = data.get('description')?.toString();
-		
+		const barcode = data.get('barcode')?.toString() || null;
+
 		const thickness = data.get('thickness') ? parseFloat(data.get('thickness') as string) : null;
 		const size1 = data.get('size1') ? parseFloat(data.get('size1') as string) : null;
 		const size2 = data.get('size2') ? parseFloat(data.get('size2') as string) : null;
 		const length = data.get('length') ? parseFloat(data.get('length') as string) : null;
 		const weightPerPiece = data.get('weightPerPiece') ? parseFloat(data.get('weightPerPiece') as string) : null;
 		const minStockLevel = data.get('minStockLevel') ? parseInt(data.get('minStockLevel') as string, 10) : 10;
+		const averageLandingCost = data.get('averageLandingCost') ? parseFloat(data.get('averageLandingCost') as string) : 0;
 
 		if (!name || !categoryId) {
 			return fail(400, { missing: true });
+		}
+		if (!isFinite(averageLandingCost) || averageLandingCost < 0) {
+			return fail(400, { error: 'Purchase cost must be a non-negative number' });
 		}
 
 		try {
@@ -64,19 +73,26 @@ export const actions = {
 				size2: size2 ? size2.toString() : null,
 				length: length ? length.toString() : null,
 				weightPerPiece: weightPerPiece ? weightPerPiece.toString() : null,
-				minStockLevel
+				minStockLevel,
+				barcode,
+				averageLandingCost: averageLandingCost.toFixed(2)
 			});
 
 			return { success: true };
 		} catch (e: any) {
 			console.error(e)
-			if (e.code === '23505') { // Unique constraint violation (likely SKU)
+			if (e.code === '23505') { // Unique constraint violation (SKU or barcode)
+				if (e.detail?.includes('barcode') || e.constraint?.includes('barcode')) {
+					return fail(400, { duplicate: true, message: 'A product with this barcode already exists.' });
+				}
 				return fail(400, { duplicate: true, message: 'A product with this identical SKU properties already exists.' });
 			}
 			return fail(500, { error: 'Unknown server error' });
 		}
 	},
-	delete: async ({ request }) => {
+	delete: async ({ request, locals }) => {
+		if (!locals.user) return fail(401, { error: 'Unauthorized' });
+		if (!['admin', 'warehouse'].includes(locals.user.role)) return fail(403, { error: 'Access denied' });
 		const data = await request.formData();
 		const id = data.get('id')?.toString();
 
@@ -89,12 +105,18 @@ export const actions = {
 			return fail(500, { error: 'Could not delete product. Ensure no inventory transactions depend on it.' });
 		}
 	},
-	update: async ({ request }) => {
+	update: async ({ request, locals }) => {
+		if (!locals.user) return fail(401, { error: 'Unauthorized' });
+		if (!['admin', 'warehouse'].includes(locals.user.role)) return fail(403, { error: 'Access denied' });
 		const data = await request.formData();
 		const id = data.get('id')?.toString();
 		const name = data.get('name')?.toString();
 		const categoryId = data.get('categoryId')?.toString();
 		const description = data.get('description')?.toString() || null;
+		// Only update barcode if the field was present in the form (i.e. barcodeEnabled=true).
+		// When the barcode input is hidden, data.has('barcode') is false and we preserve the existing value.
+		const barcodeFieldPresent = data.has('barcode');
+		const barcode = data.get('barcode')?.toString() || null;
 
 		const thickness = data.get('thickness') ? parseFloat(data.get('thickness') as string) : null;
 		const size1 = data.get('size1') ? parseFloat(data.get('size1') as string) : null;
@@ -102,8 +124,12 @@ export const actions = {
 		const length = data.get('length') ? parseFloat(data.get('length') as string) : null;
 		const weightPerPiece = data.get('weightPerPiece') ? parseFloat(data.get('weightPerPiece') as string) : null;
 		const minStockLevel = data.get('minStockLevel') ? parseInt(data.get('minStockLevel') as string, 10) : 10;
+		const averageLandingCost = data.get('averageLandingCost') ? parseFloat(data.get('averageLandingCost') as string) : 0;
 
 		if (!id || !name || !categoryId) return fail(400, { missing: true });
+		if (!isFinite(averageLandingCost) || averageLandingCost < 0) {
+			return fail(400, { error: 'Purchase cost must be a non-negative number' });
+		}
 
 		try {
 			const category = await db.query.categories.findFirst({ where: eq(categories.id, categoryId) });
@@ -119,13 +145,20 @@ export const actions = {
 					size2: size2 ? size2.toString() : null,
 					length: length ? length.toString() : null,
 					weightPerPiece: weightPerPiece ? weightPerPiece.toString() : null,
-					minStockLevel
+					minStockLevel,
+					...(barcodeFieldPresent && { barcode }),
+					averageLandingCost: averageLandingCost.toFixed(2)
 				})
 				.where(eq(products.id, id));
 
 			return { success: true };
 		} catch (e: any) {
-			if (e.code === '23505') return fail(400, { duplicate: true, message: 'A product with this identical SKU already exists.' });
+			if (e.code === '23505') {
+				if (e.detail?.includes('barcode') || e.constraint?.includes('barcode')) {
+					return fail(400, { duplicate: true, message: 'A product with this barcode already exists.' });
+				}
+				return fail(400, { duplicate: true, message: 'A product with this identical SKU already exists.' });
+			}
 			return fail(500, { error: 'Could not update product.' });
 		}
 	}
