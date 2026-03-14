@@ -72,7 +72,7 @@ export const actions: Actions = {
         const actualCash = Number(formData.get('actualCash'));
         const notes = formData.get('notes')?.toString() || '';
 
-        if (isNaN(actualCash)) {
+        if (isNaN(actualCash) || actualCash < 0) {
             return fail(400, { error: 'Invalid actual cash amount' });
         }
 
@@ -135,7 +135,7 @@ export const actions: Actions = {
             const totalSales = salesResult?.totalSales ?? '0';
 
             await db.insert(dailyReconciliations).values({
-                date: new Date(),
+                date: startOfToday,
                 expectedCash: expectedCash.toString(),
                 actualCash: actualCash.toString(),
                 discrepancy: discrepancy.toString(),
@@ -146,8 +146,11 @@ export const actions: Actions = {
             });
 
             return { success: true };
-        } catch (error) {
+        } catch (error: any) {
             console.error('Reconciliation error:', error);
+            if (error?.code === '23505') {
+                return fail(409, { error: 'A reconciliation record for today already exists' });
+            }
             return fail(500, { error: 'Failed to save reconciliation record' });
         }
     }

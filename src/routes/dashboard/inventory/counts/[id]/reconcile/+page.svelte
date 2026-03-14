@@ -41,6 +41,14 @@
 			if (result.type === 'failure') {
 				toast.error(result.data?.error ?? 'Failed to close count');
 			}
+			if (result.type === 'success') {
+				const skipped: string[] = result.data?.skippedProducts ?? [];
+				if (skipped.length > 0) {
+					toast.warning(`Count closed, but ${skipped.length} product(s) had no inventory record and were not adjusted.`);
+				} else {
+					toast.success('Count closed and inventory updated.');
+				}
+			}
 			isClosing = false;
 			showConfirm = false;
 			await update();
