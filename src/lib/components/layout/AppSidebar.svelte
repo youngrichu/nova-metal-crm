@@ -131,7 +131,7 @@
 										style={isActive ? activeStyle : ""}
 										class={cn(
 											"flex items-center h-11 transition-colors group-data-[collapsible=icon]:justify-center",
-											isActive ? "text-white" : "text-sidebar-foreground/50",
+											isActive ? "text-sidebar-foreground" : "text-sidebar-foreground/50",
 										)}
 									>
 										<!-- Link takes up all the space except the chevron -->
@@ -139,7 +139,7 @@
 											href={item.href}
 											class={cn(
 												"flex items-center gap-3 flex-1 h-full pl-6 pr-2 group-data-[collapsible=icon]:hidden",
-												isActive ? "text-white" : "hover:text-sidebar-foreground",
+												isActive ? "text-sidebar-foreground" : "hover:text-sidebar-foreground",
 											)}
 										>
 											<item.icon class="shrink-0 size-[1.05rem]" />
@@ -170,7 +170,7 @@
 														style={subIsActive ? activeStyle : ""}
 														class={cn(
 															"flex items-center gap-2 h-8 px-3 text-[0.7rem] font-bold tracking-[0.1em] uppercase rounded-none transition-colors w-full",
-															subIsActive ? "text-white" : "text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-white/5",
+															subIsActive ? "text-sidebar-foreground" : "text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-white/5",
 														)}
 													>
 														<sub.icon class="shrink-0 size-3.5" />
@@ -195,7 +195,7 @@
 												"flex items-center gap-3 h-11 transition-colors",
 												"group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full",
 												props.class as string,
-												isActive ? "text-white" : "text-sidebar-foreground/50 hover:text-sidebar-foreground",
+												isActive ? "text-sidebar-foreground" : "text-sidebar-foreground/50 hover:text-sidebar-foreground",
 												"!px-6 group-data-[collapsible=icon]:!px-0",
 											)}
 										>
