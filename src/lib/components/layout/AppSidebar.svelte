@@ -2,6 +2,7 @@
 	import * as Sidebar from "$lib/components/ui/sidebar";
 	import { cn } from "$lib/utils";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+	import { Collapsible } from "bits-ui";
 	import * as m from "$lib/paraglide/messages";
 	import {
 		LayoutDashboard,
@@ -14,6 +15,7 @@
 		Warehouse,
 		LogOut,
 		ChevronUp,
+		ChevronDown,
 		Calculator,
 		ClipboardList,
 	} from "lucide-svelte";
@@ -96,13 +98,11 @@
 	<!-- ── HEADER / WORDMARK ── -->
 	<Sidebar.Header class="px-0 pt-0 pb-0 border-b-2 border-white/10">
 		<div class="flex items-center gap-0 group-data-[collapsible=icon]:justify-center h-14">
-			<!-- Logo mark -->
 			<div class="flex items-center justify-center shrink-0 w-14 h-14 border-r-2 border-white/10 group-data-[collapsible=icon]:border-r-0 group-data-[collapsible=icon]:w-full">
 				<div class="w-8 h-8 bg-white flex items-center justify-center">
 					<span class="text-zinc-900 text-base font-black tracking-tighter select-none leading-none">N</span>
 				</div>
 			</div>
-			<!-- Wordmark -->
 			<div class="flex flex-col leading-none px-5 group-data-[collapsible=icon]:hidden overflow-hidden">
 				<span class="text-sm font-black tracking-[0.15em] text-sidebar-foreground uppercase leading-tight">Nova Metal</span>
 				<span class="text-[0.65rem] font-bold tracking-[0.2em] text-sidebar-foreground/40 uppercase mt-0.5">ERP System</span>
@@ -122,51 +122,86 @@
 						{@const isActive =
 							page.url.pathname === item.href ||
 							(item.href !== "/dashboard" && page.url.pathname.startsWith(item.href))}
-						<Sidebar.MenuItem>
-							<Sidebar.MenuButton {isActive}>
-								{#snippet child({ props })}
-									<a
-										href={item.href}
-										{...props}
-										style={isActive ? activeStyle : ""}
-										class={cn(
-											"flex items-center gap-3 h-11 transition-colors",
-											"group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full",
-											props.class as string,
-											isActive ? "text-white" : "text-sidebar-foreground/50 hover:text-sidebar-foreground",
-											"!px-6 group-data-[collapsible=icon]:!px-0",
-										)}
-									>
-										<item.icon class="shrink-0 size-[1.05rem]" />
-										<span class="text-xs font-bold tracking-[0.12em] uppercase group-data-[collapsible=icon]:hidden truncate">
-											{typeof item.title === "function" ? item.title() : item.title}
-										</span>
-									</a>
-								{/snippet}
-							</Sidebar.MenuButton>
 
-							<!-- Sub-items (e.g. Inventory children) -->
-							{#if item.children && isActive}
-								<Sidebar.MenuSub class="border-white/10 mx-6 px-0">
-									{#each item.children as sub}
-										{@const subIsActive = page.url.pathname === sub.href}
-										<Sidebar.MenuSubItem>
-											<a
-												href={sub.href}
-												style={subIsActive ? activeStyle : ""}
-												class={cn(
-													"flex items-center gap-2 h-8 px-3 text-[0.7rem] font-bold tracking-[0.1em] uppercase rounded-none transition-colors w-full",
-													subIsActive ? "text-white" : "text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-white/5",
-												)}
-											>
-												<sub.icon class="shrink-0 size-3.5" />
-												{typeof sub.title === "function" ? sub.title() : sub.title}
-											</a>
-										</Sidebar.MenuSubItem>
-									{/each}
-								</Sidebar.MenuSub>
-							{/if}
-						</Sidebar.MenuItem>
+						{#if item.children}
+							<!-- Collapsible parent item -->
+							<Collapsible.Root open={isActive}>
+								<Sidebar.MenuItem>
+									<Collapsible.Trigger>
+										{#snippet child({ props: triggerProps })}
+											<Sidebar.MenuButton {isActive}>
+												{#snippet child({ props })}
+													<button
+														{...triggerProps}
+														{...props}
+														style={isActive ? activeStyle : ""}
+														class={cn(
+															"flex items-center gap-3 h-11 w-full transition-colors",
+															"group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full",
+															props.class as string,
+															isActive ? "text-white" : "text-sidebar-foreground/50 hover:text-sidebar-foreground",
+															"!px-6 group-data-[collapsible=icon]:!px-0",
+														)}
+													>
+														<item.icon class="shrink-0 size-[1.05rem]" />
+														<span class="text-xs font-bold tracking-[0.12em] uppercase group-data-[collapsible=icon]:hidden truncate flex-1 text-left">
+															{typeof item.title === "function" ? item.title() : item.title}
+														</span>
+														<ChevronDown class="size-3 shrink-0 text-sidebar-foreground/40 transition-transform group-data-[collapsible=icon]:hidden data-[state=open]:rotate-180" />
+													</button>
+												{/snippet}
+											</Sidebar.MenuButton>
+										{/snippet}
+									</Collapsible.Trigger>
+
+									<Collapsible.Content>
+										<Sidebar.MenuSub class="border-white/10 mx-6 px-0">
+											{#each item.children as sub}
+												{@const subIsActive = page.url.pathname === sub.href}
+												<Sidebar.MenuSubItem>
+													<a
+														href={sub.href}
+														style={subIsActive ? activeStyle : ""}
+														class={cn(
+															"flex items-center gap-2 h-8 px-3 text-[0.7rem] font-bold tracking-[0.1em] uppercase rounded-none transition-colors w-full",
+															subIsActive ? "text-white" : "text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-white/5",
+														)}
+													>
+														<sub.icon class="shrink-0 size-3.5" />
+														{typeof sub.title === "function" ? sub.title() : sub.title}
+													</a>
+												</Sidebar.MenuSubItem>
+											{/each}
+										</Sidebar.MenuSub>
+									</Collapsible.Content>
+								</Sidebar.MenuItem>
+							</Collapsible.Root>
+						{:else}
+							<!-- Regular item -->
+							<Sidebar.MenuItem>
+								<Sidebar.MenuButton {isActive}>
+									{#snippet child({ props })}
+										<a
+											href={item.href}
+											{...props}
+											style={isActive ? activeStyle : ""}
+											class={cn(
+												"flex items-center gap-3 h-11 transition-colors",
+												"group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full",
+												props.class as string,
+												isActive ? "text-white" : "text-sidebar-foreground/50 hover:text-sidebar-foreground",
+												"!px-6 group-data-[collapsible=icon]:!px-0",
+											)}
+										>
+											<item.icon class="shrink-0 size-[1.05rem]" />
+											<span class="text-xs font-bold tracking-[0.12em] uppercase group-data-[collapsible=icon]:hidden truncate">
+												{typeof item.title === "function" ? item.title() : item.title}
+											</span>
+										</a>
+									{/snippet}
+								</Sidebar.MenuButton>
+							</Sidebar.MenuItem>
+						{/if}
 					{/each}
 				</Sidebar.Menu>
 			</Sidebar.GroupContent>
