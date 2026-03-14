@@ -76,7 +76,7 @@
 				<Sidebar.Menu class="gap-0">
 					{#each visibleNavItems as item}
 						{@const isActive = page.url.pathname === item.href || (item.href !== '/dashboard' && page.url.pathname.startsWith(item.href))}
-						<Sidebar.MenuItem>
+						<Sidebar.MenuItem class={isActive ? 'border-l-2 border-primary' : 'border-l-2 border-transparent'}>
 							<Sidebar.MenuButton {isActive}>
 								{#snippet child({ props })}
 									<a
@@ -92,8 +92,6 @@
 											'!px-6 group-data-[collapsible=icon]:!px-0'
 										)}
 									>
-										<!-- Active indicator pinned to the sidebar left edge -->
-										<span class={cn('absolute inset-y-0 left-0 w-0.5', isActive ? 'bg-primary' : 'bg-transparent')}></span>
 										<item.icon class="shrink-0 size-[1.05rem]" />
 										<span class="text-xs font-bold tracking-[0.12em] uppercase group-data-[collapsible=icon]:hidden truncate">
 											{typeof item.title === 'function' ? item.title() : item.title}
