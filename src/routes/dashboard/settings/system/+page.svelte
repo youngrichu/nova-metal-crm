@@ -185,8 +185,8 @@
 						checked={data.settings.barcode_enabled === 'true'}
 						class="sr-only peer"
 					/>
-					<div class="w-5 h-5 border-2 border-foreground/30 bg-muted/30 peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center">
-						<svg class="w-3 h-3 text-primary-foreground opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+					<div class="w-5 h-5 border-2 border-foreground/30 bg-muted/30 peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center [&>svg]:opacity-0 peer-checked:[&>svg]:opacity-100">
+						<svg class="w-3 h-3 text-primary-foreground transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
 							<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
 						</svg>
 					</div>
