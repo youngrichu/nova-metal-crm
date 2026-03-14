@@ -168,47 +168,47 @@
 			</div>
 		</section>
 
-	<!-- Barcode Features -->
-	<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
-		<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
-			<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
-				<Scan class="w-4 h-4 text-primary" /> Barcode Features
-			</h2>
-		</div>
-		<div class="p-6 md:p-8">
-			<label class="flex items-start gap-4 cursor-pointer group">
-				<div class="relative mt-0.5">
-					<input
-						type="checkbox"
-						name="barcode_enabled"
-						value="true"
-						checked={data.settings.barcode_enabled === 'true'}
-						class="sr-only peer"
-					/>
-					<div class="w-5 h-5 border-2 border-foreground/30 bg-muted/30 peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center [&>svg]:opacity-0 peer-checked:[&>svg]:opacity-100">
-						<svg class="w-3 h-3 text-primary-foreground transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-							<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-						</svg>
+		<!-- Barcode Features -->
+		<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
+			<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
+				<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
+					<Scan class="w-4 h-4 text-primary" /> Barcode Features
+				</h2>
+			</div>
+			<div class="p-6 md:p-8">
+				<label class="flex items-start gap-4 cursor-pointer group">
+					<div class="relative mt-0.5">
+						<input
+							type="checkbox"
+							name="barcode_enabled"
+							value="true"
+							checked={data.settings.barcode_enabled === 'true'}
+							class="sr-only peer"
+						/>
+						<div class="w-5 h-5 border-2 border-foreground/30 bg-muted/30 peer-checked:bg-primary peer-checked:border-primary transition-colors flex items-center justify-center [&>svg]:opacity-0 peer-checked:[&>svg]:opacity-100">
+							<svg class="w-3 h-3 text-primary-foreground transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+								<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+							</svg>
+						</div>
 					</div>
-				</div>
-				<input type="hidden" name="barcode_enabled" value="false" />
-				<div>
-					<p class="text-sm font-bold tracking-wide">Enable Barcode Features</p>
-					<p class="text-xs text-muted-foreground/60 mt-0.5">Shows barcode fields on products and enables the barcode scanner during stock-takes.</p>
-				</div>
-			</label>
-		</div>
-	</section>
+					<input type="hidden" name="barcode_enabled" value="false" />
+					<div>
+						<p class="text-sm font-bold tracking-wide">Enable Barcode Features</p>
+						<p class="text-xs text-muted-foreground/60 mt-0.5">Shows barcode fields on products and enables the barcode scanner during stock-takes.</p>
+					</div>
+				</label>
+			</div>
+		</section>
 
-	<div class="flex justify-end">
-		<Button
-			type="submit"
-			disabled={isSubmitting}
-			class="h-14 px-12 rounded-none bg-foreground text-background font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all flex items-center gap-3"
-		>
-			<Save class="w-4 h-4" />
-			{isSubmitting ? 'Saving...' : 'Save Settings'}
-		</Button>
-	</div>
+		<div class="flex justify-end">
+			<Button
+				type="submit"
+				disabled={isSubmitting}
+				class="h-14 px-12 rounded-none bg-foreground text-background font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all flex items-center gap-3"
+			>
+				<Save class="w-4 h-4" />
+				{isSubmitting ? 'Saving...' : 'Save Settings'}
+			</Button>
+		</div>
 	</form>
 </div>
