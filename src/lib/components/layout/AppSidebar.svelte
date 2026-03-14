@@ -87,11 +87,13 @@
 											'group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full',
 											props.class as string,
 											isActive
-												? 'bg-white/10 text-sidebar-foreground border-l-2 border-primary'
-												: 'text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/5 border-l-2 border-transparent',
+												? 'bg-white/10 text-sidebar-foreground'
+												: 'text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/5',
 											'!px-6 group-data-[collapsible=icon]:!px-0'
 										)}
 									>
+										<!-- Active indicator pinned to the sidebar left edge -->
+										<span class={cn('absolute inset-y-0 left-0 w-0.5', isActive ? 'bg-primary' : 'bg-transparent')}></span>
 										<item.icon class="shrink-0 size-[1.05rem]" />
 										<span class="text-xs font-bold tracking-[0.12em] uppercase group-data-[collapsible=icon]:hidden truncate">
 											{typeof item.title === 'function' ? item.title() : item.title}
