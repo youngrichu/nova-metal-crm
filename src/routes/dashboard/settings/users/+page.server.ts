@@ -141,7 +141,6 @@ export const actions: Actions = {
         try {
             let result: { success: boolean; error?: string } = { success: false };
 
-<<<<<<< HEAD
             await db.transaction(async (tx) => {
                 // Lock the row to prevent concurrent toggles producing a net-zero effect
                 const [row] = await tx
@@ -165,15 +164,13 @@ export const actions: Actions = {
                     .set({ emailVerified: !row.emailVerified, updatedAt: new Date() })
                     .where(eq(usersTable.id, targetUserId));
 
+                // Revoke sessions so deactivated users lose access immediately
+                await tx.delete(sessionsTable).where(eq(sessionsTable.userId, targetUserId));
+
                 result = { success: true };
             });
 
             if (!result.success) return fail(result.error === 'User not found' ? 404 : 400, { error: result.error });
-=======
-            // Revoke sessions so deactivated users lose access immediately
-            await db.delete(sessionsTable).where(eq(sessionsTable.userId, targetUserId));
-
->>>>>>> origin/main
             return { success: true };
         } catch (e) {
             console.error(e);
