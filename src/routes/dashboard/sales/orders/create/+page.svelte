@@ -47,8 +47,13 @@
 		}
 	}
 
+    // Incremented whenever the user switches between Walk-In and Registered mode.
+    // Captured before each fetch and checked after resolution to discard stale responses.
+    let priceRevision = $state(0);
+
     async function fetchAndUpdatePrice(index: number, productId: string, quantity: number, customerId: string) {
         if (!productId) return;
+        const capturedRevision = priceRevision;
         try {
             const body: Record<string, unknown> = { productId, quantity };
             if (customerId) {
@@ -64,8 +69,8 @@
             if (res.ok) {
                 const data = await res.json();
                 const newItems = [...items];
-                // Only update if it's still the same product at this index
-                if (newItems[index].productId === productId) {
+                // Discard stale responses: only update if the product and pricing mode haven't changed
+                if (newItems[index].productId === productId && priceRevision === capturedRevision) {
                     newItems[index].unitPrice = data.finalUnitPrice;
                     items = newItems;
                 }
@@ -103,6 +108,7 @@
 		savedCustomerId = selectedCustomerId;
 		selectedCustomerId = '';
 		isWalkIn = true;
+		priceRevision++;
 	}
 
 	function switchToRegistered() {
@@ -110,6 +116,7 @@
 		walkInPhone = '';
 		walkInPricingTier = 'RETAIL';
 		isWalkIn = false;
+		priceRevision++;
 	}
 
     $effect(() => {
