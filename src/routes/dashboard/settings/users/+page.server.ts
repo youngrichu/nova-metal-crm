@@ -135,22 +135,36 @@ export const actions: Actions = {
 
         if (!targetUserId) return fail(400, { error: 'Missing userId' });
 
-        const currentUser = await db.select({ emailVerified: usersTable.emailVerified })
-            .from(usersTable)
-            .where(eq(usersTable.id, targetUserId))
-            .limit(1);
-        if (!currentUser[0]) return fail(404, { error: 'User not found' });
-        const currentValue = currentUser[0].emailVerified;
-
-        if (targetUserId === locals.user.id && currentValue) {
-            return fail(400, { error: 'You cannot deactivate your own account' });
-        }
-
         try {
-            await db.update(usersTable)
-                .set({ emailVerified: !currentValue, updatedAt: new Date() })
-                .where(eq(usersTable.id, targetUserId));
+            let result: { success: boolean; error?: string } = { success: false };
 
+            await db.transaction(async (tx) => {
+                // Lock the row to prevent concurrent toggles producing a net-zero effect
+                const [row] = await tx
+                    .select({ emailVerified: usersTable.emailVerified })
+                    .from(usersTable)
+                    .where(eq(usersTable.id, targetUserId))
+                    .for('update')
+                    .limit(1);
+
+                if (!row) {
+                    result = { success: false, error: 'User not found' };
+                    return;
+                }
+
+                if (targetUserId === locals.user!.id && row.emailVerified) {
+                    result = { success: false, error: 'You cannot deactivate your own account' };
+                    return;
+                }
+
+                await tx.update(usersTable)
+                    .set({ emailVerified: !row.emailVerified, updatedAt: new Date() })
+                    .where(eq(usersTable.id, targetUserId));
+
+                result = { success: true };
+            });
+
+            if (!result.success) return fail(result.error === 'User not found' ? 404 : 400, { error: result.error });
             return { success: true };
         } catch (e) {
             console.error(e);
