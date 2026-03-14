@@ -77,7 +77,7 @@ export const actions = {
 		}
 
 		if (type === 'STOCK_IN' && unitCostStr) {
-			if (!/^\d+(\.\d{1,2})?$/.test(unitCostStr)) {
+			if (!/^\d{1,12}(\.\d{1,2})?$/.test(unitCostStr)) {
 				return fail(400, { error: 'Invalid purchase cost' });
 			}
 			const cost = Number(unitCostStr);
