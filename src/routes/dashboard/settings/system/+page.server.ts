@@ -3,7 +3,7 @@ import { systemSettings } from '$lib/server/db/schema/settings';
 import { redirect, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 
-const SETTING_KEYS = ['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred', 'currency_code', 'currency_locale'] as const;
+const SETTING_KEYS = ['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred', 'currency_code', 'currency_locale', 'barcode_enabled'] as const;
 
 const DEFAULTS: Record<string, string> = {
     vat_rate: '0.15',
@@ -12,7 +12,8 @@ const DEFAULTS: Record<string, string> = {
     markup_vip: '1.05',
     markup_preferred: '1.08',
     currency_code: 'ETB',
-    currency_locale: 'en-ET'
+    currency_locale: 'en-ET',
+    barcode_enabled: 'false'
 };
 
 export const load: PageServerLoad = async ({ locals }) => {
