@@ -321,7 +321,7 @@
 					</Table.Row>
 				{:else}
 					<Table.Row>
-						<Table.Cell colspan={8} class="h-64 text-center align-middle">
+						<Table.Cell colspan={data.barcodeEnabled ? 9 : 8} class="h-64 text-center align-middle">
 							<div class="flex flex-col items-center justify-center text-muted-foreground/40 gap-4">
 								<Box class="w-12 h-12 opacity-20" />
 								<p class="text-lg font-light tracking-widest uppercase">No materials indexed</p>
