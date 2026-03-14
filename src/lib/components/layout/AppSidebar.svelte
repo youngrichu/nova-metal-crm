@@ -169,11 +169,11 @@
 														href={sub.href}
 														style={subIsActive ? activeStyle : ""}
 														class={cn(
-															"flex items-center gap-2 h-8 px-3 text-[0.7rem] font-bold tracking-[0.1em] uppercase rounded-none transition-colors w-full",
+															"flex items-center gap-3 h-11 px-6 text-xs font-bold tracking-[0.12em] uppercase rounded-none transition-colors w-full",
 															subIsActive ? "text-sidebar-foreground" : "text-sidebar-foreground/40 hover:text-sidebar-foreground hover:bg-white/5",
 														)}
 													>
-														<sub.icon class="shrink-0 size-3.5" />
+														<sub.icon class="shrink-0 size-[1.05rem]" />
 														{typeof sub.title === "function" ? sub.title() : sub.title}
 													</a>
 												</Sidebar.MenuSubItem>
