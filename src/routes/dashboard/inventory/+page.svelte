@@ -126,6 +126,7 @@
 								</div>
 							{/if}
 
+							{#if data.barcodeEnabled}
 							<!-- Barcode Scanner Input -->
 							<div class="space-y-2">
 								<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">Scan Barcode</Label>
@@ -142,6 +143,7 @@
 									{/if}
 								</div>
 							</div>
+							{/if}
 
 							<!-- Flow Properties -->
 							<div class="space-y-6">
