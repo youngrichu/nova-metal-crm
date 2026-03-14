@@ -113,6 +113,9 @@ export const actions = {
 		const name = data.get('name')?.toString();
 		const categoryId = data.get('categoryId')?.toString();
 		const description = data.get('description')?.toString() || null;
+		// Only update barcode if the field was present in the form (i.e. barcodeEnabled=true).
+		// When the barcode input is hidden, data.has('barcode') is false and we preserve the existing value.
+		const barcodeFieldPresent = data.has('barcode');
 		const barcode = data.get('barcode')?.toString() || null;
 
 		const thickness = data.get('thickness') ? parseFloat(data.get('thickness') as string) : null;
@@ -143,7 +146,7 @@ export const actions = {
 					length: length ? length.toString() : null,
 					weightPerPiece: weightPerPiece ? weightPerPiece.toString() : null,
 					minStockLevel,
-					barcode,
+					...(barcodeFieldPresent && { barcode }),
 					averageLandingCost: averageLandingCost.toFixed(2)
 				})
 				.where(eq(products.id, id));

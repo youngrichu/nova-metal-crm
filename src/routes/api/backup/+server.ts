@@ -34,7 +34,9 @@ export const GET: RequestHandler = async ({ locals }) => {
         '-d', parsed.pathname.slice(1)
     ];
     if (parsed.username) pgArgs.push('-U', parsed.username);
-    const pgPassword = parsed.password ? decodeURIComponent(parsed.password) : (process.env.PGPASSWORD || '');
+    // new URL() already percent-decodes parsed.password; calling decodeURIComponent again
+    // would throw URIError for passwords that contain a literal '%' (stored as %25 in the URL).
+    const pgPassword = parsed.password || process.env.PGPASSWORD || '';
 
     // pg_dump may not be in the PATH inherited by the Node.js process (e.g. Homebrew on macOS).
     // Augment PATH with common PostgreSQL binary locations so exec can find it.
