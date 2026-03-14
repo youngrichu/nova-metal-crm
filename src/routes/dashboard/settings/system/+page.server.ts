@@ -87,12 +87,13 @@ export const actions: Actions = {
                 if (raw.length > 255) {
                     return fail(400, { error: 'Printer address is too long' });
                 }
-                const addrMatch = raw.match(/^([\w.-]+)(?::(\d+))?$/);
+                // Require hostname to start and end with alphanumeric (no leading/trailing dots)
+                const addrMatch = raw.match(/^([a-zA-Z0-9]([a-zA-Z0-9\-_.]*[a-zA-Z0-9])?)(?::(\d+))?$/);
                 if (!addrMatch) {
                     return fail(400, { error: 'Invalid printer address — use an IP or hostname, optionally with :port (e.g. 192.168.1.100 or 192.168.1.100:9100)' });
                 }
-                if (addrMatch[2]) {
-                    const port = parseInt(addrMatch[2], 10);
+                if (addrMatch[3]) {
+                    const port = parseInt(addrMatch[3], 10);
                     if (port < 1 || port > 65535) {
                         return fail(400, { error: 'Port must be between 1 and 65535' });
                     }

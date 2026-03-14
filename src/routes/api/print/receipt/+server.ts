@@ -179,9 +179,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						.align('ct')
 						.text('Thank you for your business!')
 						.cut()
-						.close(() => {
+						.close((closeErr: any) => {
 							clearTimeout(timeout);
-							resolve();
+							if (closeErr) {
+								reject(closeErr);
+							} else {
+								resolve();
+							}
 						});
 				} catch (printErr) {
 					clearTimeout(timeout);

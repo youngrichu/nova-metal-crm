@@ -13,11 +13,12 @@
 	let paperWidth = $state(data.settings.paper_width ?? '80');
 	let printerAddress = $state(data.settings.printer_address ?? '192.168.1.100');
 
-	// Re-sync printer state from server after form submission (handles failed saves)
+	// Re-sync only when the specific printer keys change on the server (e.g. after a failed save)
 	$effect(() => {
-		printerType = data.settings.printer_type ?? 'network';
-		paperWidth = data.settings.paper_width ?? '80';
-		printerAddress = data.settings.printer_address ?? '192.168.1.100';
+		const { printer_type, paper_width, printer_address } = data.settings;
+		printerType = printer_type ?? 'network';
+		paperWidth = paper_width ?? '80';
+		printerAddress = printer_address ?? '192.168.1.100';
 	});
 
 	function handleEnhance() {
