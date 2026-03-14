@@ -1,4 +1,4 @@
-import { error, redirect } from "@sveltejs/kit";
+import { error, redirect, fail } from "@sveltejs/kit";
 import { db } from "$lib/server/db";
 import { salesOrders, salesOrderItems, customers, products } from "$lib/server/db/schema";
 import { sql } from "drizzle-orm";
@@ -55,19 +55,19 @@ export const actions: Actions = {
 
             // Validation: need exactly one of customer or walk-in mode
             if (!customerId && !isWalkIn) {
-                return { error: "Please select a customer or use walk-in mode" };
+                return fail(400, { error: "Please select a customer or use walk-in mode" });
             }
             // If both are submitted simultaneously, treat as a registered customer order
             // (UI prevents this, but guard here for safety)
             const effectiveIsWalkIn = isWalkIn && !customerId;
 
             if (!itemsJson) {
-                return { error: "Missing required fields" };
+                return fail(400, { error: "Missing required fields" });
             }
 
             const items = JSON.parse(itemsJson);
             if (!items || items.length === 0) {
-                return { error: "Order must have at least one valid item" };
+                return fail(400, { error: "Order must have at least one valid item" });
             }
 
             // Validate walk-in pricing tier against known enum values
@@ -113,7 +113,7 @@ export const actions: Actions = {
             }
 
             if (orderItemsData.length === 0) {
-                return { error: "Order must have at least one valid item" };
+                return fail(400, { error: "Order must have at least one valid item" });
             }
 
             const taxAmount = subtotal * 0.15;
@@ -172,7 +172,7 @@ export const actions: Actions = {
 
         } catch (err) {
             console.error("Order creation error:", err);
-            return { error: "An unexpected error occurred during order creation." };
+            return fail(500, { error: "An unexpected error occurred during order creation." });
         }
     }
 };

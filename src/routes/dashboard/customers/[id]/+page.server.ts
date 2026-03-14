@@ -1,7 +1,7 @@
 import { db } from '$lib/server/db';
 import { customers, salesOrders } from '$lib/server/db/schema/sales';
 import { eq, desc, isNull, and, inArray, notInArray } from 'drizzle-orm';
-import { error } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 
 const normalizePhone = (p: string) => p.replace(/[\s\-().]/g, '');
@@ -66,11 +66,11 @@ export const actions: Actions = {
 		});
 
 		if (!customer) {
-			return { error: 'Customer not found' };
+			return fail(404, { error: 'Customer not found' });
 		}
 
 		if (!customer.phone) {
-			return { error: 'Customer has no phone number — cannot link walk-in orders' };
+			return fail(400, { error: 'Customer has no phone number — cannot link walk-in orders' });
 		}
 
 		const normalizedCustomerPhone = normalizePhone(customer.phone);
@@ -78,14 +78,14 @@ export const actions: Actions = {
 		try {
 			const formData = await request.formData();
 			const orderIdsJson = formData.get('orderIds')?.toString();
-			if (!orderIdsJson) return { error: 'No orders to link' };
+			if (!orderIdsJson) return fail(400, { error: 'No orders to link' });
 
 			const parsed = JSON.parse(orderIdsJson);
 			if (!Array.isArray(parsed) || !parsed.every((id: unknown) => typeof id === 'string')) {
-				return { error: 'Invalid order IDs' };
+				return fail(400, { error: 'Invalid order IDs' });
 			}
 			const orderIds: string[] = parsed;
-			if (!orderIds.length) return { error: 'No orders to link' };
+			if (!orderIds.length) return fail(400, { error: 'No orders to link' });
 
 			// WHERE guards:
 			// - inArray(id, orderIds): only the submitted IDs
@@ -116,7 +116,7 @@ export const actions: Actions = {
 			return { success: true };
 		} catch (err) {
 			console.error('Failed to link walk-in orders:', err);
-			return { error: 'Failed to link orders. Please try again.' };
+			return fail(500, { error: 'Failed to link orders. Please try again.' });
 		}
 	}
 };
