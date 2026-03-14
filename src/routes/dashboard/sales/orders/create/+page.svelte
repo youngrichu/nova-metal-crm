@@ -449,7 +449,7 @@
 					<span class="font-mono text-foreground">{formatCurrency(subtotal)}</span>
 				</div>
 				<div class="flex justify-between w-full md:w-[300px] text-sm font-bold tracking-widest uppercase text-muted-foreground">
-					<span>VAT (15%)</span>
+					<span>VAT ({(data.vatRate * 100).toFixed(0)}%)</span>
 					<span class="font-mono text-foreground">{formatCurrency(taxAmount)}</span>
 				</div>
 				<div class="flex justify-between w-full md:w-[300px] text-2xl md:text-3xl font-black uppercase text-primary border-t-2 border-foreground/10 pt-4 mt-2">

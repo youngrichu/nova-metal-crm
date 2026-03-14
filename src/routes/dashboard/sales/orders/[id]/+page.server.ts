@@ -83,11 +83,14 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const newStatus = formData.get("status")?.toString();
 
-        if (!newStatus) return fail(400, { error: "Status is required" });
+        const VALID_STATUSES = ['DRAFT', 'QUOTE', 'CONFIRMED', 'INVOICED', 'CANCELLED'] as const;
+        if (!newStatus || !VALID_STATUSES.includes(newStatus as any)) {
+            return fail(400, { error: "Invalid or missing status" });
+        }
 
         try {
             await db.update(salesOrders)
-                .set({ status: newStatus as any, updatedAt: new Date() })
+                .set({ status: newStatus, updatedAt: new Date() })
                 .where(eq(salesOrders.id, params.id));
 
             return { success: true };
