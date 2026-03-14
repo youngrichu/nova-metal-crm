@@ -82,7 +82,7 @@
 									<a
 										href={item.href}
 										{...props}
-										style={isActive ? 'background-color: rgba(255,255,255,0.10) !important;' : ''}
+										style={isActive ? 'background-color: rgb(194 200 211) !important;' : ''}
 										class={cn(
 											'flex items-center gap-3 h-11 transition-colors',
 											'group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full',
