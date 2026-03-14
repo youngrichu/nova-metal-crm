@@ -74,7 +74,7 @@ export const actions = {
 
 		if (type === 'STOCK_IN' && unitCostStr) {
 			const cost = parseFloat(unitCostStr);
-			if (isNaN(cost) || cost < 0.01) {
+			if (isNaN(cost) || !isFinite(cost) || cost < 0.01) {
 				return fail(400, { error: 'Invalid purchase cost' });
 			}
 		}
