@@ -121,27 +121,29 @@
 	</div>
 
 	<!-- Barcode Scanner -->
-	<div class="border-2 border-foreground/10 bg-card p-6 shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
-		<div class="flex items-center gap-3 mb-4">
-			<Scan class="w-5 h-5 text-primary" />
-			<h2 class="text-sm font-black tracking-widest uppercase">Barcode Scanner</h2>
+	{#if data.barcodeEnabled}
+		<div class="border-2 border-foreground/10 bg-card p-6 shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
+			<div class="flex items-center gap-3 mb-4">
+				<Scan class="w-5 h-5 text-primary" />
+				<h2 class="text-sm font-black tracking-widest uppercase">Barcode Scanner</h2>
+			</div>
+			<div class="space-y-2 max-w-md">
+				<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">Scan to jump to product row</Label>
+				<Input
+					bind:ref={barcodeInputEl}
+					bind:value={barcodeInput}
+					onkeydown={handleBarcodeScan}
+					placeholder="Focus here and scan barcode..."
+					class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 font-mono transition-all"
+				/>
+				{#if barcodeError}
+					<p class="text-xs text-rose-500 font-medium flex items-center gap-1">
+						<AlertTriangle class="w-3 h-3" /> {barcodeError}
+					</p>
+				{/if}
+			</div>
 		</div>
-		<div class="space-y-2 max-w-md">
-			<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">Scan to jump to product row</Label>
-			<Input
-				bind:ref={barcodeInputEl}
-				bind:value={barcodeInput}
-				onkeydown={handleBarcodeScan}
-				placeholder="Focus here and scan barcode..."
-				class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 font-mono transition-all"
-			/>
-			{#if barcodeError}
-				<p class="text-xs text-rose-500 font-medium flex items-center gap-1">
-					<AlertTriangle class="w-3 h-3" /> {barcodeError}
-				</p>
-			{/if}
-		</div>
-	</div>
+	{/if}
 
 	<!-- Items Table -->
 	<section>
@@ -173,7 +175,7 @@
 							<Table.Cell class="px-6 py-3 font-mono text-xs font-bold align-middle">{row.product.sku}</Table.Cell>
 							<Table.Cell class="px-6 py-3 align-middle">
 								<div class="text-sm font-medium">{row.product.name}</div>
-								{#if row.product.barcode}
+								{#if data.barcodeEnabled && row.product.barcode}
 									<div class="text-[10px] font-mono text-muted-foreground/50 mt-0.5">{row.product.barcode}</div>
 								{/if}
 							</Table.Cell>
