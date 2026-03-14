@@ -32,10 +32,11 @@ export const load: PageServerLoad = async ({ url }) => {
 		let filteredOrders = orders;
 		if (query) {
 			const lowerQuery = query.toLowerCase();
-			filteredOrders = orders.filter(o => 
+			filteredOrders = orders.filter(o =>
 				o.orderNumber.toLowerCase().includes(lowerQuery) ||
 				(o.customer?.name && o.customer.name.toLowerCase().includes(lowerQuery)) ||
-				(o.customer?.companyName && o.customer.companyName.toLowerCase().includes(lowerQuery))
+				(o.customer?.companyName && o.customer.companyName.toLowerCase().includes(lowerQuery)) ||
+				(o.walkInPhone && o.walkInPhone.includes(lowerQuery))
 			);
 		}
 

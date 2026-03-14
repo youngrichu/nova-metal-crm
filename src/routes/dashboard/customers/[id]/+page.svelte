@@ -5,7 +5,7 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 
-	let { data } = $props();
+	let { data, form } = $props();
 	let customer = $derived(data.customer);
 	let orders = $derived(data.orders);
 	let pendingWalkInOrders = $derived(data.pendingWalkInOrders);
@@ -39,6 +39,12 @@
 			</Button>
 		</div>
 	</div>
+
+	{#if form?.error}
+		<div class="bg-red-500/10 border-l-4 border-red-600 p-4">
+			<p class="text-sm font-bold text-red-600">{form.error}</p>
+		</div>
+	{/if}
 
 	{#if showBanner}
 		<div class="bg-primary/10 border-2 border-primary p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">

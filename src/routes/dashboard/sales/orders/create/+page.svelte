@@ -9,7 +9,7 @@
     import * as Popover from "$lib/components/ui/popover";
     import * as Command from "$lib/components/ui/command";
     import { cn } from "$lib/utils";
-    import { tick } from "svelte";
+    import { tick, untrack } from "svelte";
 
 	let { data, form } = $props();
 
@@ -113,27 +113,34 @@
 	}
 
     $effect(() => {
-        // When customer changes, recalculate all prices
+        // When customer changes, recalculate all prices.
+        // untrack() prevents items reads inside from becoming reactive dependencies —
+        // without it, fetchAndUpdatePrice writing back to items would cause an infinite loop.
         if (selectedCustomerId) {
-            items.forEach((item, index) => {
-                if (item.productId) {
-                    fetchAndUpdatePrice(index, item.productId, item.quantity, selectedCustomerId);
-                }
+            untrack(() => {
+                items.forEach((item, index) => {
+                    if (item.productId) {
+                        fetchAndUpdatePrice(index, item.productId, item.quantity, selectedCustomerId);
+                    }
+                });
             });
         }
     });
 
 	$effect(() => {
-		// Recalculate when walk-in tier changes
+		// Recalculate when walk-in tier changes.
+		// Reading walkInPricingTier here tracks it as a reactive dependency.
+		// untrack() prevents items from also becoming a dependency — without it,
+		// fetchAndUpdatePrice writing back to items would cause an infinite loop.
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const _trackTier = walkInPricingTier;
 		if (isWalkIn) {
-			// Reading walkInPricingTier forces Svelte to track it as a reactive dependency.
-			// Do NOT remove this line — without it, tier changes won't trigger price re-fetches.
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			const _trackTier = walkInPricingTier;
-			items.forEach((item, index) => {
-				if (item.productId) {
-					fetchAndUpdatePrice(index, item.productId, item.quantity, '');
-				}
+			untrack(() => {
+				items.forEach((item, index) => {
+					if (item.productId) {
+						fetchAndUpdatePrice(index, item.productId, item.quantity, '');
+					}
+				});
 			});
 		}
 	});
