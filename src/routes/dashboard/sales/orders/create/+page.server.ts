@@ -1,6 +1,7 @@
 import { error, redirect } from "@sveltejs/kit";
 import { db } from "$lib/server/db";
 import { salesOrders, salesOrderItems, customers, products } from "$lib/server/db/schema";
+import { sql } from "drizzle-orm";
 import type { PageServerLoad, Actions } from "./$types";
 
 export const load: PageServerLoad = async () => {
@@ -46,7 +47,9 @@ export const actions: Actions = {
             const formData = await request.formData();
             const customerId = formData.get("customerId")?.toString() || null;
             const isWalkIn = formData.get("isWalkIn") === "true";
-            const walkInPhone = formData.get("walkInPhone")?.toString() || null;
+            // Normalize phone: strip spaces, dashes, parentheses, dots (preserve +)
+            const rawWalkInPhone = formData.get("walkInPhone")?.toString() || null;
+            const walkInPhone = rawWalkInPhone ? rawWalkInPhone.replace(/[\s\-().]/g, '') : null;
             const walkInPricingTier = formData.get("walkInPricingTier")?.toString() || null;
             const itemsJson = formData.get("items")?.toString();
 
@@ -77,9 +80,6 @@ export const actions: Actions = {
             // Resolve the effective pricing tier override for walk-in orders.
             // If customerId is present, the engine will look up the customer tier — no override needed.
             const tierOverride = customerId ? undefined : effectiveWalkInTier;
-
-            const orderCount = await db.$count(salesOrders);
-            const orderNumber = `SO-${new Date().getFullYear()}-${String(orderCount + 1).padStart(4, '0')}`;
 
             let subtotal = 0;
             let orderDiscountAmount = 0;
@@ -122,6 +122,16 @@ export const actions: Actions = {
             let newOrderId = "";
 
             await db.transaction(async (tx) => {
+                // Generate order number inside the transaction for atomicity.
+                // Using MAX(cast(split_part(...))) scoped to the current year avoids the
+                // race condition of reading a count outside the transaction.
+                const year = new Date().getFullYear();
+                const [{ maxNum }] = await tx
+                    .select({ maxNum: sql<number>`coalesce(max(cast(split_part(order_number, '-', 3) as int)), 0)` })
+                    .from(salesOrders)
+                    .where(sql`order_number like ${'SO-' + year + '-%'}`);
+                const orderNumber = `SO-${year}-${String((maxNum ?? 0) + 1).padStart(4, '0')}`;
+
                 const [order] = await tx.insert(salesOrders).values({
                     orderNumber,
                     customerId: customerId || null,

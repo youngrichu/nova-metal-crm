@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { customers, salesOrders } from '$lib/server/db/schema/sales';
-import { isNull, eq, and, desc, ilike, or } from 'drizzle-orm';
+import { isNull, eq, and, desc, ilike, or, notInArray } from 'drizzle-orm';
 import { fail } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import { customerSchema } from '$lib/server/schemas/customer';
@@ -36,16 +36,18 @@ export const actions: Actions = {
 			let walkInOrderIds: string[] = [];
 			if (parsed.data.phone) {
 				try {
+					// Normalize phone before comparison (strip spaces, dashes, parens; keep +)
+					const normalizedPhone = parsed.data.phone.replace(/[\s\-().]/g, '');
 					const unlinked = await db
 						.select({ id: salesOrders.id })
 						.from(salesOrders)
 						.where(
 							and(
 								isNull(salesOrders.customerId),
-								eq(salesOrders.walkInPhone, parsed.data.phone)
+								eq(salesOrders.walkInPhone, normalizedPhone),
+								notInArray(salesOrders.status, ['CANCELLED'])
 							)
 						);
-					// Note: cancelled walk-in orders are included in this list by design.
 					walkInOrderIds = unlinked.map(r => r.id);
 				} catch {
 					// Non-blocking — customer created successfully even if this query fails

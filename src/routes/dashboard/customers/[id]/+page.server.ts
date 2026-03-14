@@ -1,7 +1,9 @@
 import { db } from '$lib/server/db';
 import { customers, salesOrders } from '$lib/server/db/schema/sales';
 import { eq, desc, isNull, and, inArray } from 'drizzle-orm';
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
+
+const normalizePhone = (p: string) => p.replace(/[\s\-().]/g, '');
 import type { PageServerLoad, Actions } from './$types';
 
 export const load: PageServerLoad = async ({ params, url }) => {
@@ -24,6 +26,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	let pendingWalkInOrders: { id: string; orderNumber: string; createdAt: Date }[] = [];
 	if (url.searchParams.has('linkOrders') && customer.phone) {
 		try {
+			const normalizedPhone = normalizePhone(customer.phone);
 			pendingWalkInOrders = await db
 				.select({
 					id: salesOrders.id,
@@ -34,7 +37,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
 				.where(
 					and(
 						isNull(salesOrders.customerId),
-						eq(salesOrders.walkInPhone, customer.phone)
+						eq(salesOrders.walkInPhone, normalizedPhone)
 					)
 				)
 				.orderBy(desc(salesOrders.createdAt));
@@ -52,7 +55,9 @@ export const load: PageServerLoad = async ({ params, url }) => {
 };
 
 export const actions: Actions = {
-	linkOrders: async ({ params, request }) => {
+	linkOrders: async ({ params, request, locals }) => {
+		if (!locals.user) throw error(401, 'Unauthorized');
+
 		const customerId = params.id;
 
 		const customer = await db.query.customers.findFirst({
@@ -66,6 +71,8 @@ export const actions: Actions = {
 		if (!customer.phone) {
 			return { error: 'Customer has no phone number — cannot link walk-in orders' };
 		}
+
+		const normalizedCustomerPhone = normalizePhone(customer.phone);
 
 		try {
 			const formData = await request.formData();
@@ -99,7 +106,7 @@ export const actions: Actions = {
 					and(
 						inArray(salesOrders.id, orderIds),
 						isNull(salesOrders.customerId),
-						eq(salesOrders.walkInPhone, customer.phone)
+						eq(salesOrders.walkInPhone, normalizedCustomerPhone)
 					)
 				);
 
