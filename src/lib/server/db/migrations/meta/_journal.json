@@ -57,6 +57,13 @@
       "when": 1773500000000,
       "tag": "0007_inventory_db_constraints",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1773480863841,
+      "tag": "0008_set_email_verified_default",
+      "breakpoints": true
     }
   ]
 }
