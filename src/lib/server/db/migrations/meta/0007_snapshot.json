@@ -1,5 +1,5 @@
 {
-  "id": "5a0fb81b-4a0a-483a-8ae1-af7ec9191011",
+  "id": "de10d37c-b77a-4232-a153-550eccc2b24b",
   "prevId": "7391cf6b-ee15-4fb9-8b62-8951d1b13043",
   "version": "7",
   "dialect": "postgresql",
@@ -422,7 +422,8 @@
           "name": "email_verified",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": true
         },
         "image": {
           "name": "image",
@@ -1401,7 +1402,7 @@
           "name": "customer_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "status": {
           "name": "status",
@@ -1443,18 +1444,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'0.00'"
-        },
-        "walk_in_phone": {
-          "name": "walk_in_phone",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "walk_in_pricing_tier": {
-          "name": "walk_in_pricing_tier",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "created_by": {
           "name": "created_by",

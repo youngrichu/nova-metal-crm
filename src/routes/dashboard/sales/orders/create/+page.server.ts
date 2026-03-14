@@ -30,7 +30,7 @@ export const load: PageServerLoad = async () => {
             .from(systemSettings)
             .where(eq(systemSettings.key, 'vat_rate'))
             .limit(1);
-        const vatRate = parseFloat(vatRow[0]?.value ?? '0.15') || 0.15;
+        const vatRate = (() => { const v = parseFloat(vatRow[0]?.value ?? ''); return Number.isFinite(v) ? v : 0.15; })();
 
 		return {
 			customers: customersList,
@@ -127,7 +127,7 @@ export const actions: Actions = {
                 .from(systemSettings)
                 .where(eq(systemSettings.key, 'vat_rate'))
                 .limit(1);
-            const vatRate = parseFloat(vatRow[0]?.value ?? '0.15') || 0.15;
+            const vatRate = (() => { const v = parseFloat(vatRow[0]?.value ?? ''); return Number.isFinite(v) ? v : 0.15; })();
             const taxAmount = subtotal * vatRate;
             const totalAmount = subtotal + taxAmount;
 
