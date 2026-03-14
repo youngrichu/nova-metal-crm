@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db';
-import { user as usersTable } from '$lib/server/db/schema/users';
+import { user as usersTable, session as sessionsTable } from '$lib/server/db/schema/users';
 import { eq, desc } from 'drizzle-orm';
 import { fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
@@ -48,6 +48,9 @@ export const actions: Actions = {
             await db.update(usersTable)
                 .set({ role: newRole, updatedAt: new Date() })
                 .where(eq(usersTable.id, targetId));
+
+            // Revoke all active sessions so the new role takes effect immediately
+            await db.delete(sessionsTable).where(eq(sessionsTable.userId, targetId));
 
             return { success: true };
         } catch (e) {

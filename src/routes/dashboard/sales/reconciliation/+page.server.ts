@@ -135,7 +135,7 @@ export const actions: Actions = {
             const totalSales = salesResult?.totalSales ?? '0';
 
             await db.insert(dailyReconciliations).values({
-                date: new Date(),
+                date: startOfToday,
                 expectedCash: expectedCash.toString(),
                 actualCash: actualCash.toString(),
                 discrepancy: discrepancy.toString(),
