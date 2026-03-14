@@ -35,6 +35,7 @@
 
 <style>
 	:global(#app-sidebar) {
+		--sidebar-width: 13rem;
 		--sidebar-background: 220 10% 10%;
 		--sidebar-foreground: 210 40% 96%;
 		--sidebar-primary: var(--primary);
