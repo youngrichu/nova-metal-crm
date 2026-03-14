@@ -8,6 +8,10 @@ import type { LayoutServerLoad } from './$types';
 let barcodeCache: { value: boolean; expiresAt: number } | null = null;
 const CACHE_TTL_MS = 60_000; // 60 seconds
 
+export function invalidateBarcodeCache() {
+	barcodeCache = null;
+}
+
 export const load: LayoutServerLoad = async ({ locals }) => {
 	if (!locals.user) return { barcodeEnabled: false };
 	try {
