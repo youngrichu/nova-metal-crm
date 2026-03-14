@@ -110,6 +110,8 @@ export const load = async ({ locals }) => {
         marginPercent: Number(r.margin_percent)
     }));
 
+	const isFinancialRole = ['admin', 'sales'].includes(locals.user.role);
+
 	return {
 		user: locals.user,
 		productCount: Number(productCountResult.count),
@@ -118,9 +120,9 @@ export const load = async ({ locals }) => {
 		lowStockCount: lowStockItems.length,
 		lowStockItems,
 		recentTransactions,
-        totalSales,
-        totalProfit,
-        salesTrend,
-        marginsByCategory
+        totalSales:        isFinancialRole ? totalSales : null,
+        totalProfit:       isFinancialRole ? totalProfit : null,
+        salesTrend:        isFinancialRole ? salesTrend : [],
+        marginsByCategory: isFinancialRole ? marginsByCategory : []
 	};
 };
