@@ -4,7 +4,7 @@ import { redirect, fail } from '@sveltejs/kit';
 import { invalidateBarcodeCache } from '$lib/server/barcodeCache';
 import type { PageServerLoad, Actions } from './$types';
 
-const SETTING_KEYS = ['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred', 'currency_code', 'currency_locale', 'barcode_enabled'] as const;
+const SETTING_KEYS = ['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred', 'currency_code', 'currency_locale', 'barcode_enabled', 'printer_type', 'printer_address', 'paper_width'] as const;
 
 const DEFAULTS: Record<string, string> = {
     vat_rate: '0.15',
@@ -14,7 +14,10 @@ const DEFAULTS: Record<string, string> = {
     markup_preferred: '1.08',
     currency_code: 'ETB',
     currency_locale: 'en-ET',
-    barcode_enabled: 'false'
+    barcode_enabled: 'false',
+    printer_type: 'network',
+    printer_address: '192.168.1.100',
+    paper_width: '80'
 };
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -71,6 +74,12 @@ export const actions: Actions = {
             }
             if (key === 'barcode_enabled' && !['true', 'false'].includes(raw)) {
                 return fail(400, { error: 'Invalid value for barcode_enabled' });
+            }
+            if (key === 'printer_type' && !['network', 'usb'].includes(raw)) {
+                return fail(400, { error: 'Printer type must be "network" or "usb"' });
+            }
+            if (key === 'paper_width' && !['58', '80'].includes(raw)) {
+                return fail(400, { error: 'Paper width must be 58 or 80' });
             }
 
             updates.push({ key, value: raw });
