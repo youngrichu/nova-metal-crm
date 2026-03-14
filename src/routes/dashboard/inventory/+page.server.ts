@@ -127,12 +127,12 @@ export const actions = {
 					notes,
 					performedBy: sessionUser.id
 				});
-			});
 
-			// 3. If a new purchase cost was provided on stock-in, apply it to all units
-			if (type === 'STOCK_IN' && unitCostStr && productId) {
-				await applyPurchaseCost(productId, unitCostStr);
-			}
+				// 3. Apply new purchase cost inside the same transaction for atomicity
+				if (type === 'STOCK_IN' && unitCostStr) {
+					await applyPurchaseCost(productId, unitCostStr, tx);
+				}
+			});
 
 			return { success: true };
 		} catch (e: any) {
