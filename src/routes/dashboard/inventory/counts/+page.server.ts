@@ -125,7 +125,7 @@ export const actions: Actions = {
 				}
 			});
 
-			redirect(303, `/dashboard/inventory/counts/${newCountId}`);
+			throw redirect(303, `/dashboard/inventory/counts/${newCountId}`);
 		} catch (err: any) {
 			if (err?.status === 303) throw err;
 			if (err?.code === 'DUPLICATE_COUNT') {
