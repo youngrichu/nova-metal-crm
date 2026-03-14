@@ -83,12 +83,13 @@
 										href={item.href}
 										{...props}
 										class={cn(
-											'flex items-center gap-3 relative h-11 px-6 transition-colors',
-											'group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:w-full',
+											'flex items-center gap-3 relative h-11 transition-colors',
+											'group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full',
 											props.class as string,
 											isActive
 												? 'bg-white/10 text-sidebar-foreground border-l-2 border-primary'
-												: 'text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/5 border-l-2 border-transparent'
+												: 'text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/5 border-l-2 border-transparent',
+											'!px-6 group-data-[collapsible=icon]:!px-0'
 										)}
 									>
 										<item.icon class="shrink-0 size-[1.05rem]" />
