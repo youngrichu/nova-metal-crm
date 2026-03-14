@@ -289,7 +289,7 @@
 							{#each WALK_IN_TIERS as tier}
 								<button
 									type="button"
-									onclick={() => { walkInPricingTier = tier; }}
+									onclick={() => { walkInPricingTier = tier; priceRevision++; }}
 									class={cn(
 										"px-4 py-2 text-xs font-bold tracking-widest uppercase transition-colors border-r last:border-r-0 border-border",
 										walkInPricingTier === tier
