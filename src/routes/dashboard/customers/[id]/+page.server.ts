@@ -80,7 +80,12 @@ export const actions: Actions = {
 			const orderIdsJson = formData.get('orderIds')?.toString();
 			if (!orderIdsJson) return fail(400, { error: 'No orders to link' });
 
-			const parsed = JSON.parse(orderIdsJson);
+			let parsed: unknown;
+			try {
+				parsed = JSON.parse(orderIdsJson);
+			} catch {
+				return fail(400, { error: 'Invalid order IDs' });
+			}
 			if (!Array.isArray(parsed) || !parsed.every((id: unknown) => typeof id === 'string')) {
 				return fail(400, { error: 'Invalid order IDs' });
 			}
