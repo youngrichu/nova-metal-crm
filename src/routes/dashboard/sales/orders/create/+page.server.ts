@@ -26,9 +26,16 @@ export const load: PageServerLoad = async () => {
 			.from(products)
 			.orderBy(products.name);
 
+        const vatRow = await db.select({ value: systemSettings.value })
+            .from(systemSettings)
+            .where(eq(systemSettings.key, 'vat_rate'))
+            .limit(1);
+        const vatRate = parseFloat(vatRow[0]?.value ?? '0.15') || 0.15;
+
 		return {
 			customers: customersList,
             products: productsList,
+            vatRate,
 		};
 	} catch (err) {
 		console.error("Failed to load create order form data:", err);

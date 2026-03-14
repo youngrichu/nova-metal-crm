@@ -34,7 +34,7 @@
 
 	// Computed totals
 	let subtotal = $derived(items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0));
-	let taxAmount = $derived(subtotal * 0.15); // 15% VAT
+	let taxAmount = $derived(subtotal * data.vatRate);
 	let totalAmount = $derived(subtotal + taxAmount);
 
 	function addItem() {
