@@ -25,7 +25,8 @@ vi.mock('$lib/server/db/schema', () => ({
 }));
 
 vi.mock('drizzle-orm', () => ({
-	eq: vi.fn((col, val) => ({ col, val }))
+	eq: vi.fn((col, val) => ({ col, val })),
+	sql: new Proxy(() => 'sql`now()`', { get: () => () => 'sql`now()`' })
 }));
 
 describe('applyPurchaseCost', () => {

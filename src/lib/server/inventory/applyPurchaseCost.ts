@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { inventory, products } from '$lib/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 type DbClient = Pick<typeof db, 'update'>;
 
@@ -17,10 +17,10 @@ export async function applyPurchaseCost(
 	client: DbClient = db
 ): Promise<void> {
 	await client.update(products)
-		.set({ averageLandingCost: unitCost, updatedAt: new Date() })
+		.set({ averageLandingCost: unitCost, updatedAt: sql`now()` })
 		.where(eq(products.id, productId));
 
 	await client.update(inventory)
-		.set({ avgCostPerPiece: unitCost, lastUpdated: new Date() })
+		.set({ avgCostPerPiece: unitCost, lastUpdated: sql`now()` })
 		.where(eq(inventory.productId, productId));
 }
