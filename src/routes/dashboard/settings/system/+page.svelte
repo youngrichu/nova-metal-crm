@@ -71,7 +71,7 @@
 					</div>
 				</div>
 
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+				<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
 					<div class="space-y-2 group">
 						<Label for="markup_retail" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
 							Retail Markup Multiplier
@@ -119,6 +119,22 @@
 							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all font-mono"
 						/>
 						<p class="text-xs text-muted-foreground/60">e.g. 1.05 = 5% markup</p>
+					</div>
+					<div class="space-y-2 group">
+						<Label for="markup_preferred" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
+							Preferred Markup Multiplier
+						</Label>
+						<Input
+							id="markup_preferred"
+							name="markup_preferred"
+							type="number"
+							step="0.01"
+							min="1"
+							value={data.settings.markup_preferred}
+							required
+							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all font-mono"
+						/>
+						<p class="text-xs text-muted-foreground/60">e.g. 1.08 = 8% markup</p>
 					</div>
 				</div>
 			</div>

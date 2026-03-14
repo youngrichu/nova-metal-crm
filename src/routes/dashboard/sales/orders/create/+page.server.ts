@@ -91,7 +91,8 @@ export const actions: Actions = {
             let subtotal = 0;
             let orderDiscountAmount = 0;
 
-            const { calculateDynamicPrice } = await import('$lib/server/pricing/engine');
+            const { calculateDynamicPrice, fetchMarkupTiers } = await import('$lib/server/pricing/engine');
+            const markupTiers = await fetchMarkupTiers();
 
             const orderItemsData: any[] = [];
             for (const item of items) {
@@ -103,7 +104,8 @@ export const actions: Actions = {
                     customerId,
                     quantity,
                     undefined,
-                    tierOverride
+                    tierOverride,
+                    markupTiers
                 );
 
                 subtotal += pricing.lineTotal;

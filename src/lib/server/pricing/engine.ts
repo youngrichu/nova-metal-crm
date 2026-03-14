@@ -60,12 +60,45 @@ export function computePrice(baseCost: number, pricingTier: string, quantity: nu
  * If pricingTierOverride is provided, it takes precedence over the customer's CRM tier (used for walk-in orders).
  * Tier resolution order: quote lock-in → pricingTierOverride → customer tier lookup → RETAIL default.
  */
+export type MarkupTiers = {
+    RETAIL: number;
+    WHOLESALE: number;
+    VIP: number;
+    PREFERRED: number;
+};
+
+/**
+ * Fetches markup multipliers from system_settings once.
+ * Pass the result as `prefetchedTiers` to `calculateDynamicPrice` when pricing
+ * multiple items in a loop to avoid one DB query per item.
+ */
+export async function fetchMarkupTiers(): Promise<MarkupTiers> {
+    const markupKeys = ['markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred'];
+    const settingRows = await db.select().from(systemSettings)
+        .where(inArray(systemSettings.key, markupKeys));
+    // Use Number.isFinite so corrupt/non-numeric DB values fall back to defaults
+    // rather than silently propagating NaN through all price calculations.
+    const settingsMap = Object.fromEntries(
+        settingRows.map(r => {
+            const parsed = parseFloat(r.value);
+            return [r.key, Number.isFinite(parsed) ? parsed : null];
+        })
+    );
+    return {
+        RETAIL:    settingsMap['markup_retail']     ?? PRICING_RULES.TIERS.RETAIL,
+        WHOLESALE: settingsMap['markup_wholesale']  ?? PRICING_RULES.TIERS.WHOLESALE,
+        VIP:       settingsMap['markup_vip']        ?? PRICING_RULES.TIERS.VIP,
+        PREFERRED: settingsMap['markup_preferred']  ?? PRICING_RULES.TIERS.PREFERRED,
+    };
+}
+
 export async function calculateDynamicPrice(
     productId: string,
     customerId: string | null,
     quantity: number = 1,
     orderId?: string,
-    pricingTierOverride?: string
+    pricingTierOverride?: string,
+    prefetchedTiers?: MarkupTiers
 ): Promise<PricingResult> {
     // 1. Fetch Product (Layer 1: Base Cost)
     const product = await db.query.products.findFirst({
@@ -131,25 +164,9 @@ export async function calculateDynamicPrice(
         }
     }
 
-    // 4. Load markup multipliers from system_settings, falling back to hardcoded defaults
-    const markupKeys = ['markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred'];
-    const settingRows = await db.select().from(systemSettings)
-        .where(inArray(systemSettings.key, markupKeys));
-    // Use Number.isFinite so corrupt/non-numeric DB values fall back to defaults
-    // rather than silently propagating NaN through all price calculations.
-    const settingsMap = Object.fromEntries(
-        settingRows.map(r => {
-            const parsed = parseFloat(r.value);
-            return [r.key, Number.isFinite(parsed) ? parsed : null];
-        })
-    );
-
-    const dynamicTiers = {
-        RETAIL:    settingsMap['markup_retail']     ?? PRICING_RULES.TIERS.RETAIL,
-        WHOLESALE: settingsMap['markup_wholesale']  ?? PRICING_RULES.TIERS.WHOLESALE,
-        VIP:       settingsMap['markup_vip']        ?? PRICING_RULES.TIERS.VIP,
-        PREFERRED: settingsMap['markup_preferred']  ?? PRICING_RULES.TIERS.PREFERRED,
-    };
+    // 4. Load markup multipliers from system_settings, falling back to hardcoded defaults.
+    // Callers processing multiple items should pass prefetchedTiers to avoid N DB queries.
+    const dynamicTiers = prefetchedTiers ?? await fetchMarkupTiers();
 
     return computePrice(baseCost, pricingTier, quantity, dynamicTiers);
 }
