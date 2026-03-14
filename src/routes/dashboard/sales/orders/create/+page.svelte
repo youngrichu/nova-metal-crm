@@ -9,7 +9,7 @@
     import * as Popover from "$lib/components/ui/popover";
     import * as Command from "$lib/components/ui/command";
     import { cn } from "$lib/utils";
-    import { tick } from "svelte";
+    import { tick, untrack } from "svelte";
 
 	let { data, form } = $props();
 
@@ -47,19 +47,30 @@
 		}
 	}
 
+    // Incremented whenever the user switches between Walk-In and Registered mode.
+    // Captured before each fetch and checked after resolution to discard stale responses.
+    let priceRevision = $state(0);
+
     async function fetchAndUpdatePrice(index: number, productId: string, quantity: number, customerId: string) {
         if (!productId) return;
+        const capturedRevision = priceRevision;
         try {
+            const body: Record<string, unknown> = { productId, quantity };
+            if (customerId) {
+                body.customerId = customerId;
+            } else if (isWalkIn) {
+                body.pricingTier = walkInPricingTier;
+            }
             const res = await fetch('/api/pricing', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId, customerId, quantity })
+                body: JSON.stringify(body)
             });
             if (res.ok) {
                 const data = await res.json();
                 const newItems = [...items];
-                // Only update if it's still the same product at this index
-                if (newItems[index].productId === productId) {
+                // Discard stale responses: only update if the product and pricing mode haven't changed
+                if (newItems[index].productId === productId && priceRevision === capturedRevision) {
                     newItems[index].unitPrice = data.finalUnitPrice;
                     items = newItems;
                 }
@@ -83,16 +94,63 @@
         fetchAndUpdatePrice(index, items[index].productId, items[index].quantity, selectedCustomerId);
     }
 
+	// Walk-in mode state
+	let isWalkIn = $state(false);
+	let savedCustomerId = $state(''); // preserves selection when toggling to walk-in and back
+	let walkInPricingTier = $state('RETAIL');
+	let walkInPhone = $state('');
+
+	// NOTE: these are PRICING ENGINE tiers, not CRM customer tiers (STANDARD/PREFERRED/VIP).
+	// Do NOT "normalise" this to match the CRM enum — they serve different purposes.
+	const WALK_IN_TIERS = ['RETAIL', 'WHOLESALE', 'VIP', 'PREFERRED'] as const;
+
+	function switchToWalkIn() {
+		savedCustomerId = selectedCustomerId;
+		selectedCustomerId = '';
+		isWalkIn = true;
+		priceRevision++;
+	}
+
+	function switchToRegistered() {
+		selectedCustomerId = savedCustomerId;
+		walkInPhone = '';
+		walkInPricingTier = 'RETAIL';
+		isWalkIn = false;
+		priceRevision++;
+	}
+
     $effect(() => {
-        // When customer changes, recalculate all prices
+        // When customer changes, recalculate all prices.
+        // untrack() prevents items reads inside from becoming reactive dependencies —
+        // without it, fetchAndUpdatePrice writing back to items would cause an infinite loop.
         if (selectedCustomerId) {
-            items.forEach((item, index) => {
-                if (item.productId) {
-                    fetchAndUpdatePrice(index, item.productId, item.quantity, selectedCustomerId);
-                }
+            untrack(() => {
+                items.forEach((item, index) => {
+                    if (item.productId) {
+                        fetchAndUpdatePrice(index, item.productId, item.quantity, selectedCustomerId);
+                    }
+                });
             });
         }
     });
+
+	$effect(() => {
+		// Recalculate when walk-in tier changes.
+		// Reading walkInPricingTier here tracks it as a reactive dependency.
+		// untrack() prevents items from also becoming a dependency — without it,
+		// fetchAndUpdatePrice writing back to items would cause an infinite loop.
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const _trackTier = walkInPricingTier;
+		if (isWalkIn) {
+			untrack(() => {
+				items.forEach((item, index) => {
+					if (item.productId) {
+						fetchAndUpdatePrice(index, item.productId, item.quantity, '');
+					}
+				});
+			});
+		}
+	});
 
 	function handleSubmit() {
 		isSubmitting = true;
@@ -135,60 +193,131 @@
 			<h2 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-4 mb-6 flex items-center gap-2">
 				<User class="w-4 h-4" /> Customer Details
 			</h2>
-			
-			<div class="space-y-2 group">
-				<Label for="customerId" class="text-xs font-bold tracking-wider uppercase text-foreground/70 mb-2 block">Select Customer</Label>
-				<input type="hidden" name="customerId" value={selectedCustomerId} />
-                <Popover.Root bind:open={customerOpen}>
-                    <Popover.Trigger
-                        class={cn(
-                            buttonVariants({ variant: "outline" }),
-                            "flex h-14 w-full md:w-[400px] justify-between rounded-none border-b-2 border-border/50 border-t-0 border-x-0 bg-muted/20 px-4 text-base font-bold focus:bg-transparent focus:border-primary transition-colors hover:bg-muted/30",
-                            !selectedCustomerId && "text-muted-foreground"
-                        )}
-                        role="combobox"
-                        aria-expanded={customerOpen}
-                    >
-                        <span class="truncate block w-[90%] text-left">
-                            {getCustomerLabel(selectedCustomerId)}
-                        </span>
-                        <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Popover.Trigger>
-                    <Popover.Content class="w-[350px] md:w-[400px] p-0 rounded-none border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
-                        <Command.Root>
-                            <Command.Input placeholder="Search customers..." class="h-12 border-none font-medium" />
-                            <Command.List>
-                                <Command.Empty>No customer found.</Command.Empty>
-                                <Command.Group>
-                                    {#each data.customers as customer}
-                                        <Command.Item
-                                            value={customer.name + " " + (customer.companyName || '')}
-                                            onSelect={() => {
-                                                selectedCustomerId = customer.id;
-                                                customerOpen = false;
-                                            }}
-                                            class="cursor-pointer py-3"
-                                        >
-                                            <Check
-                                                class={cn(
-                                                    "mr-2 h-4 w-4",
-                                                    selectedCustomerId === customer.id ? "opacity-100 text-primary" : "opacity-0"
-                                                )}
-                                            />
-                                            <div class="flex flex-col truncate w-full">
-                                                <span class="font-bold truncate">{customer.name}</span>
-                                                {#if customer.companyName}
-                                                    <span class="text-[10px] uppercase font-bold tracking-widest text-muted-foreground truncate">{customer.companyName}</span>
-                                                {/if}
-                                            </div>
-                                        </Command.Item>
-                                    {/each}
-                                </Command.Group>
-                            </Command.List>
-                        </Command.Root>
-                    </Popover.Content>
-                </Popover.Root>
+
+			<!-- Mode toggle -->
+			<div class="flex gap-0 mb-6 border-2 border-border w-fit">
+				<button
+					type="button"
+					onclick={switchToRegistered}
+					class={cn(
+						"px-5 py-2 text-xs font-bold tracking-widest uppercase transition-colors",
+						!isWalkIn
+							? "bg-foreground text-background"
+							: "bg-transparent text-muted-foreground hover:text-foreground"
+					)}
+				>
+					Registered
+				</button>
+				<button
+					type="button"
+					onclick={switchToWalkIn}
+					class={cn(
+						"px-5 py-2 text-xs font-bold tracking-widest uppercase transition-colors",
+						isWalkIn
+							? "bg-foreground text-background"
+							: "bg-transparent text-muted-foreground hover:text-foreground"
+					)}
+				>
+					Walk-In
+				</button>
 			</div>
+
+			{#if !isWalkIn}
+				<!-- Registered customer combobox (unchanged) -->
+				<div class="space-y-2 group">
+					<Label for="customerId" class="text-xs font-bold tracking-wider uppercase text-foreground/70 mb-2 block">Select Customer</Label>
+					<input type="hidden" name="customerId" value={selectedCustomerId} />
+					<Popover.Root bind:open={customerOpen}>
+						<Popover.Trigger
+							class={cn(
+								buttonVariants({ variant: "outline" }),
+								"flex h-14 w-full md:w-[400px] justify-between rounded-none border-b-2 border-border/50 border-t-0 border-x-0 bg-muted/20 px-4 text-base font-bold focus:bg-transparent focus:border-primary transition-colors hover:bg-muted/30",
+								!selectedCustomerId && "text-muted-foreground"
+							)}
+							role="combobox"
+							aria-expanded={customerOpen}
+						>
+							<span class="truncate block w-[90%] text-left">
+								{getCustomerLabel(selectedCustomerId)}
+							</span>
+							<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+						</Popover.Trigger>
+						<Popover.Content class="w-[350px] md:w-[400px] p-0 rounded-none border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
+							<Command.Root>
+								<Command.Input placeholder="Search customers..." class="h-12 border-none font-medium" />
+								<Command.List>
+									<Command.Empty>No customer found.</Command.Empty>
+									<Command.Group>
+										{#each data.customers as customer}
+											<Command.Item
+												value={customer.name + " " + (customer.companyName || '')}
+												onSelect={() => {
+													selectedCustomerId = customer.id;
+													customerOpen = false;
+												}}
+												class="cursor-pointer py-3"
+											>
+												<Check
+													class={cn(
+														"mr-2 h-4 w-4",
+														selectedCustomerId === customer.id ? "opacity-100 text-primary" : "opacity-0"
+													)}
+												/>
+												<div class="flex flex-col truncate w-full">
+													<span class="font-bold truncate">{customer.name}</span>
+													{#if customer.companyName}
+														<span class="text-[10px] uppercase font-bold tracking-widest text-muted-foreground truncate">{customer.companyName}</span>
+													{/if}
+												</div>
+											</Command.Item>
+										{/each}
+									</Command.Group>
+								</Command.List>
+							</Command.Root>
+						</Popover.Content>
+					</Popover.Root>
+				</div>
+			{:else}
+				<!-- Walk-in mode fields -->
+				<input type="hidden" name="isWalkIn" value="true" />
+				<div class="flex flex-col md:flex-row gap-6">
+					<!-- Tier selector -->
+					<div class="space-y-2">
+						<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70 block">Pricing Tier</Label>
+						<input type="hidden" name="walkInPricingTier" value={walkInPricingTier} />
+						<div class="flex gap-0 border-2 border-border w-fit">
+							{#each WALK_IN_TIERS as tier}
+								<button
+									type="button"
+									onclick={() => { walkInPricingTier = tier; priceRevision++; }}
+									class={cn(
+										"px-4 py-2 text-xs font-bold tracking-widest uppercase transition-colors border-r last:border-r-0 border-border",
+										walkInPricingTier === tier
+											? "bg-primary text-primary-foreground"
+											: "bg-transparent text-muted-foreground hover:text-foreground"
+									)}
+								>
+									{tier}
+								</button>
+							{/each}
+						</div>
+					</div>
+
+					<!-- Optional phone -->
+					<div class="space-y-2 flex-1 max-w-xs">
+						<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70 block">
+							Phone <span class="text-muted-foreground/50 normal-case font-normal">(optional — for future linking)</span>
+						</Label>
+						<Input
+							type="tel"
+							name="walkInPhone"
+							bind:value={walkInPhone}
+							placeholder="+251 9XX XXX XXXX"
+							class="h-14 border-t-0 border-x-0 border-b-2 border-border/50 rounded-none bg-muted/20 px-4 font-bold focus-visible:border-primary focus-visible:ring-0"
+						/>
+					</div>
+				</div>
+			{/if}
 		</section>
 
 		<!-- Section 2: Items -->
@@ -335,7 +464,7 @@
 			<Button type="button" variant="outline" onclick={() => goto('/dashboard/sales/orders')} class="h-14 px-8 rounded-none font-bold uppercase tracking-widest text-xs border-2 border-border hover:bg-muted">
 				Cancel
 			</Button>
-			<Button type="submit" disabled={isSubmitting || items.length === 0 || !selectedCustomerId} class="h-14 px-12 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary shadow-[6px_6px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+			<Button type="submit" disabled={isSubmitting || items.length === 0 || (!selectedCustomerId && !isWalkIn)} class="h-14 px-12 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary shadow-[6px_6px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
 				{#if isSubmitting}
 					<span class="animate-pulse">Saving...</span>
 				{:else}

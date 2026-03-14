@@ -57,12 +57,15 @@ export function computePrice(baseCost: number, pricingTier: string, quantity: nu
 /**
  * Calculates the dynamic price for a product based on customer tier and quantity.
  * If orderId is provided, checks for a valid quote lock-in and returns the locked price if still valid.
+ * If pricingTierOverride is provided, it takes precedence over the customer's CRM tier (used for walk-in orders).
+ * Tier resolution order: quote lock-in → pricingTierOverride → customer tier lookup → RETAIL default.
  */
 export async function calculateDynamicPrice(
     productId: string,
     customerId: string | null,
     quantity: number = 1,
-    orderId?: string  // optional — for quote lock-in check
+    orderId?: string,
+    pricingTierOverride?: string
 ): Promise<PricingResult> {
     // 1. Fetch Product (Layer 1: Base Cost)
     const product = await db.query.products.findFirst({
@@ -109,9 +112,16 @@ export async function calculateDynamicPrice(
         // If order not found, expired, or no matching item — fall through to normal calculation
     }
 
-    // 3. Fetch Customer Tier
+    // 3. Resolve Pricing Tier
+    // Full resolution order (steps 1–2 already handled above by the quote lock-in block):
+    //   1. Quote lock-in (handled above — returns early if locked)
+    //   2. pricingTierOverride provided → use it directly
+    //   3. customerId provided → look up customer tier from DB
+    //   4. Default → RETAIL
     let pricingTier = "RETAIL";
-    if (customerId) {
+    if (pricingTierOverride) {
+        pricingTier = pricingTierOverride;
+    } else if (customerId) {
         const customer = await db.query.customers.findFirst({
             where: eq(customers.id, customerId)
         });

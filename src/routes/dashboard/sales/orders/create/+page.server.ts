@@ -1,6 +1,7 @@
 import { error, redirect } from "@sveltejs/kit";
 import { db } from "$lib/server/db";
 import { salesOrders, salesOrderItems, customers, products } from "$lib/server/db/schema";
+import { sql } from "drizzle-orm";
 import type { PageServerLoad, Actions } from "./$types";
 
 export const load: PageServerLoad = async () => {
@@ -36,18 +37,31 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-	create: async ({ request, locals }) => {
-		const user = locals.user;
-		if (!user) {
-			throw error(401, "Unauthorized");
-		}
+    create: async ({ request, locals }) => {
+        const user = locals.user;
+        if (!user) {
+            throw error(401, "Unauthorized");
+        }
 
-		try {
-			const formData = await request.formData();
-			const customerId = formData.get("customerId")?.toString();
-			const itemsJson = formData.get("items")?.toString();
+        try {
+            const formData = await request.formData();
+            const customerId = formData.get("customerId")?.toString() || null;
+            const isWalkIn = formData.get("isWalkIn") === "true";
+            // Normalize phone: strip spaces, dashes, parentheses, dots (preserve +)
+            const rawWalkInPhone = formData.get("walkInPhone")?.toString() || null;
+            const walkInPhone = rawWalkInPhone ? rawWalkInPhone.replace(/[\s\-().]/g, '') : null;
+            const walkInPricingTier = formData.get("walkInPricingTier")?.toString() || null;
+            const itemsJson = formData.get("items")?.toString();
 
-            if (!customerId || !itemsJson) {
+            // Validation: need exactly one of customer or walk-in mode
+            if (!customerId && !isWalkIn) {
+                return { error: "Please select a customer or use walk-in mode" };
+            }
+            // If both are submitted simultaneously, treat as a registered customer order
+            // (UI prevents this, but guard here for safety)
+            const effectiveIsWalkIn = isWalkIn && !customerId;
+
+            if (!itemsJson) {
                 return { error: "Missing required fields" };
             }
 
@@ -56,31 +70,36 @@ export const actions: Actions = {
                 return { error: "Order must have at least one valid item" };
             }
 
-            // Generate an order number (e.g., SO-2026-XXXX)
-            // In a real system, you'd use a sequence or transaction-safe generator
-            const orderCount = await db.$count(salesOrders);
-            const orderNumber = `SO-${new Date().getFullYear()}-${String(orderCount + 1).padStart(4, '0')}`;
+            // Validate walk-in pricing tier against known enum values
+            const VALID_TIERS = ['RETAIL', 'WHOLESALE', 'VIP', 'PREFERRED'] as const;
+            type PricingTier = typeof VALID_TIERS[number];
+            const effectiveWalkInTier: PricingTier = (walkInPricingTier && VALID_TIERS.includes(walkInPricingTier as PricingTier))
+                ? walkInPricingTier as PricingTier
+                : 'RETAIL';
 
-            // Calculate totals SECURELY via PricingEngine
+            // Resolve the effective pricing tier override for walk-in orders.
+            // If customerId is present, the engine will look up the customer tier — no override needed.
+            const tierOverride = customerId ? undefined : effectiveWalkInTier;
+
             let subtotal = 0;
             let orderDiscountAmount = 0;
-            
+
             const { calculateDynamicPrice } = await import('$lib/server/pricing/engine');
 
-            // Process sequentially since we are querying the DB in calculateDynamicPrice
             const orderItemsData: any[] = [];
             for (const item of items) {
                 const quantity = Number(item.quantity) || 0;
-                let submittedUnitPrice = Number(item.unitPrice) || 0;
-                
                 if (quantity <= 0) continue;
 
-                // Call the Pricing Engine to get the correct price & discounts
-                const pricing = await calculateDynamicPrice(item.productId, customerId, quantity);
-                
+                const pricing = await calculateDynamicPrice(
+                    item.productId,
+                    customerId,
+                    quantity,
+                    undefined,
+                    tierOverride
+                );
+
                 subtotal += pricing.lineTotal;
-                
-                // Track total absolute discount value for the order summary
                 const itemTotalWithoutDiscount = pricing.unitPriceBeforeDiscount * quantity;
                 orderDiscountAmount += (itemTotalWithoutDiscount - pricing.lineTotal);
 
@@ -93,40 +112,67 @@ export const actions: Actions = {
                 });
             }
 
-            const taxAmount = subtotal * 0.15; // 15% VAT
+            if (orderItemsData.length === 0) {
+                return { error: "Order must have at least one valid item" };
+            }
+
+            const taxAmount = subtotal * 0.15;
             const totalAmount = subtotal + taxAmount;
 
             let newOrderId = "";
 
-            await db.transaction(async (tx) => {
-                // Insert order
-                const [order] = await tx.insert(salesOrders).values({
-                    orderNumber,
-                    customerId,
-                    status: 'DRAFT',
-                    subtotal: subtotal.toString(),
-                    taxAmount: taxAmount.toString(),
-                    totalAmount: totalAmount.toString(),
-                    discountAmount: orderDiscountAmount.toString(),
-                    createdBy: user.id
-                }).returning({ id: salesOrders.id });
+            // Retry loop: under READ COMMITTED, two concurrent transactions can both
+            // read the same MAX and attempt to insert the same order number. The UNIQUE
+            // constraint on order_number catches the collision; we retry up to 5 times.
+            // Each retry re-reads MAX inside a fresh transaction so it sees the committed value.
+            for (let attempt = 0; attempt < 5; attempt++) {
+                try {
+                    await db.transaction(async (tx) => {
+                        const year = new Date().getFullYear();
+                        const [{ maxNum }] = await tx
+                            .select({ maxNum: sql<number>`coalesce(max(cast(split_part(order_number, '-', 3) as int)), 0)` })
+                            .from(salesOrders)
+                            .where(sql`order_number like ${'SO-' + year + '-%'}`);
+                        const orderNumber = `SO-${year}-${String((maxNum ?? 0) + 1).padStart(4, '0')}`;
 
-                newOrderId = order.id;
+                        const [order] = await tx.insert(salesOrders).values({
+                            orderNumber,
+                            customerId: customerId || null,
+                            walkInPhone: effectiveIsWalkIn ? (walkInPhone || null) : null,
+                            walkInPricingTier: effectiveIsWalkIn ? effectiveWalkInTier : null,
+                            status: 'DRAFT',
+                            subtotal: subtotal.toString(),
+                            taxAmount: taxAmount.toString(),
+                            totalAmount: totalAmount.toString(),
+                            discountAmount: orderDiscountAmount.toString(),
+                            createdBy: user.id
+                        }).returning({ id: salesOrders.id });
 
-                // Insert items
-                const insertItems = orderItemsData.map((item: any) => ({
-                    orderId: newOrderId,
-                    ...item
-                }));
+                        newOrderId = order.id;
 
-                await tx.insert(salesOrderItems).values(insertItems);
-            });
+                        const insertItems = orderItemsData.map((item: any) => ({
+                            orderId: newOrderId,
+                            ...item
+                        }));
+
+                        await tx.insert(salesOrderItems).values(insertItems);
+                    });
+                    break; // success — exit retry loop
+                } catch (e: any) {
+                    const isOrderNumberCollision = e.code === '23505' &&
+                        (e.message ?? '').includes('order_number');
+                    if (attempt < 4 && isOrderNumberCollision) {
+                        continue; // retry with fresh MAX read
+                    }
+                    throw e; // rethrow on non-collision error or final attempt
+                }
+            }
 
             return { success: true, orderId: newOrderId };
 
-		} catch (err) {
-			console.error("Order creation error:", err);
-			return { error: "An unexpected error occurred during order creation." };
-		}
-	}
+        } catch (err) {
+            console.error("Order creation error:", err);
+            return { error: "An unexpected error occurred during order creation." };
+        }
+    }
 };

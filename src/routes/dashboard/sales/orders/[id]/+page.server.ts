@@ -20,7 +20,9 @@ export const load: PageServerLoad = async ({ params }) => {
                 discountAmount: salesOrders.discountAmount,
                 validUntil: salesOrders.validUntil,
                 createdAt: salesOrders.createdAt,
-				customer: {
+				walkInPhone: salesOrders.walkInPhone,
+                walkInPricingTier: salesOrders.walkInPricingTier,
+                customer: {
                     id: customers.id,
                     name: customers.name,
                     companyName: customers.companyName,
@@ -60,7 +62,10 @@ export const load: PageServerLoad = async ({ params }) => {
             .where(eq(payments.orderId, orderId));
 
 		return {
-			order,
+			order: {
+                ...order,
+                customer: order.customer?.id ? order.customer : null
+            },
             items,
             payments: orderPayments
 		};

@@ -50,6 +50,13 @@
       "when": 1773420882597,
       "tag": "0006_good_anita_blake",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1773476114655,
+      "tag": "0007_slim_zarek",
+      "breakpoints": true
     }
   ]
 }
