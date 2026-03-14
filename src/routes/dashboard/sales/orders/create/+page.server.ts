@@ -50,10 +50,13 @@ export const actions: Actions = {
             const walkInPricingTier = formData.get("walkInPricingTier")?.toString() || null;
             const itemsJson = formData.get("items")?.toString();
 
-            // Validation: need either a customer or walk-in mode
+            // Validation: need exactly one of customer or walk-in mode
             if (!customerId && !isWalkIn) {
                 return { error: "Please select a customer or use walk-in mode" };
             }
+            // If both are submitted simultaneously, treat as a registered customer order
+            // (UI prevents this, but guard here for safety)
+            const effectiveIsWalkIn = isWalkIn && !customerId;
 
             if (!itemsJson) {
                 return { error: "Missing required fields" };
@@ -64,9 +67,16 @@ export const actions: Actions = {
                 return { error: "Order must have at least one valid item" };
             }
 
+            // Validate walk-in pricing tier against known enum values
+            const VALID_TIERS = ['RETAIL', 'WHOLESALE', 'VIP', 'PREFERRED'] as const;
+            type PricingTier = typeof VALID_TIERS[number];
+            const effectiveWalkInTier: PricingTier = (walkInPricingTier && VALID_TIERS.includes(walkInPricingTier as PricingTier))
+                ? walkInPricingTier as PricingTier
+                : 'RETAIL';
+
             // Resolve the effective pricing tier override for walk-in orders.
             // If customerId is present, the engine will look up the customer tier — no override needed.
-            const tierOverride = customerId ? undefined : (walkInPricingTier || 'RETAIL');
+            const tierOverride = customerId ? undefined : effectiveWalkInTier;
 
             const orderCount = await db.$count(salesOrders);
             const orderNumber = `SO-${new Date().getFullYear()}-${String(orderCount + 1).padStart(4, '0')}`;
@@ -102,6 +112,10 @@ export const actions: Actions = {
                 });
             }
 
+            if (orderItemsData.length === 0) {
+                return { error: "Order must have at least one valid item" };
+            }
+
             const taxAmount = subtotal * 0.15;
             const totalAmount = subtotal + taxAmount;
 
@@ -111,8 +125,8 @@ export const actions: Actions = {
                 const [order] = await tx.insert(salesOrders).values({
                     orderNumber,
                     customerId: customerId || null,
-                    walkInPhone: isWalkIn ? (walkInPhone || null) : null,
-                    walkInPricingTier: isWalkIn ? (walkInPricingTier || 'RETAIL') : null,
+                    walkInPhone: effectiveIsWalkIn ? (walkInPhone || null) : null,
+                    walkInPricingTier: effectiveIsWalkIn ? effectiveWalkInTier : null,
                     status: 'DRAFT',
                     subtotal: subtotal.toString(),
                     taxAmount: taxAmount.toString(),
