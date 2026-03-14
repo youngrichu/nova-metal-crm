@@ -6,6 +6,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import { Trash2, Box, ChevronDown, Pencil, Building2, User, Phone, Mail, MessageCircle, FileText } from 'lucide-svelte';
 	import * as m from '$lib/paraglide/messages';
 	
@@ -84,7 +85,23 @@
 						</Sheet.Header>
 					</div>
 
-					<form method="POST" action="?/create" use:enhance={makeEnhance('create')} class="flex-1 flex flex-col justify-between px-10 py-8 bg-background relative z-10">
+					<form method="POST" action="?/create" use:enhance={() => {
+					isSubmitting = true;
+					return async ({ result, update }: any) => {
+						isSubmitting = false;
+						if (result.type === 'success' && result.data?.success) {
+							const { customerId, walkInOrderIds } = result.data as any;
+							isCreateOpen = false;
+							if (walkInOrderIds?.length > 0) {
+								goto(`/dashboard/customers/${customerId}?linkOrders=true`);
+							} else {
+								goto(`/dashboard/customers/${customerId}`);
+							}
+							return; // skip update() — navigation handles the reload
+						}
+						await update();
+					};
+				}} class="flex-1 flex flex-col justify-between px-10 py-8 bg-background relative z-10">
 						<div class="space-y-10">
 							{#if form?.error}
 								<div class="p-4 text-sm font-medium bg-red-500/10 text-red-600 border-l-4 border-red-600 shadow-sm animate-in fade-in slide-in-from-top-2">
