@@ -1,4 +1,4 @@
-import { error, redirect } from "@sveltejs/kit";
+import { error, redirect, fail } from "@sveltejs/kit";
 import { db } from "$lib/server/db";
 import { salesOrders, salesOrderItems, customers, products, payments } from "$lib/server/db/schema";
 import { eq } from "drizzle-orm";
@@ -83,7 +83,7 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const newStatus = formData.get("status")?.toString();
 
-        if (!newStatus) return { error: "Status is required" };
+        if (!newStatus) return fail(400, { error: "Status is required" });
 
         try {
             await db.update(salesOrders)
@@ -93,7 +93,7 @@ export const actions: Actions = {
             return { success: true };
         } catch (err) {
             console.error("Failed to update status:", err);
-            return { error: "Could not update status" };
+            return fail(500, { error: "Could not update status" });
         }
 	}
 };

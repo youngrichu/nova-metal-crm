@@ -1,7 +1,7 @@
 import { error, redirect, fail } from "@sveltejs/kit";
 import { db } from "$lib/server/db";
-import { salesOrders, salesOrderItems, customers, products } from "$lib/server/db/schema";
-import { sql } from "drizzle-orm";
+import { salesOrders, salesOrderItems, customers, products, systemSettings } from "$lib/server/db/schema";
+import { eq, sql } from "drizzle-orm";
 import type { PageServerLoad, Actions } from "./$types";
 
 export const load: PageServerLoad = async () => {
@@ -116,7 +116,12 @@ export const actions: Actions = {
                 return fail(400, { error: "Order must have at least one valid item" });
             }
 
-            const taxAmount = subtotal * 0.15;
+            const vatRow = await db.select({ value: systemSettings.value })
+                .from(systemSettings)
+                .where(eq(systemSettings.key, 'vat_rate'))
+                .limit(1);
+            const vatRate = parseFloat(vatRow[0]?.value ?? '0.15') || 0.15;
+            const taxAmount = subtotal * vatRate;
             const totalAmount = subtotal + taxAmount;
 
             let newOrderId = "";

@@ -13,7 +13,9 @@ export const POST: RequestHandler = async ({ request }) => {
         // Suppression rule: if customerId is present, it wins — never forward pricingTierOverride.
         // customerId || null guards against empty-string values (treated same as absent)
         const effectiveCustomerId = customerId || null;
-        const tierOverride = effectiveCustomerId ? undefined : (pricingTier || undefined);
+        const VALID_TIERS = ['RETAIL', 'WHOLESALE', 'VIP', 'PREFERRED'] as const;
+        const validatedTier = VALID_TIERS.includes(pricingTier) ? pricingTier : undefined;
+        const tierOverride = effectiveCustomerId ? undefined : validatedTier;
 
         const pricing = await calculateDynamicPrice(productId, effectiveCustomerId, quantity || 1, undefined, tierOverride);
         return json(pricing);
