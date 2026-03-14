@@ -11,6 +11,7 @@
 	let isSubmitting = $state(false);
 	let printerType = $state(data.settings.printer_type ?? 'network');
 	let paperWidth = $state(data.settings.paper_width ?? '80');
+	let printerAddress = $state(data.settings.printer_address ?? '192.168.1.100');
 
 	function handleEnhance() {
 		isSubmitting = true;
@@ -251,15 +252,15 @@
 							id="printer_address"
 							name="printer_address"
 							type="text"
-							value={data.settings.printer_address}
+							bind:value={printerAddress}
 							placeholder="192.168.1.100"
 							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all font-mono"
 						/>
 						<p class="text-xs text-muted-foreground/60">Default port 9100 — use ip:port to override</p>
 					</div>
 					{:else}
-					<!-- Hidden fallback so the existing DB value is preserved when USB is selected -->
-					<input type="hidden" name="printer_address" value={data.settings.printer_address} />
+					<!-- Hidden fallback preserves the user-typed value when USB is selected -->
+					<input type="hidden" name="printer_address" value={printerAddress} />
 					<div></div>
 					{/if}
 					<div class="space-y-2 group">

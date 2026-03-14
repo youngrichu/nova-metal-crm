@@ -64,7 +64,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const items = await db
 			.select({
 				quantity: salesOrderItems.quantity,
-				unitPrice: salesOrderItems.unitPrice,
 				lineTotal: salesOrderItems.lineTotal,
 				product: {
 					sku: products.sku,

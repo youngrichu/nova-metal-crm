@@ -85,8 +85,15 @@ export const actions: Actions = {
                 if (raw.length > 255) {
                     return fail(400, { error: 'Printer address is too long' });
                 }
-                if (!/^[\w.-]+(:\d{1,5})?$/.test(raw)) {
+                const addrMatch = raw.match(/^([\w.-]+)(?::(\d+))?$/);
+                if (!addrMatch) {
                     return fail(400, { error: 'Invalid printer address — use an IP or hostname, optionally with :port (e.g. 192.168.1.100 or 192.168.1.100:9100)' });
+                }
+                if (addrMatch[2]) {
+                    const port = parseInt(addrMatch[2], 10);
+                    if (port < 1 || port > 65535) {
+                        return fail(400, { error: 'Port must be between 1 and 65535' });
+                    }
                 }
             }
 
