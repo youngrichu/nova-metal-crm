@@ -39,10 +39,14 @@
 		--sidebar-foreground: 210 40% 96%;
 		--sidebar-primary: var(--primary);
 		--sidebar-primary-foreground: var(--primary-foreground);
-		--sidebar-accent: 220 10% 15%;
+		--sidebar-accent: 220 10% 20%;
 		--sidebar-accent-foreground: 210 40% 96%;
 		--sidebar-border: 220 10% 16%;
 		--sidebar-ring: 212.7 26.8% 83.9%;
+	}
+
+	:global(#app-sidebar [data-sidebar="menu-button"][data-active="true"]) {
+		background-color: rgba(255, 255, 255, 0.12);
 	}
 </style>
 
@@ -76,19 +80,19 @@
 				<Sidebar.Menu class="gap-0">
 					{#each visibleNavItems as item}
 						{@const isActive = page.url.pathname === item.href || (item.href !== '/dashboard' && page.url.pathname.startsWith(item.href))}
-						<Sidebar.MenuItem class={isActive ? 'border-l-2 border-primary' : 'border-l-2 border-transparent'}>
+						<Sidebar.MenuItem>
 							<Sidebar.MenuButton {isActive}>
 								{#snippet child({ props })}
 									<a
 										href={item.href}
 										{...props}
 										class={cn(
-											'flex items-center gap-3 relative h-11 transition-colors',
+											'flex items-center gap-3 h-11 transition-colors',
 											'group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full',
 											props.class as string,
 											isActive
-												? 'bg-white/10 text-sidebar-foreground'
-												: 'text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-white/5',
+												? 'text-sidebar-foreground'
+												: 'text-sidebar-foreground/50 hover:text-sidebar-foreground',
 											'!px-6 group-data-[collapsible=icon]:!px-0'
 										)}
 									>
