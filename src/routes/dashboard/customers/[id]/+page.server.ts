@@ -91,6 +91,7 @@ export const actions: Actions = {
 			// - inArray(id, orderIds): only the submitted IDs
 			// - isNull(customerId): race-condition guard (order not already linked)
 			// - eq(walkInPhone, customer.phone): prevent cross-customer linking if orderIds were tampered
+			// - notInArray(status, ['CANCELLED']): server-side guard; load query excludes them but action must enforce independently
 			// walkInPhone and walkInPricingTier are intentionally cleared on link:
 			// - walkInPhone is now redundant (the customer record holds the phone)
 			// - walkInPricingTier was the anonymous pricing tier; the actual prices are
@@ -107,7 +108,8 @@ export const actions: Actions = {
 					and(
 						inArray(salesOrders.id, orderIds),
 						isNull(salesOrders.customerId),
-						eq(salesOrders.walkInPhone, normalizedCustomerPhone)
+						eq(salesOrders.walkInPhone, normalizedCustomerPhone),
+						notInArray(salesOrders.status, ['CANCELLED'])
 					)
 				);
 
