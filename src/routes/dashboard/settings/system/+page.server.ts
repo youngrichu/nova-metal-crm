@@ -4,7 +4,7 @@ import { redirect, fail } from '@sveltejs/kit';
 import { invalidateBarcodeCache } from '$lib/server/barcodeCache';
 import type { PageServerLoad, Actions } from './$types';
 
-const SETTING_KEYS = ['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred', 'currency_code', 'currency_locale', 'barcode_enabled'] as const;
+const SETTING_KEYS = ['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred', 'currency_code', 'currency_locale', 'barcode_enabled', 'printer_type', 'printer_address', 'paper_width', 'company_name', 'company_address'] as const;
 
 const DEFAULTS: Record<string, string> = {
     vat_rate: '0.15',
@@ -14,7 +14,12 @@ const DEFAULTS: Record<string, string> = {
     markup_preferred: '1.08',
     currency_code: 'ETB',
     currency_locale: 'en-ET',
-    barcode_enabled: 'false'
+    barcode_enabled: 'false',
+    printer_type: 'network',
+    printer_address: '192.168.1.100',
+    paper_width: '80',
+    company_name: 'NOVA METAL PLC',
+    company_address: 'Addis Ababa, Ethiopia'
 };
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -66,14 +71,59 @@ export const actions: Actions = {
             if (key === 'currency_code' && !/^[A-Z]{3}$/.test(raw)) {
                 return fail(400, { error: 'Currency code must be a 3-letter uppercase ISO code (e.g. ETB, USD)' });
             }
-            if (key === 'currency_locale' && raw.length > 20) {
-                return fail(400, { error: 'Currency locale value is too long (max 20 characters)' });
+            if (key === 'currency_locale') {
+                if (raw.length > 20) {
+                    return fail(400, { error: 'Currency locale value is too long (max 20 characters)' });
+                }
+                try {
+                    new Intl.Locale(raw);
+                } catch {
+                    return fail(400, { error: 'Invalid locale — use a BCP 47 tag (e.g. en-ET, am-ET, en-US)' });
+                }
             }
             if (key === 'barcode_enabled' && !['true', 'false'].includes(raw)) {
                 return fail(400, { error: 'Invalid value for barcode_enabled' });
             }
+            if (key === 'printer_type' && !['network', 'usb'].includes(raw)) {
+                return fail(400, { error: 'Printer type must be "network" or "usb"' });
+            }
+            if (key === 'paper_width' && !['58', '80'].includes(raw)) {
+                return fail(400, { error: 'Paper width must be 58 or 80' });
+            }
+            if (key === 'printer_address') {
+                if (raw.length > 255) {
+                    return fail(400, { error: 'Printer address is too long' });
+                }
+                // Require hostname to start and end with alphanumeric (no leading/trailing dots)
+                const addrMatch = raw.match(/^([a-zA-Z0-9]([a-zA-Z0-9\-_.]*[a-zA-Z0-9])?)(?::(\d+))?$/);
+                if (!addrMatch) {
+                    return fail(400, { error: 'Invalid printer address — use an IP or hostname, optionally with :port (e.g. 192.168.1.100 or 192.168.1.100:9100)' });
+                }
+                if (addrMatch[3]) {
+                    const port = parseInt(addrMatch[3], 10);
+                    if (port < 1 || port > 65535) {
+                        return fail(400, { error: 'Port must be between 1 and 65535' });
+                    }
+                }
+            }
+            if (key === 'company_name') {
+                if (raw.length > 100) return fail(400, { error: 'Company name must be 100 characters or fewer' });
+                if (/[\x00-\x1F\x7F]/.test(raw)) return fail(400, { error: 'Company name must not contain control characters' });
+            }
+            if (key === 'company_address') {
+                if (raw.length > 200) return fail(400, { error: 'Company address must be 200 characters or fewer' });
+                if (/[\x00-\x1F\x7F]/.test(raw)) return fail(400, { error: 'Company address must not contain control characters' });
+            }
 
             updates.push({ key, value: raw });
+        }
+
+        // Cross-field: network mode requires a non-empty address.
+        // Use the validated updates array (falls back to 'network' default if omitted).
+        const resolvedType = updates.find(u => u.key === 'printer_type')?.value ?? 'network';
+        const hasAddress = updates.some(u => u.key === 'printer_address');
+        if (resolvedType === 'network' && !hasAddress) {
+            return fail(400, { error: 'Printer IP address is required for Network connection type' });
         }
 
         const userId = locals.user.id;

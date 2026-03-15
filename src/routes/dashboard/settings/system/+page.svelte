@@ -3,12 +3,27 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { enhance } from '$app/forms';
-	import { Settings, DollarSign, Globe, Save, Scan } from 'lucide-svelte';
+	import { Settings, DollarSign, Globe, Save, Scan, Printer } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let { data, form } = $props();
 
 	let isSubmitting = $state(false);
+	let printerType = $state(data.settings.printer_type ?? 'network');
+	let paperWidth = $state(data.settings.paper_width ?? '80');
+	let printerAddress = $state(data.settings.printer_address ?? '192.168.1.100');
+	let companyName = $state(data.settings.company_name ?? 'NOVA METAL PLC');
+	let companyAddress = $state(data.settings.company_address ?? 'Addis Ababa, Ethiopia');
+
+	// Re-sync only when the specific printer keys change on the server (e.g. after a failed save)
+	$effect(() => {
+		const { printer_type, paper_width, printer_address, company_name, company_address } = data.settings;
+		printerType = printer_type ?? 'network';
+		paperWidth = paper_width ?? '80';
+		printerAddress = printer_address ?? '192.168.1.100';
+		companyName = company_name ?? 'NOVA METAL PLC';
+		companyAddress = company_address ?? 'Addis Ababa, Ethiopia';
+	});
 
 	function handleEnhance() {
 		isSubmitting = true;
@@ -213,6 +228,100 @@
 						<p class="text-xs text-muted-foreground/60 mt-0.5">Shows barcode fields on products and enables the barcode scanner during stock-takes.</p>
 					</div>
 				</label>
+			</div>
+		</section>
+
+		<!-- Printer Configuration -->
+		<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
+			<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
+				<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
+					<Printer class="w-4 h-4 text-primary" /> Thermal Printer
+				</h2>
+			</div>
+			<div class="p-6 md:p-8 space-y-6">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div class="space-y-2 group">
+						<Label for="company_name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
+							Company Name
+						</Label>
+						<Input
+							id="company_name"
+							name="company_name"
+							type="text"
+							bind:value={companyName}
+							maxlength={100}
+							placeholder="NOVA METAL PLC"
+							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all"
+						/>
+						<p class="text-xs text-muted-foreground/60">Printed in the receipt header</p>
+					</div>
+					<div class="space-y-2 group">
+						<Label for="company_address" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
+							Company Address
+						</Label>
+						<Input
+							id="company_address"
+							name="company_address"
+							type="text"
+							bind:value={companyAddress}
+							maxlength={200}
+							placeholder="Addis Ababa, Ethiopia"
+							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all"
+						/>
+						<p class="text-xs text-muted-foreground/60">Printed below company name</p>
+					</div>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+					<div class="space-y-2 group">
+						<Label for="printer_type" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
+							Connection Type
+						</Label>
+						<select
+							id="printer_type"
+							name="printer_type"
+							bind:value={printerType}
+							class="w-full h-14 bg-muted/30 border-2 border-transparent focus:bg-transparent focus:border-primary focus:outline-none rounded-lg text-base px-4 transition-all font-mono"
+						>
+							<option value="network">Network (TCP/IP)</option>
+							<option value="usb">USB</option>
+						</select>
+						<p class="text-xs text-muted-foreground/60">{printerType === 'usb' ? 'Connects via USB — no IP needed' : 'Connects over LAN via TCP port 9100'}</p>
+					</div>
+					{#if printerType === 'network'}
+					<div class="space-y-2 group">
+						<Label for="printer_address" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
+							Printer IP Address
+						</Label>
+						<Input
+							id="printer_address"
+							name="printer_address"
+							type="text"
+							bind:value={printerAddress}
+							placeholder="192.168.1.100"
+							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all font-mono"
+						/>
+						<p class="text-xs text-muted-foreground/60">Default port 9100 — use ip:port to override</p>
+					</div>
+					{:else}
+					<!-- Hidden fallback preserves the user-typed value when USB is selected -->
+					<input type="hidden" name="printer_address" value={printerAddress} />
+					<div></div>
+					{/if}
+					<div class="space-y-2 group">
+						<Label for="paper_width" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
+							Paper Width
+						</Label>
+						<select
+							id="paper_width"
+							name="paper_width"
+							bind:value={paperWidth}
+							class="w-full h-14 bg-muted/30 border-2 border-transparent focus:bg-transparent focus:border-primary focus:outline-none rounded-lg text-base px-4 transition-all font-mono"
+						>
+							<option value="80">80mm</option>
+							<option value="58">58mm</option>
+						</select>
+					</div>
+				</div>
 			</div>
 		</section>
 
