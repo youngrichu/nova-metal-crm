@@ -25,7 +25,7 @@ export type PricingResult = {
     availableStock: number; // total units in stock across all warehouses
 };
 
-export function computePrice(baseCost: number, pricingTier: string, quantity: number, tiersOverride?: typeof PRICING_RULES.TIERS): PricingResult {
+export function computePrice(baseCost: number, pricingTier: string, quantity: number, tiersOverride?: typeof PRICING_RULES.TIERS): Omit<PricingResult, 'availableStock'> {
     const tiers = tiersOverride ?? PRICING_RULES.TIERS;
     let markupMultiplier = tiers.RETAIL; // Default
 
