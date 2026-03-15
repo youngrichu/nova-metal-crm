@@ -269,7 +269,7 @@ Run this at the end of each working day.
 2. Click **New Customer**.
 3. Fill in at minimum:
    - **Name** (required)
-   - **Pricing Tier** — Standard (Retail), Preferred (5% Discount), or VIP (Wholesale) (determines markup applied to their orders)
+   - **Pricing Tier** — Standard (Retail), Preferred (+8% markup), or VIP (Wholesale) (determines markup applied to their orders)
 4. Optionally add:
    - Company Name, Primary Phone, WhatsApp Number, Email
    - TIN Number (required for VAT-registered businesses)

@@ -62,7 +62,11 @@ export const actions = {
 		}
 		const unitCostStr = type === 'STOCK_IN' ? submittedUnitCost : null;
 
-		if (!type || !productId || !warehouseId || !quantityStr) {
+		if (!type || !['STOCK_IN', 'STOCK_OUT', 'ADJUSTMENT'].includes(type)) {
+			return fail(400, { error: 'Invalid transaction type' });
+		}
+
+		if (!productId || !warehouseId || !quantityStr) {
 			return fail(400, { missing: true });
 		}
 

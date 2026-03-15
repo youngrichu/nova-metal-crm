@@ -54,6 +54,10 @@
     async function fetchAndUpdatePrice(index: number, productId: string, quantity: number, customerId: string) {
         if (!productId) return;
         const capturedRevision = priceRevision;
+        // Clear stale stock immediately so a previous product's warning can't linger
+        const resetItems = [...items];
+        resetItems[index].availableStock = null;
+        items = resetItems;
         try {
             const body: Record<string, unknown> = { productId, quantity };
             if (customerId) {

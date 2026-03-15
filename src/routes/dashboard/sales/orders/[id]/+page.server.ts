@@ -1,7 +1,7 @@
 import { error, redirect, fail } from "@sveltejs/kit";
 import { db } from "$lib/server/db";
 import { salesOrders, salesOrderItems, customers, products, payments, inventory, warehouses } from "$lib/server/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import type { PageServerLoad, Actions } from "./$types";
 import { recordTransaction } from "$lib/server/inventory/recordTransaction";
 
@@ -91,23 +91,36 @@ export const actions: Actions = {
 
         try {
             await db.transaction(async (tx) => {
-                // 1. Read current status inside the transaction (idempotency guard)
+                // 1. Fetch order for orderNumber (needed as referenceDoc) and existence check
                 const [currentOrder] = await tx
-                    .select({ status: salesOrders.status, orderNumber: salesOrders.orderNumber })
+                    .select({ orderNumber: salesOrders.orderNumber })
                     .from(salesOrders)
                     .where(eq(salesOrders.id, params.id))
                     .limit(1);
 
                 if (!currentOrder) throw new Error("Order not found");
 
-                // 2. Update order status
-                await tx.update(salesOrders)
-                    .set({ status: newStatus, updatedAt: new Date() })
-                    .where(eq(salesOrders.id, params.id));
+                // 2. Update order status.
+                //    For INVOICED: conditional update (WHERE status != 'INVOICED') makes the
+                //    transition atomic — concurrent requests cannot both proceed past this point.
+                if (newStatus === 'INVOICED') {
+                    const updated = await tx.update(salesOrders)
+                        .set({ status: 'INVOICED', updatedAt: new Date() })
+                        .where(and(eq(salesOrders.id, params.id), ne(salesOrders.status, 'INVOICED')))
+                        .returning({ id: salesOrders.id });
+
+                    if (updated.length === 0) {
+                        // Already INVOICED — idempotent, skip deduction
+                        return;
+                    }
+                } else {
+                    await tx.update(salesOrders)
+                        .set({ status: newStatus, updatedAt: new Date() })
+                        .where(eq(salesOrders.id, params.id));
+                }
 
                 // 3. Auto-deduct stock only when transitioning TO INVOICED
-                //    (idempotency: skip if already INVOICED to prevent duplicate deductions)
-                if (newStatus === 'INVOICED' && currentOrder.status !== 'INVOICED') {
+                if (newStatus === 'INVOICED') {
                     // Fetch line items with productId and quantity
                     const items = await tx
                         .select({

@@ -103,7 +103,7 @@ This function contains the full upsert+transaction-insert logic currently in the
 
 When `updateStatus` receives `newStatus === 'INVOICED'`, the entire operation runs inside a `db.transaction()` wrapper:
 
-```
+```text
 db.transaction(async (tx) => {
   1. Read current order status — if already INVOICED, skip deduction and return early (idempotency guard)
   2. Update order status to INVOICED
