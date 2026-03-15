@@ -125,13 +125,9 @@ export const actions: Actions = {
                         .limit(1);
 
                     if (!warehouse) {
-                        // No warehouse configured — log and skip deduction, status still updates.
-                        // `return` here exits the transaction callback only; status commit proceeds.
-                        console.warn('[invoice:stock-deduction] skipped — no active warehouse found', {
-                            orderId: params.id,
-                            orderNumber: currentOrder.orderNumber,
-                        });
-                        return;
+                        // No warehouse configured — abort the entire transaction so the order
+                        // is not marked INVOICED without stock being deducted.
+                        throw new Error('Cannot invoice order: no active warehouse found. Please configure a warehouse first.');
                     }
 
                     // Deduct stock for each line item

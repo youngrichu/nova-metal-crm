@@ -53,8 +53,10 @@ export async function recordTransaction(
     let currentInventoryId: string;
 
     if (!invRecord) {
-        // No row exists — only STOCK_IN can create one (unless allowNegative is set)
-        if (quantityChange < 0 && !allowNegative) {
+        // No row exists — only STOCK_IN can create one. allowNegative does not
+        // apply here: a missing inventory row means the product was never stocked
+        // in this warehouse, which is always an error regardless of the caller.
+        if (quantityChange < 0) {
             throw new Error('Cannot reduce stock below 0');
         }
 

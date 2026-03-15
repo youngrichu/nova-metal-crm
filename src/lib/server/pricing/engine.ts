@@ -7,7 +7,7 @@ const PRICING_RULES = {
     TIERS: {
         RETAIL: 1.15,      // 15% markup
         WHOLESALE: 1.05,   // 5% markup
-        PREFERRED: 1.05,   // 5% markup
+        PREFERRED: 1.08,   // 8% markup
         VIP: 1.05          // 5% markup
     },
     BULK_DISCOUNT: {
