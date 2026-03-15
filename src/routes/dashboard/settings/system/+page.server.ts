@@ -109,10 +109,11 @@ export const actions: Actions = {
             updates.push({ key, value: raw });
         }
 
-        // Cross-field: network mode requires a non-empty address
-        const submittedType = formData.get('printer_type')?.toString().trim();
+        // Cross-field: network mode requires a non-empty address.
+        // Use the validated updates array (falls back to 'network' default if omitted).
+        const resolvedType = updates.find(u => u.key === 'printer_type')?.value ?? 'network';
         const hasAddress = updates.some(u => u.key === 'printer_address');
-        if (submittedType === 'network' && !hasAddress) {
+        if (resolvedType === 'network' && !hasAddress) {
             return fail(400, { error: 'Printer IP address is required for Network connection type' });
         }
 

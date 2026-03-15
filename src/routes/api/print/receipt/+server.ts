@@ -95,11 +95,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			if (!escpos.Network) {
 				return json({ success: false, error: 'Network printer driver failed to load on this server' }, { status: 500 });
 			}
-			// Use lastIndexOf to correctly split host and optional port
 			const lastColon = config.address.lastIndexOf(':');
 			const host = lastColon === -1 ? config.address : config.address.substring(0, lastColon);
-			const port = lastColon === -1 ? 9100 : parseInt(config.address.substring(lastColon + 1), 10);
-			device = new escpos.Network(host, port);
+			const portNum = lastColon === -1 ? 9100 : parseInt(config.address.substring(lastColon + 1), 10);
+			if (isNaN(portNum)) {
+				return json({ success: false, error: `Invalid port in printer address: ${config.address}` }, { status: 500 });
+			}
+			device = new escpos.Network(host, portNum);
 		}
 
 		if (typeof escpos.Printer !== 'function') {
@@ -114,19 +116,25 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		await new Promise<void>((resolve, reject) => {
 			let deviceOpened = false;
 			let cancelled = false;
+			let alreadyClosed = false;
+
+			function safeClose() {
+				if (!alreadyClosed) {
+					alreadyClosed = true;
+					try { printer.close(); } catch (_) { /* ignore */ }
+				}
+			}
 
 			const timeout = setTimeout(() => {
 				cancelled = true;
-				if (deviceOpened) {
-					try { printer.close(); } catch (_) { /* ignore */ }
-				}
+				if (deviceOpened) safeClose();
 				reject(new Error('Print timed out after 15 seconds'));
 			}, PRINT_TIMEOUT_MS);
 
 			device.open((err: any) => {
 				// Timeout already fired — close device immediately to prevent ghost print
 				if (cancelled) {
-					try { printer.close(); } catch (_) { /* ignore */ }
+					safeClose();
 					return;
 				}
 				if (err) {
@@ -160,13 +168,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						.text('ITEMS')
 						.style('normal');
 
-					for (const item of items) {
-						const name = (item.product?.name ?? item.product?.sku ?? 'Item').substring(0, nameColWidth);
-						printer.tableCustom([
-							{ text: name,                                    align: 'LEFT',   width: 0.55 },
-							{ text: `x${item.quantity ?? 0}`,                align: 'CENTER', width: 0.15 },
-							{ text: `${Number(item.lineTotal).toFixed(2)}`,  align: 'RIGHT',  width: 0.30 }
-						]);
+					if (items.length === 0) {
+						printer.text('(no items)');
+					} else {
+						for (const item of items) {
+							const name = (item.product?.name ?? item.product?.sku ?? 'Item').substring(0, nameColWidth);
+							printer.tableCustom([
+								{ text: name,                                    align: 'LEFT',   width: 0.55 },
+								{ text: `x${item.quantity ?? 0}`,                align: 'CENTER', width: 0.15 },
+								{ text: `${Number(item.lineTotal).toFixed(2)}`,  align: 'RIGHT',  width: 0.30 }
+							]);
+						}
 					}
 
 					printer
@@ -182,6 +194,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						.text('Thank you for your business!')
 						.cut()
 						.close((closeErr: any) => {
+							alreadyClosed = true;
 							clearTimeout(timeout);
 							if (closeErr) {
 								reject(closeErr);
