@@ -249,6 +249,7 @@
 							name="company_name"
 							type="text"
 							bind:value={companyName}
+							maxlength={100}
 							placeholder="NOVA METAL PLC"
 							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all"
 						/>
@@ -263,6 +264,7 @@
 							name="company_address"
 							type="text"
 							bind:value={companyAddress}
+							maxlength={200}
 							placeholder="Addis Ababa, Ethiopia"
 							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all"
 						/>
