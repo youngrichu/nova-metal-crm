@@ -162,7 +162,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						const name = (item.product?.name ?? item.product?.sku ?? 'Item').substring(0, nameColWidth);
 						printer.tableCustom([
 							{ text: name,                                    align: 'LEFT',   width: 0.55 },
-							{ text: `x${item.quantity}`,                     align: 'CENTER', width: 0.15 },
+							{ text: `x${item.quantity ?? 0}`,                align: 'CENTER', width: 0.15 },
 							{ text: `${Number(item.lineTotal).toFixed(2)}`,  align: 'RIGHT',  width: 0.30 }
 						]);
 					}

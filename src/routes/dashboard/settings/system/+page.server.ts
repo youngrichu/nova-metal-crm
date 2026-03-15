@@ -99,6 +99,12 @@ export const actions: Actions = {
                     }
                 }
             }
+            if (key === 'company_name' && raw.length > 100) {
+                return fail(400, { error: 'Company name must be 100 characters or fewer' });
+            }
+            if (key === 'company_address' && raw.length > 200) {
+                return fail(400, { error: 'Company address must be 200 characters or fewer' });
+            }
 
             updates.push({ key, value: raw });
         }
