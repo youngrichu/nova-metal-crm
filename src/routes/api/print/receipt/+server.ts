@@ -198,6 +198,6 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 	} catch (err: any) {
 		console.error('Thermal printing failed:', err);
-		return json({ success: false, error: 'Failed to communicate with printer' }, { status: 500 });
+		return json({ success: false, error: err.message ?? 'Failed to communicate with printer' }, { status: 500 });
 	}
 };
