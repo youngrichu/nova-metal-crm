@@ -5,11 +5,42 @@
   import * as Table from "$lib/components/ui/table";
   import { Button } from "$lib/components/ui/button";
   import { formatCurrency } from "$lib/utils/currency";
+  import { goto } from '$app/navigation';
 
   let { data } = $props();
 
-  let activePeriod = $state<'day' | 'week' | 'month'>('month');
-  let selectedRange = $state('this-month');
+  let activePeriod  = $state<'day' | 'week' | 'month'>(data.period);
+  let selectedRange = $state<string>(data.range);
+
+  const RANGE_LABELS: Record<string, string> = {
+    'last-7-days':      'Last 7 Days',
+    'last-30-days':     'Last 30 Days',
+    'this-month':       'This Month',
+    'last-month':       'Last Month',
+    'last-quarter':     'Last Quarter',
+    'current-quarter':  'Current Quarter',
+    'this-year':        'This Year',
+  };
+
+  function applyFilter(range: string, period: string) {
+    goto(`/dashboard?range=${range}&period=${period}`, { replaceState: true, keepFocus: true });
+  }
+
+  function setPeriod(p: 'day' | 'week' | 'month') {
+    activePeriod = p;
+    applyFilter(selectedRange, p);
+  }
+
+  function setRange(r: string) {
+    selectedRange = r;
+    applyFilter(r, activePeriod);
+  }
+
+  // Keep local state in sync if SvelteKit reloads data (e.g. browser back/forward)
+  $effect(() => {
+    activePeriod  = data.period as 'day' | 'week' | 'month';
+    selectedRange = data.range;
+  });
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening';
@@ -112,42 +143,36 @@
       <!-- Brutalist Toggle -->
       <div class="flex border-2 border-foreground/20 p-1 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)] shrink-0">
         <button
-          onclick={() => activePeriod = 'day'}
+          onclick={() => setPeriod('day')}
           class="px-6 py-2 text-xs font-bold tracking-widest uppercase transition-all
             {activePeriod === 'day' ? 'bg-foreground text-background shadow-inner scale-[0.98]' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
         >Day</button>
         <button
-          onclick={() => activePeriod = 'week'}
+          onclick={() => setPeriod('week')}
           class="px-6 py-2 text-xs font-bold tracking-widest uppercase transition-all
             {activePeriod === 'week' ? 'bg-foreground text-background shadow-inner scale-[0.98]' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
         >Week</button>
         <button
-          onclick={() => activePeriod = 'month'}
+          onclick={() => setPeriod('month')}
           class="px-6 py-2 text-xs font-bold tracking-widest uppercase transition-all
             {activePeriod === 'month' ? 'bg-foreground text-background shadow-inner scale-[0.98]' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
         >Month</button>
       </div>
 
       <!-- Select Dropdown -->
-      <Select.Root type="single" bind:value={selectedRange}>
+      <Select.Root type="single" value={selectedRange} onValueChange={setRange}>
         <Select.Trigger class="w-[200px] h-12 rounded-none border-2 border-foreground/20 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)] font-bold text-xs tracking-widest uppercase">
           <CalendarDays class="mr-3 h-4 w-4 opacity-50" />
-          <span>{selectedRange === 'this-month' ? 'This Month' : 
-                 selectedRange === 'last-7-days' ? 'Last 7 Days' : 
-                 selectedRange === 'last-30-days' ? 'Last 30 Days' :
-                 selectedRange === 'last-month' ? 'Last Month' :
-                 selectedRange === 'last-quarter' ? 'Last Quarter' :
-                 selectedRange === 'current-quarter' ? 'Current Quarter' :
-                 selectedRange === 'this-year' ? 'This Year' : 'Select range...'}</span>
+          <span>{RANGE_LABELS[selectedRange] ?? 'Select range...'}</span>
         </Select.Trigger>
         <Select.Content align="end" class="rounded-none border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)]">
-          <Select.Item value="last-7-days" class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Last 7 Days</Select.Item>
-          <Select.Item value="last-30-days" class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Last 30 Days</Select.Item>
-          <Select.Item value="this-month" class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">This Month</Select.Item>
-          <Select.Item value="last-month" class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Last Month</Select.Item>
-          <Select.Item value="last-quarter" class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Last Quarter</Select.Item>
-          <Select.Item value="current-quarter" class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Current Qtr</Select.Item>
-          <Select.Item value="this-year" class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">This Year</Select.Item>
+          <Select.Item value="last-7-days"      class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Last 7 Days</Select.Item>
+          <Select.Item value="last-30-days"     class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Last 30 Days</Select.Item>
+          <Select.Item value="this-month"       class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">This Month</Select.Item>
+          <Select.Item value="last-month"       class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Last Month</Select.Item>
+          <Select.Item value="last-quarter"     class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Last Quarter</Select.Item>
+          <Select.Item value="current-quarter"  class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Current Qtr</Select.Item>
+          <Select.Item value="this-year"        class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">This Year</Select.Item>
         </Select.Content>
       </Select.Root>
     </div>
@@ -201,13 +226,13 @@
         <div>
           <span class="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{m.total_revenue()}</span>
           <div class="flex items-center justify-between">
-            <span class="font-mono font-black text-3xl text-foreground">{formatCurrency(data.totalSales)}</span>
+            <span class="font-mono font-black text-3xl text-foreground">{formatCurrency(data.totalSales ?? 0)}</span>
           </div>
         </div>
         <div>
           <span class="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Total Profit</span>
           <div class="flex items-center justify-between">
-            <span class="font-mono font-black text-3xl text-emerald-500">{formatCurrency(data.totalProfit)}</span>
+            <span class="font-mono font-black text-3xl text-emerald-500">{formatCurrency(data.totalProfit ?? 0)}</span>
           </div>
         </div>
       </div>
@@ -240,7 +265,7 @@
           <h3 class="font-black text-sm tracking-widest uppercase text-foreground mb-1 flex items-center gap-3">
             <TrendingUp class="w-4 h-4 text-primary" /> Revenue Trajectory
           </h3>
-          <p class="text-xs font-medium text-muted-foreground/60 tracking-wider">Daily revenue — last 30 days (excl. draft &amp; cancelled).</p>
+          <p class="text-xs font-medium text-muted-foreground/60 tracking-wider">{activePeriod === 'day' ? 'Daily' : activePeriod === 'week' ? 'Weekly' : 'Monthly'} revenue — {RANGE_LABELS[selectedRange]} (excl. draft &amp; cancelled).</p>
         </div>
         <Button variant="outline" size="sm" href="/dashboard/sales/orders" class="h-8 rounded-none border-2 border-foreground/20 text-[10px] font-bold tracking-widest uppercase shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
           View Orders
