@@ -71,8 +71,15 @@ export const actions: Actions = {
             if (key === 'currency_code' && !/^[A-Z]{3}$/.test(raw)) {
                 return fail(400, { error: 'Currency code must be a 3-letter uppercase ISO code (e.g. ETB, USD)' });
             }
-            if (key === 'currency_locale' && raw.length > 20) {
-                return fail(400, { error: 'Currency locale value is too long (max 20 characters)' });
+            if (key === 'currency_locale') {
+                if (raw.length > 20) {
+                    return fail(400, { error: 'Currency locale value is too long (max 20 characters)' });
+                }
+                try {
+                    new Intl.Locale(raw);
+                } catch {
+                    return fail(400, { error: 'Invalid locale — use a BCP 47 tag (e.g. en-ET, am-ET, en-US)' });
+                }
             }
             if (key === 'barcode_enabled' && !['true', 'false'].includes(raw)) {
                 return fail(400, { error: 'Invalid value for barcode_enabled' });

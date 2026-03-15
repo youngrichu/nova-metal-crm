@@ -159,7 +159,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 						.align('lt')
 						.text(`Receipt: ${o.orderNumber}`)
-						.text(`Date:    ${new Date(o.createdAt).toLocaleString(config.currencyLocale)}`)
+						.text(`Date:    ${(() => { try { return new Date(o.createdAt).toLocaleString(config.currencyLocale); } catch { return new Date(o.createdAt).toLocaleString('en-ET'); } })()}`)
 						.text(`Cashier: ${user.name ?? user.email ?? 'Staff'}`)
 						.text(`Customer: ${c?.name ?? 'Walk-in'}`)
 						.drawLine()
@@ -185,7 +185,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						.drawLine()
 						.align('rt')
 						.text(`Subtotal:  ${config.currencyCode} ${Number(o.subtotal).toFixed(2)}`)
-						.text(`${vatLabel.padEnd(10)} ${config.currencyCode} ${Number(o.taxAmount).toFixed(2)}`)
+						.text(`${vatLabel.padEnd(11)}${config.currencyCode} ${Number(o.taxAmount).toFixed(2)}`)
 						.style('b')
 						.text(`TOTAL:     ${config.currencyCode} ${Number(o.totalAmount).toFixed(2)}`)
 						.style('normal')
