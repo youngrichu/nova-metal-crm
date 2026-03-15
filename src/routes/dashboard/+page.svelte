@@ -171,7 +171,7 @@
           <Select.Item value="this-month"       class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">This Month</Select.Item>
           <Select.Item value="last-month"       class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Last Month</Select.Item>
           <Select.Item value="last-quarter"     class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Last Quarter</Select.Item>
-          <Select.Item value="current-quarter"  class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Current Qtr</Select.Item>
+          <Select.Item value="current-quarter"  class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Current Quarter</Select.Item>
           <Select.Item value="this-year"        class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">This Year</Select.Item>
         </Select.Content>
       </Select.Root>
