@@ -146,15 +146,18 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				try {
 					const vatLabel = `VAT ${Math.round(config.vatRate * 100)}%:`;
 
+					// At 2× width each char takes 2 positions; cap to avoid overflow
+					const maxHeaderChars = Math.floor(lineWidth / 2);
+
 					printer
 						.font('a')
 						.align('ct')
 						.style('b')
 						.size(2, 2)
-						.text(config.companyName)
+						.text(config.companyName.substring(0, maxHeaderChars))
 						.size(1, 1)
 						.style('normal')
-						.text(config.companyAddress)
+						.text(config.companyAddress.substring(0, lineWidth))
 						.drawLine()
 
 						.align('lt')

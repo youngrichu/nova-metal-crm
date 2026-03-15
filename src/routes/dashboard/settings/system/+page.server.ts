@@ -106,11 +106,13 @@ export const actions: Actions = {
                     }
                 }
             }
-            if (key === 'company_name' && raw.length > 100) {
-                return fail(400, { error: 'Company name must be 100 characters or fewer' });
+            if (key === 'company_name') {
+                if (raw.length > 100) return fail(400, { error: 'Company name must be 100 characters or fewer' });
+                if (/[\x00-\x1F\x7F]/.test(raw)) return fail(400, { error: 'Company name must not contain control characters' });
             }
-            if (key === 'company_address' && raw.length > 200) {
-                return fail(400, { error: 'Company address must be 200 characters or fewer' });
+            if (key === 'company_address') {
+                if (raw.length > 200) return fail(400, { error: 'Company address must be 200 characters or fewer' });
+                if (/[\x00-\x1F\x7F]/.test(raw)) return fail(400, { error: 'Company address must not contain control characters' });
             }
 
             updates.push({ key, value: raw });
