@@ -9,6 +9,12 @@ type Period = 'day' | 'week' | 'month';
 const VALID_RANGES: DateRange[] = ['last-7-days', 'last-30-days', 'this-month', 'last-month', 'last-quarter', 'current-quarter', 'this-year'];
 const VALID_PERIODS: Period[] = ['day', 'week', 'month'];
 
+/**
+ * Returns SQL timestamp boundary expressions for the selected date range.
+ *
+ * @param range - Named date range to convert into SQL boundary expressions
+ * @returns `start` (inclusive lower bound) and `end` (exclusive upper bound) as raw SQL strings
+ */
 function getRangeSQL(range: DateRange): { start: string; end: string } {
 	switch (range) {
 		case 'last-7-days':     return { start: `NOW() - INTERVAL '7 days'`,                             end: `NOW()` };
@@ -21,6 +27,12 @@ function getRangeSQL(range: DateRange): { start: string; end: string } {
 	}
 }
 
+/**
+ * Returns SQL fragments for grouping and formatting timestamps by the requested period.
+ *
+ * @param period - Aggregation granularity: 'day', 'week', or 'month'
+ * @returns `trunc` (GROUP BY expression) and `format` (TO_CHAR format string)
+ */
 function getTrendGrouping(period: Period): { trunc: string; format: string } {
 	switch (period) {
 		case 'day':   return { trunc: `DATE(created_at)`,                    format: `'YYYY-MM-DD'` };
@@ -29,6 +41,21 @@ function getTrendGrouping(period: Period): { trunc: string; format: string } {
 	}
 }
 
+/**
+ * SvelteKit server load function for the dashboard page.
+ *
+ * Reads optional `range` (DateRange) and `period` (Period) query-string parameters
+ * to scope financial KPIs, sales trend, and margin data to the selected window.
+ * Non-financial fields (product/warehouse counts, active orders, low-stock items,
+ * recent transactions) are returned for all authenticated roles.
+ * Financial fields (`totalSales`, `totalProfit`, `salesTrend`, `marginsByCategory`)
+ * are returned only for `admin` and `sales` roles; they are `null`/empty for `warehouse`.
+ *
+ * @param locals - SvelteKit request locals (must contain `user`)
+ * @param url    - Request URL used to read `range` and `period` params
+ * @returns Dashboard data object
+ * @throws Redirect to `/login` if `locals.user` is not set
+ */
 export const load = async ({ locals, url }) => {
 	if (!locals.user) throw redirect(302, '/login');
 
@@ -51,7 +78,8 @@ export const load = async ({ locals, url }) => {
 		.select({ count: sql<number>`count(*)` })
 		.from(warehouses);
 
-	// Active orders: QUOTE (locked pricing, awaiting confirmation) and CONFIRMED (awaiting invoice)
+	// Active orders: QUOTE and CONFIRMED — intentionally shown to all roles (including warehouse)
+	// so staff can see how many orders are in-flight without accessing revenue figures.
 	const [activeOrdersResult] = await db
 		.select({ count: sql<number>`count(*)` })
 		.from(salesOrders)
