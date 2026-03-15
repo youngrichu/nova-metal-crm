@@ -1,7 +1,7 @@
 // src/lib/server/pricing/engine.ts
 import { db } from '$lib/server/db';
-import { products, customers, salesOrders, salesOrderItems, priceHistory, systemSettings } from '$lib/server/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { products, customers, salesOrders, salesOrderItems, priceHistory, systemSettings, inventory } from '$lib/server/db/schema';
+import { eq, and, inArray, sum } from 'drizzle-orm';
 
 const PRICING_RULES = {
     TIERS: {
@@ -22,6 +22,7 @@ export type PricingResult = {
     discountPercent: number;
     finalUnitPrice: number;
     lineTotal: number;
+    availableStock: number; // total units in stock across all warehouses
 };
 
 export function computePrice(baseCost: number, pricingTier: string, quantity: number, tiersOverride?: typeof PRICING_RULES.TIERS): PricingResult {
@@ -111,6 +112,13 @@ export async function calculateDynamicPrice(
 
     const baseCost = Number(product.averageLandingCost || 0);
 
+    // Fetch available stock — sum across all warehouses for this product.
+    const stockRows = await db
+        .select({ totalQty: sum(inventory.quantity) })
+        .from(inventory)
+        .where(eq(inventory.productId, productId));
+    const availableStock = Number(stockRows[0]?.totalQty ?? 0);
+
     // 2. Quote Lock-in Check
     if (orderId) {
         const now = new Date();
@@ -138,7 +146,8 @@ export async function calculateDynamicPrice(
                     unitPriceBeforeDiscount: lockedUnitPrice,
                     discountPercent: 0,
                     finalUnitPrice: lockedUnitPrice,
-                    lineTotal: lockedLineTotal
+                    lineTotal: lockedLineTotal,
+                    availableStock,
                 };
             }
         }
@@ -168,7 +177,10 @@ export async function calculateDynamicPrice(
     // Callers processing multiple items should pass prefetchedTiers to avoid N DB queries.
     const dynamicTiers = prefetchedTiers ?? await fetchMarkupTiers();
 
-    return computePrice(baseCost, pricingTier, quantity, dynamicTiers);
+    return {
+        ...computePrice(baseCost, pricingTier, quantity, dynamicTiers),
+        availableStock,
+    };
 }
 
 /**

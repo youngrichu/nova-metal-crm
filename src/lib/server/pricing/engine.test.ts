@@ -91,3 +91,12 @@ describe('calculateDynamicPrice with pricingTierOverride', () => {
         expect(result.unitPriceBeforeDiscount).toBe(115); // 100 * 1.15 (RETAIL)
     });
 });
+
+describe('calculateDynamicPrice — availableStock', () => {
+    it('returns 0 when no inventory rows exist', async () => {
+        // The existing mock returns [] for all select() calls.
+        // The inventory SUM query returns [], so totalQty is undefined → 0.
+        const result = await calculateDynamicPrice('test-product-id', null, 1, undefined, 'RETAIL');
+        expect(result.availableStock).toBe(0);
+    });
+});
