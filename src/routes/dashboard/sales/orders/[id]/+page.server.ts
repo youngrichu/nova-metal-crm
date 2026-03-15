@@ -1,8 +1,9 @@
 import { error, redirect, fail } from "@sveltejs/kit";
 import { db } from "$lib/server/db";
-import { salesOrders, salesOrderItems, customers, products, payments } from "$lib/server/db/schema";
+import { salesOrders, salesOrderItems, customers, products, payments, inventory, warehouses } from "$lib/server/db/schema";
 import { eq } from "drizzle-orm";
 import type { PageServerLoad, Actions } from "./$types";
+import { recordTransaction } from "$lib/server/inventory/recordTransaction";
 
 export const load: PageServerLoad = async ({ params }) => {
 	const orderId = params.id;
@@ -89,9 +90,69 @@ export const actions: Actions = {
         }
 
         try {
-            await db.update(salesOrders)
-                .set({ status: newStatus, updatedAt: new Date() })
-                .where(eq(salesOrders.id, params.id));
+            await db.transaction(async (tx) => {
+                // 1. Read current status inside the transaction (idempotency guard)
+                const [currentOrder] = await tx
+                    .select({ status: salesOrders.status, orderNumber: salesOrders.orderNumber })
+                    .from(salesOrders)
+                    .where(eq(salesOrders.id, params.id))
+                    .limit(1);
+
+                if (!currentOrder) throw new Error("Order not found");
+
+                // 2. Update order status
+                await tx.update(salesOrders)
+                    .set({ status: newStatus, updatedAt: new Date() })
+                    .where(eq(salesOrders.id, params.id));
+
+                // 3. Auto-deduct stock only when transitioning TO INVOICED
+                //    (idempotency: skip if already INVOICED to prevent duplicate deductions)
+                if (newStatus === 'INVOICED' && currentOrder.status !== 'INVOICED') {
+                    // Fetch line items with productId and quantity
+                    const items = await tx
+                        .select({
+                            productId: salesOrderItems.productId,
+                            quantity: salesOrderItems.quantity,
+                        })
+                        .from(salesOrderItems)
+                        .where(eq(salesOrderItems.orderId, params.id));
+
+                    // Get the first active warehouse
+                    const [warehouse] = await tx
+                        .select({ id: warehouses.id })
+                        .from(warehouses)
+                        .where(eq(warehouses.isActive, true))
+                        .limit(1);
+
+                    if (!warehouse) {
+                        // No warehouse configured — log and skip deduction, status still updates.
+                        // `return` here exits the transaction callback only; status commit proceeds.
+                        console.warn('[invoice:stock-deduction] skipped — no active warehouse found', {
+                            orderId: params.id,
+                            orderNumber: currentOrder.orderNumber,
+                        });
+                        return;
+                    }
+
+                    // Deduct stock for each line item
+                    for (const item of items) {
+                        if (!item.productId) continue;
+                        // salesOrderItems.quantity is numeric(10,2) — Drizzle returns it as string
+                        const qty = Math.round(Number(item.quantity));
+                        if (qty <= 0) continue;
+
+                        await recordTransaction(tx, {
+                            productId: item.productId,
+                            warehouseId: warehouse.id,
+                            quantityChange: -qty,
+                            transactionType: 'STOCK_OUT',
+                            referenceDoc: currentOrder.orderNumber,
+                            performedBy: user.id,
+                            allowNegative: true, // stock warning was shown at order creation
+                        });
+                    }
+                }
+            });
 
             return { success: true };
         } catch (err) {
