@@ -1,8 +1,9 @@
 import { db } from '$lib/server/db';
 import { inventory, inventoryTransactions, products, warehouses } from '$lib/server/db/schema';
 import { applyPurchaseCost } from '$lib/server/inventory/applyPurchaseCost';
+import { recordTransaction } from '$lib/server/inventory/recordTransaction';
 import { fail } from '@sveltejs/kit';
-import { eq, sql, and, desc } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 
 export const load = async () => {
 	// Load all active inventory grouped by warehouse and product
@@ -88,54 +89,18 @@ export const actions = {
 
 		try {
 			await db.transaction(async (tx) => {
-				// 1. Upsert or get existing inventory record
-				let invRecord = await tx.query.inventory.findFirst({
-					where: and(
-						eq(inventory.productId, productId),
-						eq(inventory.warehouseId, warehouseId)
-					)
-				});
-
-				let currentInventoryId;
-
-				if (!invRecord) {
-					// Disallow stock-out from non-existent inventory
-					if (quantityChange < 0) throw new Error('Cannot reduce stock below 0');
-
-					const newInv = await tx.insert(inventory).values({
-						productId,
-						warehouseId,
-						quantity: quantityChange
-					}).returning();
-
-					currentInventoryId = newInv[0].id;
-				} else {
-					const newQuantity = invRecord.quantity + quantityChange;
-
-					if (newQuantity < 0) throw new Error(`Insufficient stock. Current: ${invRecord.quantity}`);
-
-					await tx.update(inventory)
-						.set({
-							quantity: newQuantity,
-							lastUpdated: sql`now()`
-						})
-						.where(eq(inventory.id, invRecord.id));
-
-					currentInventoryId = invRecord.id;
-				}
-
-				// 2. Insert append-only transaction entry
-				await tx.insert(inventoryTransactions).values({
-					inventoryId: currentInventoryId,
-					transactionType: type,
+				await recordTransaction(tx, {
+					productId,
+					warehouseId,
 					quantityChange,
+					transactionType: type as 'STOCK_IN' | 'STOCK_OUT' | 'ADJUSTMENT',
+					referenceDoc: referenceDoc ?? undefined,
+					notes: notes ?? undefined,
+					performedBy: sessionUser.id,
 					unitCost: unitCostStr ?? undefined,
-					referenceDoc,
-					notes,
-					performedBy: sessionUser.id
 				});
 
-				// 3. Apply new purchase cost inside the same transaction for atomicity
+				// Apply new purchase cost inside the same transaction for atomicity
 				if (type === 'STOCK_IN' && unitCostStr) {
 					await applyPurchaseCost(productId, unitCostStr, tx);
 				}
