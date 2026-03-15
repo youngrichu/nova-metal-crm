@@ -92,7 +92,7 @@ Reset all values to their correct defaults before proceeding.
 | | |
 |---|---|
 | **Action** | Open a private/incognito browser window. Log in as `sara@nova.et`. |
-| **Expected** | Sidebar shows: Dashboard, Sales, Customers, Settings. **Does not show** Products, Categories, Inventory, or Warehouses. |
+| **Expected** | Sidebar shows: Dashboard, Sales, Reconciliation, Customers, Settings. **Does not show** Products, Categories, or Inventory. |
 
 ---
 
@@ -101,7 +101,7 @@ Reset all values to their correct defaults before proceeding.
 | | |
 |---|---|
 | **Action** | Open another private window. Log in as `dawit@nova.et`. |
-| **Expected** | Sidebar shows: Dashboard, Products, Categories, Inventory, Settings. **Does not show** Sales, Customers, or Reconciliation. Dashboard shows inventory counts and alerts but **not** Total Revenue or Total Profit. |
+| **Expected** | Sidebar shows: Dashboard, Products, Categories, Inventory, Settings. **Does not show** Sales, Reconciliation, or Customers. Dashboard shows product counts, warehouse counts, inventory alerts, and active orders — but **not** Total Revenue or Total Profit. |
 
 Keep all three windows open (admin, Sara, Dawit) for subsequent sections.
 
@@ -250,12 +250,14 @@ Keep all three windows open (admin, Sara, Dawit) for subsequent sections.
 | | |
 |---|---|
 | **Action** | Go to **Sales → Orders**. Click **New Order**. Select Customer: `Haile Construction`. Add item: Product `RHS 20x30x1.5 L6000`, Quantity `10`. Note the auto-calculated unit price. Add a second item: Product `SHS 40x40x2 L6000`, Quantity `5`. Click **Create Order**. |
-| **Expected** | Order created in **DRAFT** status with an order number (e.g., SO-2026-0001). Subtotal, VAT (15%), and Total are displayed correctly. Unit price for RHS = ETB 450 × 1.05 × 1.15 = ETB 542.81 (Wholesale markup + VAT). |
+| **Expected** | Order created in **DRAFT** status with an order number (e.g., SO-2026-0001). Subtotal, VAT (15%), and Total are displayed correctly. Unit price for RHS = ETB 450 × 1.05 = **ETB 472.50** (Wholesale markup only — VAT is on the order total, not the unit price). |
 
 > **Spot-check the maths:**
-> RHS: 450 × 1.05 = 472.50 × 1.15 = **ETB 543.38** × 10 pcs = **ETB 5,433.75**
-> SHS: 820 × 1.05 = 861.00 × 1.15 = **ETB 990.15** × 5 pcs = **ETB 4,950.75**
-> Subtotal (pre-tax): divide total by 1.15 to check VAT extraction
+> RHS unit price: 450 × 1.05 = **ETB 472.50** × 10 pcs = **ETB 4,725.00**
+> SHS unit price: 820 × 1.05 = **ETB 861.00** × 5 pcs = **ETB 4,305.00**
+> Subtotal = **ETB 9,030.00**
+> VAT (15%) = 9,030 × 0.15 = **ETB 1,354.50**
+> **Total = ETB 10,384.50**
 
 ---
 
@@ -318,7 +320,7 @@ Keep all three windows open (admin, Sara, Dawit) for subsequent sections.
 | | |
 |---|---|
 | **Action** | Click **New Order**. Leave the Customer dropdown empty. Enter Walk-In Phone: `0922 334455`, Pricing Tier: `Retail`. Add item: `RHS 20x30x1.5 L6000`, Quantity `2`. Click **Create Order**. |
-| **Expected** | Order created in DRAFT. Unit price reflects **Retail** markup (1.15×) rather than Wholesale — should be higher than the previous order. |
+| **Expected** | Order created in DRAFT. Unit price = 450 × 1.15 = **ETB 517.50** (RETAIL markup, higher than the Wholesale price of ETB 472.50 used on Haile's order). |
 
 ---
 

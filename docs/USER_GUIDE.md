@@ -448,18 +448,42 @@ Go to **Settings → Profile** to update your display name or change your passwo
 
 ## Appendix: Pricing Tiers
 
-| Tier | Default Markup | Typical Customer |
+The system has two separate sets of tiers:
+
+### Customer account tiers (registered customers)
+
+Set on the customer's profile and used automatically when creating an order for that customer.
+
+| Tier | UI Label | Markup |
 |---|---|---|
-| Retail | +15% | Walk-in counter sales |
-| Wholesale | +5% | Regular bulk buyers |
-| VIP | +5% | Strategic accounts |
-| Preferred | +8% | Valued recurring customers |
+| STANDARD | Standard (Retail) | +15% |
+| PREFERRED | Preferred | +5% |
+| VIP | VIP (Wholesale) | +5% |
 
-All markups are applied on top of the product's **average landing cost**, then VAT is added.
+### Walk-in order tiers (anonymous customers)
 
-**Formula:** `Unit Price = Landing Cost × Markup × (1 + VAT Rate)`
+Selected manually when creating an order without a registered customer.
 
-**Example (RETAIL):** Landing cost ETB 100 → 100 × 1.15 × 1.15 = **ETB 132.25**
+| Tier | Markup |
+|---|---|
+| RETAIL | +15% |
+| WHOLESALE | +5% |
+| VIP | +5% |
+| PREFERRED | +8% |
+
+### How prices are calculated
+
+Markups are applied to the product's **average landing cost** to produce the **unit price**. VAT is then calculated on the order subtotal — it is **not** included in the unit price.
+
+**Unit Price** = `Landing Cost × Markup`
+
+**Order Total** = `Subtotal + (Subtotal × VAT Rate)`
+
+**Example (STANDARD / Retail):** Landing cost ETB 100, qty 10
+- Unit price = 100 × 1.15 = **ETB 115.00**
+- Subtotal = 115.00 × 10 = **ETB 1,150.00**
+- VAT (15%) = **ETB 172.50**
+- **Total = ETB 1,322.50**
 
 ---
 
