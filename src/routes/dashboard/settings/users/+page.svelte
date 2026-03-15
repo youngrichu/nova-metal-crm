@@ -68,7 +68,7 @@
 					</Button>
 				{/snippet}
 			</Dialog.Trigger>
-			<Dialog.Content class="rounded-none border-2 border-foreground sm:max-w-md" onInteractOutside={closeCreateDialog} onEscapeKeyDown={closeCreateDialog}>
+			<Dialog.Content class="rounded-none border-2 border-foreground sm:max-w-md" onInteractOutside={closeCreateDialog} onEscapeKeydown={closeCreateDialog}>
 				<Dialog.Header>
 					<Dialog.Title class="text-xl font-black tracking-tighter uppercase">Create New User</Dialog.Title>
 					<Dialog.Description class="text-xs text-muted-foreground tracking-widest uppercase">
