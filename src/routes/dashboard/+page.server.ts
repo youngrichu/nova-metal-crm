@@ -51,11 +51,11 @@ export const load = async ({ locals, url }) => {
 		.select({ count: sql<number>`count(*)` })
 		.from(warehouses);
 
-	// Active orders
+	// Active orders: QUOTE (locked pricing, awaiting confirmation) and CONFIRMED (awaiting invoice)
 	const [activeOrdersResult] = await db
 		.select({ count: sql<number>`count(*)` })
 		.from(salesOrders)
-		.where(inArray(salesOrders.status, ['PENDING', 'PROCESSING']));
+		.where(inArray(salesOrders.status, ['QUOTE', 'CONFIRMED']));
 
 	// Low stock items
 	const lowStockItems = await db
@@ -96,7 +96,7 @@ export const load = async ({ locals, url }) => {
 	let marginsByCategory: { categoryName: string; marginPercent: number }[] = [];
 
 	if (isFinancialRole) {
-		const { rows: kpiRows } = await db.execute(sql.raw(`
+		const { rows: kpiRows } = await db.execute(sql`
 			SELECT
 				COALESCE(SUM(so.total_amount), 0) as total_sales,
 				COALESCE(SUM(
@@ -106,30 +106,30 @@ export const load = async ({ locals, url }) => {
 			JOIN sales_order_items soi ON so.id = soi.order_id
 			JOIN products p ON soi.product_id = p.id
 			WHERE so.status NOT IN ('CANCELLED', 'DRAFT')
-			  AND so.created_at >= ${start}
-			  AND so.created_at < ${end}
-		`));
+			  AND so.created_at >= ${sql.raw(start)}
+			  AND so.created_at < ${sql.raw(end)}
+		`);
 		totalSales  = Number(kpiRows[0]?.total_sales  || 0);
 		totalProfit = Number(kpiRows[0]?.total_profit || 0);
 
 		const { trunc, format } = getTrendGrouping(period);
-		const { rows: trendRows } = await db.execute(sql.raw(`
+		const { rows: trendRows } = await db.execute(sql`
 			SELECT
-				TO_CHAR(${trunc}, ${format}) as date,
+				TO_CHAR(${sql.raw(trunc)}, ${sql.raw(format)}) as date,
 				SUM(total_amount)::float as revenue
 			FROM sales_orders
 			WHERE status NOT IN ('CANCELLED', 'DRAFT')
-			  AND created_at >= ${start}
-			  AND created_at < ${end}
-			GROUP BY ${trunc}
-			ORDER BY ${trunc} ASC
-		`));
+			  AND created_at >= ${sql.raw(start)}
+			  AND created_at < ${sql.raw(end)}
+			GROUP BY ${sql.raw(trunc)}
+			ORDER BY ${sql.raw(trunc)} ASC
+		`);
 		salesTrend = trendRows.map((r: any) => ({
 			date:    r.date as string,
 			revenue: Number(r.revenue)
 		}));
 
-		const { rows: marginRows } = await db.execute(sql.raw(`
+		const { rows: marginRows } = await db.execute(sql`
 			SELECT
 				c.name as category_name,
 				ROUND(
@@ -142,11 +142,11 @@ export const load = async ({ locals, url }) => {
 			JOIN categories c ON p.category_id = c.id
 			JOIN sales_orders so ON soi.order_id = so.id
 			WHERE so.status NOT IN ('CANCELLED', 'DRAFT')
-			  AND so.created_at >= ${start}
-			  AND so.created_at < ${end}
+			  AND so.created_at >= ${sql.raw(start)}
+			  AND so.created_at < ${sql.raw(end)}
 			GROUP BY c.id, c.name
 			ORDER BY margin_percent DESC
-		`));
+		`);
 		marginsByCategory = marginRows.map((r: any) => ({
 			categoryName:  r.category_name as string,
 			marginPercent: Number(r.margin_percent)

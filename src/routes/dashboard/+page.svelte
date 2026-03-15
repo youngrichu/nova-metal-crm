@@ -222,11 +222,12 @@
         </div>
       </div>
       
+      {#if data.totalSales !== null}
       <div class="pt-8 mt-4 flex flex-col gap-4">
         <div>
           <span class="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{m.total_revenue()}</span>
           <div class="flex items-center justify-between">
-            <span class="font-mono font-black text-3xl text-foreground">{formatCurrency(data.totalSales ?? 0)}</span>
+            <span class="font-mono font-black text-3xl text-foreground">{formatCurrency(data.totalSales)}</span>
           </div>
         </div>
         <div>
@@ -236,6 +237,7 @@
           </div>
         </div>
       </div>
+      {/if}
 
       <!-- Margins by Category -->
       {#if data.marginsByCategory && data.marginsByCategory.length > 0}
@@ -265,7 +267,7 @@
           <h3 class="font-black text-sm tracking-widest uppercase text-foreground mb-1 flex items-center gap-3">
             <TrendingUp class="w-4 h-4 text-primary" /> Revenue Trajectory
           </h3>
-          <p class="text-xs font-medium text-muted-foreground/60 tracking-wider">{activePeriod === 'day' ? 'Daily' : activePeriod === 'week' ? 'Weekly' : 'Monthly'} revenue — {RANGE_LABELS[selectedRange]} (excl. draft &amp; cancelled).</p>
+          <p class="text-xs font-medium text-muted-foreground/60 tracking-wider">{data.period === 'day' ? 'Daily' : data.period === 'week' ? 'Weekly' : 'Monthly'} revenue — {RANGE_LABELS[data.range]} (excl. draft &amp; cancelled).</p>
         </div>
         <Button variant="outline" size="sm" href="/dashboard/sales/orders" class="h-8 rounded-none border-2 border-foreground/20 text-[10px] font-bold tracking-widest uppercase shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
           View Orders
