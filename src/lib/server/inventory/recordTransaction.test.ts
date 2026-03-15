@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { recordTransaction } from './recordTransaction';
+import type { DbClient } from './recordTransaction';
 
 // ── DB mock ────────────────────────────────────────────────────────────────
 // Drizzle's insert chain: insert(table).values({}).returning() → Promise<row[]>
@@ -21,7 +22,7 @@ const mockTx = {
     query: { inventory: { findFirst: mockFindFirst } },
     insert: mockInsert,
     update: mockUpdate,
-} as any;
+} as unknown as DbClient;
 
 vi.mock('$lib/server/db/schema', () => ({
     inventory: { id: 'id', productId: 'product_id', warehouseId: 'warehouse_id', quantity: 'quantity' },

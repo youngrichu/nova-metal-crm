@@ -4,7 +4,7 @@ import { eq, and, sql } from 'drizzle-orm';
 
 // Follow the applyPurchaseCost pattern: Pick the operations we need so both
 // db itself and a db.transaction() callback parameter are accepted.
-type DbClient = Pick<typeof db, 'query' | 'insert' | 'update'>;
+export type DbClient = Pick<typeof db, 'query' | 'insert' | 'update'>;
 
 export type TransactionType = 'STOCK_IN' | 'STOCK_OUT' | 'ADJUSTMENT';
 
@@ -53,8 +53,8 @@ export async function recordTransaction(
     let currentInventoryId: string;
 
     if (!invRecord) {
-        // No row exists — only STOCK_IN can create one
-        if (quantityChange < 0) {
+        // No row exists — only STOCK_IN can create one (unless allowNegative is set)
+        if (quantityChange < 0 && !allowNegative) {
             throw new Error('Cannot reduce stock below 0');
         }
 
