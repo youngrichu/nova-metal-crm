@@ -109,6 +109,13 @@ export const actions: Actions = {
             updates.push({ key, value: raw });
         }
 
+        // Cross-field: network mode requires a non-empty address
+        const submittedType = formData.get('printer_type')?.toString().trim();
+        const hasAddress = updates.some(u => u.key === 'printer_address');
+        if (submittedType === 'network' && !hasAddress) {
+            return fail(400, { error: 'Printer IP address is required for Network connection type' });
+        }
+
         const userId = locals.user.id;
         try {
             await db.transaction(async (tx) => {

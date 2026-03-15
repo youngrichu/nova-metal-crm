@@ -95,9 +95,11 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			if (!escpos.Network) {
 				return json({ success: false, error: 'Network printer driver failed to load on this server' }, { status: 500 });
 			}
-			// address may include port as "ip:port", default to 9100
-			const [host, port] = config.address.split(':');
-			device = new escpos.Network(host, port ? parseInt(port, 10) : 9100);
+			// Use lastIndexOf to correctly split host and optional port
+			const lastColon = config.address.lastIndexOf(':');
+			const host = lastColon === -1 ? config.address : config.address.substring(0, lastColon);
+			const port = lastColon === -1 ? 9100 : parseInt(config.address.substring(lastColon + 1), 10);
+			device = new escpos.Network(host, port);
 		}
 
 		if (typeof escpos.Printer !== 'function') {

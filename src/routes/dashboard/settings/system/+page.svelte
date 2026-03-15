@@ -12,13 +12,17 @@
 	let printerType = $state(data.settings.printer_type ?? 'network');
 	let paperWidth = $state(data.settings.paper_width ?? '80');
 	let printerAddress = $state(data.settings.printer_address ?? '192.168.1.100');
+	let companyName = $state(data.settings.company_name ?? 'NOVA METAL PLC');
+	let companyAddress = $state(data.settings.company_address ?? 'Addis Ababa, Ethiopia');
 
 	// Re-sync only when the specific printer keys change on the server (e.g. after a failed save)
 	$effect(() => {
-		const { printer_type, paper_width, printer_address } = data.settings;
+		const { printer_type, paper_width, printer_address, company_name, company_address } = data.settings;
 		printerType = printer_type ?? 'network';
 		paperWidth = paper_width ?? '80';
 		printerAddress = printer_address ?? '192.168.1.100';
+		companyName = company_name ?? 'NOVA METAL PLC';
+		companyAddress = company_address ?? 'Addis Ababa, Ethiopia';
 	});
 
 	function handleEnhance() {
@@ -244,7 +248,7 @@
 							id="company_name"
 							name="company_name"
 							type="text"
-							value={data.settings.company_name}
+							bind:value={companyName}
 							placeholder="NOVA METAL PLC"
 							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all"
 						/>
@@ -258,7 +262,7 @@
 							id="company_address"
 							name="company_address"
 							type="text"
-							value={data.settings.company_address}
+							bind:value={companyAddress}
 							placeholder="Addis Ababa, Ethiopia"
 							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all"
 						/>
