@@ -7,6 +7,10 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { enhance } from '$app/forms';
 	import { Trash2, Tags, ChevronDown, Pencil } from 'lucide-svelte';
+	import { DataCards } from '$lib/components/ui/data-cards';
+	import { PageFAB } from '$lib/components/ui/fab';
+	import { invalidateAll } from '$app/navigation';
+	import type { Action } from '$lib/components/ui/data-cards';
 	
 	let { data, form } = $props();
 	
@@ -14,6 +18,41 @@
 	let isEditOpen = $state(false);
 	let isSubmitting = $state(false);
 	let editingCategory = $state<any>(null);
+
+	const processedCategories = $derived(
+		data.categories.map((row: any) => ({
+			id: row.id,
+			name: row.name,
+			prefix: row.prefix,
+			description: row.description ?? '—',
+		}))
+	);
+
+	const cardColumns = [
+		{ key: 'name',        label: 'Name',        primary: true },
+		{ key: 'prefix',      label: 'Prefix',      secondary: true },
+		{ key: 'description', label: 'Description' },
+	];
+
+	const cardActions: Action[] = [
+		{
+			label: 'Edit',
+			onClick: (row: any) => {
+				const original = data.categories.find((c: any) => c.id === row.id);
+				if (original) openEdit(original);
+			},
+		},
+		{
+			label: 'Delete',
+			variant: 'destructive',
+			onClick: async (row: any) => {
+				const fd = new FormData();
+				fd.set('id', row.id);
+				await fetch('?/delete', { method: 'POST', body: fd });
+				await invalidateAll();
+			},
+		},
+	];
 
 	function openEdit(cat: any) {
 		editingCategory = cat;
@@ -53,7 +92,7 @@
 			<Sheet.Root bind:open={isCreateOpen}>
 				<Sheet.Trigger>
 					{#snippet child({ props })}
-						<Button {...props} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]">
+						<Button {...props} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] hidden md:flex">
 							New Category
 						</Button>
 					{/snippet}
@@ -114,7 +153,13 @@
 		</div>
 	</header>
 
-	<!-- Data Table -->
+	<!-- Mobile card view -->
+	<div class="md:hidden">
+		<DataCards columns={cardColumns} data={processedCategories} actions={cardActions} emptyMessage="No categories found." />
+	</div>
+
+	<!-- Desktop table view -->
+	<div class="hidden md:block">
 	<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)]">
 		<Table.Root class="w-full">
 			<Table.Header>
@@ -182,7 +227,10 @@
 			{data.categories.length} categor{data.categories.length !== 1 ? 'ies' : 'y'} total
 		</div>
 	</div>
+	</div>
 </div>
+
+<PageFAB label="Add category" onclick={() => isCreateOpen = true} />
 
 <!-- Edit Category Sheet -->
 <Sheet.Root bind:open={isEditOpen}>
