@@ -131,18 +131,18 @@
 
 								<div class="space-y-2 group">
 									<Label for="name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Category Name *</Label>
-									<Input id="name" name="name" placeholder="E.g., Rectangular Hollow Section" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+									<Input id="name" name="name" placeholder="E.g., Rectangular Hollow Section" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all" />
 								</div>
 
 								<div class="space-y-2 group">
 									<Label for="prefix" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">SKU Prefix *</Label>
-									<Input id="prefix" name="prefix" placeholder="E.g., RHS" class="uppercase h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" required />
+									<Input id="prefix" name="prefix" placeholder="E.g., RHS" class="uppercase h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" required />
 									<p class="text-[0.7rem] text-muted-foreground/60 font-medium tracking-wide">Must be unique. Auto-generates product identifiers.</p>
 								</div>
 
 								<div class="space-y-2 group">
 									<Label for="description" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Description / Notes</Label>
-									<Input id="description" name="description" placeholder="Optional context..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg" />
+									<Input id="description" name="description" placeholder="Optional context..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none" />
 								</div>
 							</div>
 						</div>

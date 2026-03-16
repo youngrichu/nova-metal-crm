@@ -156,7 +156,7 @@
 									<Popover.Root bind:open={catOpen}>
 										<Popover.Trigger
 											class={cn(
-												"flex h-12 w-full items-center justify-between rounded-lg border-2 border-transparent bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors",
+												"flex h-12 w-full items-center justify-between rounded-none border-2 border-foreground/10 bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors",
 												!selectedCategory && "text-muted-foreground"
 											)}
 											role="combobox"
@@ -165,7 +165,7 @@
 											<span class="truncate">{getCategoryLabel(selectedCategory)}</span>
 											<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
 										</Popover.Trigger>
-										<Popover.Content class="w-[min(300px,calc(100vw-2rem))] p-0 rounded-lg border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
+										<Popover.Content class="w-[min(300px,calc(100vw-2rem))] p-0 rounded-none border-2 border-foreground/10 shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
 											<Command.Root>
 												<Command.Input placeholder="Search category..." class="h-12 border-none font-medium" />
 												<Command.List>
@@ -194,13 +194,13 @@
 
 								<div class="space-y-2 group">
 									<Label for="name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Identifier Name *</Label>
-									<Input id="name" name="name" placeholder="Square Tube 40x40" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+									<Input id="name" name="name" placeholder="Square Tube 40x40" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all" />
 								</div>
 
 								{#if data.barcodeEnabled}
 								<div class="space-y-2 group">
 									<Label for="barcode" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Barcode / EAN</Label>
-									<Input id="barcode" name="barcode" type="text" placeholder="Scan or type barcode..." class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+									<Input id="barcode" name="barcode" type="text" placeholder="Scan or type barcode..." class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all" />
 								</div>
 								{/if}
 							</div>
@@ -212,39 +212,39 @@
 								<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 									<div class="space-y-2 group">
 										<Label for="size1" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Size 1 (mm)</Label>
-										<Input id="size1" name="size1" type="number" step="0.1" placeholder="40" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
+										<Input id="size1" name="size1" type="number" step="0.1" placeholder="40" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 									</div>
 									<div class="space-y-2 group">
 										<Label for="size2" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Size 2 (mm)</Label>
-										<Input id="size2" name="size2" type="number" step="0.1" placeholder="Optional" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
+										<Input id="size2" name="size2" type="number" step="0.1" placeholder="Optional" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 									</div>
 								</div>
 
 								<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 									<div class="space-y-2 group">
 										<Label for="thickness" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Gauge / Thickness (mm)</Label>
-										<Input id="thickness" name="thickness" type="number" step="0.1" placeholder="1.5" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
+										<Input id="thickness" name="thickness" type="number" step="0.1" placeholder="1.5" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 									</div>
 									<div class="space-y-2 group">
 										<Label for="length" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Standard Length (mm)</Label>
-										<Input id="length" name="length" type="number" placeholder="6000" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
+										<Input id="length" name="length" type="number" placeholder="6000" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 									</div>
 								</div>
 
 								<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 									<div class="space-y-2 group">
 										<Label for="weightPerPiece" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Unit Weight (kg)</Label>
-										<Input id="weightPerPiece" name="weightPerPiece" type="number" step="0.01" placeholder="Optional" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
+										<Input id="weightPerPiece" name="weightPerPiece" type="number" step="0.01" placeholder="Optional" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 									</div>
 									<div class="space-y-2 group">
 										<Label for="minStockLevel" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Alert Threshold *</Label>
-										<Input id="minStockLevel" name="minStockLevel" type="number" value="10" required class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
+										<Input id="minStockLevel" name="minStockLevel" type="number" value="10" required class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 									</div>
 								</div>
 
 								<div class="space-y-2 group">
 									<Label for="description" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Specs & Annotations</Label>
-									<Input id="description" name="description" placeholder="Any special remarks..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
+									<Input id="description" name="description" placeholder="Any special remarks..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 								</div>
 							</div>
 						</div>
@@ -255,7 +255,7 @@
 								<div class="space-y-2 group">
 									<Label for="averageLandingCost" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Purchase Cost (ETB) *</Label>
 									<p class="text-[11px] text-muted-foreground/60 mb-1">What you paid per piece. The selling price is calculated automatically from this using the markup in Settings.</p>
-									<Input id="averageLandingCost" name="averageLandingCost" type="number" step="0.01" min="0" placeholder="e.g. 150.00" required class="h-14 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+									<Input id="averageLandingCost" name="averageLandingCost" type="number" step="0.01" min="0" placeholder="e.g. 150.00" required class="h-14 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all" />
 								</div>
 							</div>
 						<div class="pt-6 sm:pt-10 mt-6 sm:mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
@@ -471,7 +471,7 @@
 						{#if data.barcodeEnabled}
 						<div class="space-y-2 group">
 							<Label for="edit-barcode" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary">Barcode / EAN</Label>
-							<Input id="edit-barcode" name="barcode" type="text" value={editingProduct.product.barcode ?? ''} placeholder="Scan or type barcode..." class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+							<Input id="edit-barcode" name="barcode" type="text" value={editingProduct.product.barcode ?? ''} placeholder="Scan or type barcode..." class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all" />
 						</div>
 						{/if}
 					</div>

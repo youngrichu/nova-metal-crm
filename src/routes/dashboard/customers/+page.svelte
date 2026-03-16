@@ -137,7 +137,7 @@
 										<Label for="name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors flex items-center gap-2">
 											<User class="w-3.5 h-3.5" /> {m.customer_name()}
 										</Label>
-										<Input id="name" name="name" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+										<Input id="name" name="name" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all" />
 									</div>
 								</div>
 
@@ -146,13 +146,13 @@
 										<Label for="companyName" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary flex items-center gap-2">
 											<Building2 class="w-3.5 h-3.5" /> {m.customer_org()}
 										</Label>
-										<Input id="companyName" name="companyName" class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg" />
+										<Input id="companyName" name="companyName" class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none" />
 									</div>
 									<div class="space-y-2 group">
 										<Label for="tinNumber" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary flex items-center gap-2">
 											<FileText class="w-3.5 h-3.5" /> {m.customer_tin()}
 										</Label>
-										<Input id="tinNumber" name="tinNumber" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg" />
+										<Input id="tinNumber" name="tinNumber" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none" />
 									</div>
 								</div>
 							</div>
@@ -164,7 +164,7 @@
 								<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 									<div class="space-y-2">
 										<Label for="customerType" class="text-xs font-bold tracking-wider uppercase text-foreground/70">{m.customer_type()}</Label>
-										<select id="customerType" name="customerType" class="flex h-12 w-full items-center justify-between rounded-lg border-2 border-transparent bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors">
+										<select id="customerType" name="customerType" class="flex h-12 w-full items-center justify-between rounded-none border-2 border-foreground/10 bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors">
 											<option value="INDIVIDUAL">{m.customer_type_individual()}</option>
 											<option value="WORKSHOP">{m.customer_type_workshop()}</option>
 											<option value="ENTERPRISE">{m.customer_type_enterprise()}</option>
@@ -172,7 +172,7 @@
 									</div>
 									<div class="space-y-2">
 										<Label for="pricingTier" class="text-xs font-bold tracking-wider uppercase text-foreground/70">{m.customer_tier()}</Label>
-										<select id="pricingTier" name="pricingTier" class="flex h-12 w-full items-center justify-between rounded-lg border-2 border-transparent bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors">
+										<select id="pricingTier" name="pricingTier" class="flex h-12 w-full items-center justify-between rounded-none border-2 border-foreground/10 bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors">
 											<option value="STANDARD">{m.customer_tier_std()}</option>
 											<option value="PREFERRED">{m.customer_tier_pref()}</option>
 											<option value="VIP">{m.customer_tier_vip()}</option>
@@ -190,19 +190,19 @@
 										<Label for="phone" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary flex items-center gap-2">
 											<Phone class="w-3.5 h-3.5" /> {m.customer_phone()}
 										</Label>
-										<Input id="phone" type="tel" name="phone" placeholder="+251..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg font-mono" />
+										<Input id="phone" type="tel" name="phone" placeholder="+251..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none font-mono" />
 									</div>
 									<div class="space-y-2 group">
 										<Label for="whatsapp" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-[var(--color-whatsapp,#25D366)] flex items-center gap-2">
 											<MessageCircle class="w-3.5 h-3.5" /> {m.customer_whatsapp()}
 										</Label>
-										<Input id="whatsapp" type="tel" name="whatsapp" placeholder="+251..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-[var(--color-whatsapp,#25D366)] focus-visible:ring-0 rounded-lg font-mono" />
+										<Input id="whatsapp" type="tel" name="whatsapp" placeholder="+251..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-[var(--color-whatsapp,#25D366)] focus-visible:ring-0 rounded-none font-mono" />
 									</div>
 								</div>
 								
 								<div class="space-y-2 group">
 									<Label for="notes" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary">{m.customer_notes()}</Label>
-									<Input id="notes" name="notes" placeholder="" class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg" />
+									<Input id="notes" name="notes" placeholder="" class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none" />
 								</div>
 							</div>
 						</div>

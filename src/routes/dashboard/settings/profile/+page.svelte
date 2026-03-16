@@ -68,14 +68,14 @@
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 				<div class="space-y-2">
 					<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">Email Address</Label>
-					<div class="h-14 bg-muted/50 border-2 border-foreground/10 rounded-lg px-4 flex items-center font-mono text-sm text-foreground/60 select-all">
+					<div class="h-14 bg-muted/50 border-2 border-foreground/10 rounded-none px-4 flex items-center font-mono text-sm text-foreground/60 select-all">
 						{data.user?.email}
 					</div>
 					<p class="text-xs text-muted-foreground/60">Email cannot be changed here</p>
 				</div>
 				<div class="space-y-2">
 					<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">Role</Label>
-					<div class="h-14 bg-muted/50 border-2 border-foreground/10 rounded-lg px-4 flex items-center gap-3">
+					<div class="h-14 bg-muted/50 border-2 border-foreground/10 rounded-none px-4 flex items-center gap-3">
 						<Shield class="w-4 h-4 text-muted-foreground" />
 						<span class="inline-block px-3 py-1 text-[10px] font-black tracking-widest uppercase {roleColors[data.user?.role ?? 'sales'] ?? 'bg-muted'}">
 							{data.user?.role}
@@ -108,7 +108,7 @@
 					name="name"
 					value={data.user?.name}
 					required
-					class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all"
+					class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all"
 				/>
 			</div>
 			<Button
@@ -144,7 +144,7 @@
 						name="currentPassword"
 						type="password"
 						required
-						class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all"
+						class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all"
 					/>
 				</div>
 				<div class="space-y-2 group">
@@ -156,7 +156,7 @@
 						name="newPassword"
 						type="password"
 						required
-						class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all"
+						class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all"
 					/>
 				</div>
 				<div class="space-y-2 group">
@@ -168,7 +168,7 @@
 						name="confirmPassword"
 						type="password"
 						required
-						class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all"
+						class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all"
 					/>
 				</div>
 			</div>
