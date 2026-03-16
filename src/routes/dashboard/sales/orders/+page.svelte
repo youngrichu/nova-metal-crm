@@ -8,7 +8,7 @@
 	import { goto } from '$app/navigation';
 	import { DataCards } from '$lib/components/ui/data-cards';
 	import { PageFAB } from '$lib/components/ui/fab';
-	import type { ActionsInput } from '$lib/components/ui/data-cards';
+	import type { Action, ActionsInput } from '$lib/components/ui/data-cards';
 	import * as m from '$lib/paraglide/messages';
 
 	let { data } = $props();
@@ -45,7 +45,7 @@
 	];
 
 	const cardActions: ActionsInput = (row) => {
-		const actions: any[] = [
+		const actions: Action[] = [
 			{ label: 'View Details', onClick: (r: any) => goto(`/dashboard/sales/orders/${r.id}`) },
 		];
 		if (row.status === 'CONFIRMED' || row.status === 'INVOICED') {

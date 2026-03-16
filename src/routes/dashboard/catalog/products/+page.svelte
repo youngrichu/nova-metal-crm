@@ -35,7 +35,7 @@
 			categoryName: row.category?.name ?? '—',
 			isActiveLabel: row.product.isActive ? 'Active' : 'Inactive',
 			minStockLevel: row.product.minStockLevel,
-			averageLandingCost: Number(row.product.averageLandingCost).toFixed(2),
+			averageLandingCost: Number(row.product.averageLandingCost || 0).toFixed(2),
 		}))
 	);
 
@@ -57,10 +57,14 @@
 			if (found) openEdit(found);
 		}},
 		{ label: 'Delete', variant: 'destructive', onClick: async (row: any) => {
-				const fd = new FormData();
-				fd.set('id', row.id);
-				await fetch('?/delete', { method: 'POST', body: fd });
-				await invalidateAll();
+				try {
+					const fd = new FormData();
+					fd.set('id', row.id);
+					const res = await fetch('?/delete', { method: 'POST', body: fd });
+					if (res.ok) await invalidateAll();
+				} catch (err) {
+					console.error('Delete failed:', err);
+				}
 			}
 		},
 	];
