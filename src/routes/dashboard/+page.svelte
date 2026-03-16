@@ -140,59 +140,59 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     
     <!-- Metrics Side Panel -->
-    <div class="col-span-1 order-2 lg:order-none border-2 border-foreground/10 bg-card p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col relative overflow-hidden group">
-      
+    <div class="col-span-1 order-2 lg:order-none border-2 border-foreground/10 bg-card p-4 sm:p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col relative overflow-hidden group">
+
       <!-- Decorative brutalist accent -->
       <div class="absolute -right-12 -top-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors duration-700"></div>
 
-      <h3 class="font-black text-sm tracking-widest uppercase mb-8 text-foreground flex items-center gap-3">
+      <h3 class="font-black text-sm tracking-widest uppercase mb-4 sm:mb-8 text-foreground flex items-center gap-3">
         <Activity class="w-4 h-4 text-primary" /> Inventory Overview
       </h3>
-      
-      <div class="space-y-6 flex-1 relative z-10">
-        <div class="flex justify-between items-center border-b-2 border-foreground/5 pb-4 group/item">
-          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-3">
+
+      <div class="space-y-3 sm:space-y-6 flex-1 relative z-10">
+        <div class="flex justify-between items-center border-b border-foreground/5 pb-3 sm:pb-4 group/item">
+          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-2">
             <Package class="w-4 h-4 opacity-50" /> Total Products
           </span>
-          <span class="font-mono font-black text-xl text-foreground">{data.productCount}</span>
+          <span class="font-mono font-black text-base sm:text-xl text-foreground">{data.productCount}</span>
         </div>
-        
-        <div class="flex justify-between items-center border-b-2 border-foreground/5 pb-4 group/item">
-          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-3">
+
+        <div class="flex justify-between items-center border-b border-foreground/5 pb-3 sm:pb-4 group/item">
+          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-2">
             <Warehouse class="w-4 h-4 opacity-50" /> Storage Depots
           </span>
-          <span class="font-mono font-black text-xl text-foreground">{data.warehouseCount}</span>
+          <span class="font-mono font-black text-base sm:text-xl text-foreground">{data.warehouseCount}</span>
         </div>
-        
-        <div class="flex justify-between items-center border-b-2 border-foreground/5 pb-4 group/item">
-          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-3">
+
+        <div class="flex justify-between items-center border-b border-foreground/5 pb-3 sm:pb-4 group/item">
+          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-2">
             <AlertTriangle class="w-4 h-4 opacity-50" /> {m.inventory_alerts()}
           </span>
-          <span class="font-mono font-black text-lg px-2 py-1 {data.lowStockCount > 0 ? 'bg-rose-500 text-white' : 'bg-muted text-muted-foreground'}">
+          <span class="font-mono font-black text-sm sm:text-lg px-2 py-1 {data.lowStockCount > 0 ? 'bg-rose-500 text-white' : 'bg-muted text-muted-foreground'}">
             {data.lowStockCount}
           </span>
         </div>
 
-        <div class="flex justify-between items-center border-b-2 border-foreground/5 pb-4 group/item">
-          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-3">
+        <div class="flex justify-between items-center border-b border-foreground/5 pb-3 sm:pb-4 group/item">
+          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-2">
             <Activity class="w-4 h-4 opacity-50" /> {m.active_orders()}
           </span>
-          <span class="font-mono font-black text-xl text-foreground">{data.activeOrderCount}</span>
+          <span class="font-mono font-black text-base sm:text-xl text-foreground">{data.activeOrderCount}</span>
         </div>
       </div>
-      
+
       {#if data.totalSales !== null}
-      <div class="pt-8 mt-4 flex flex-col gap-4">
+      <div class="pt-4 sm:pt-8 mt-3 sm:mt-4 flex flex-col gap-3 sm:gap-4">
         <div>
           <span class="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{m.total_revenue()}</span>
           <div class="flex items-center justify-between">
-            <span class="font-mono font-black text-3xl text-foreground">{formatCurrency(data.totalSales)}</span>
+            <span class="font-mono font-black text-xl sm:text-3xl text-foreground">{formatCurrency(data.totalSales)}</span>
           </div>
         </div>
         <div>
           <span class="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Total Profit</span>
           <div class="flex items-center justify-between">
-            <span class="font-mono font-black text-3xl text-emerald-500">{formatCurrency(data.totalProfit ?? 0)}</span>
+            <span class="font-mono font-black text-xl sm:text-3xl text-emerald-500">{formatCurrency(data.totalProfit ?? 0)}</span>
           </div>
         </div>
       </div>
