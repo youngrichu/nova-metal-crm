@@ -85,7 +85,7 @@
 
 <div class="p-4 md:p-8 max-w-[1600px] mx-auto space-y-8">
 	<!-- Page Header -->
-	<header class="flex flex-col md:flex-row justify-between items-end border-b-2 border-foreground pb-6 gap-6 relative">
+	<header class="flex flex-col md:flex-row justify-between items-start md:items-end border-b-2 border-foreground pb-6 gap-6 relative">
 		<div class="absolute -left-6 top-2 w-2 h-16 bg-primary transform -skew-x-12 hidden md:block"></div>
 		<div>
 			<span class="inline-block px-2 py-0.5 bg-foreground text-background text-[10px] font-black tracking-widest uppercase">Stock-Take</span>

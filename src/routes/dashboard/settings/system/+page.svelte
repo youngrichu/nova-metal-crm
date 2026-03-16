@@ -81,7 +81,7 @@
 							max="1"
 							value={data.settings.vat_rate}
 							required
-							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-lg px-4 transition-all font-mono"
+							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
 					</div>
 				</div>
@@ -99,7 +99,7 @@
 							min="1"
 							value={data.settings.markup_retail}
 							required
-							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-lg px-4 transition-all font-mono"
+							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
 						<p class="text-xs text-muted-foreground/60">e.g. 1.15 = 15% markup</p>
 					</div>
@@ -115,7 +115,7 @@
 							min="1"
 							value={data.settings.markup_wholesale}
 							required
-							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-lg px-4 transition-all font-mono"
+							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
 						<p class="text-xs text-muted-foreground/60">e.g. 1.05 = 5% markup</p>
 					</div>
@@ -131,7 +131,7 @@
 							min="1"
 							value={data.settings.markup_vip}
 							required
-							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-lg px-4 transition-all font-mono"
+							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
 						<p class="text-xs text-muted-foreground/60">e.g. 1.05 = 5% markup</p>
 					</div>
@@ -147,7 +147,7 @@
 							min="1"
 							value={data.settings.markup_preferred}
 							required
-							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-lg px-4 transition-all font-mono"
+							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
 						<p class="text-xs text-muted-foreground/60">e.g. 1.08 = 8% markup</p>
 					</div>
@@ -176,7 +176,7 @@
 							value={data.settings.currency_code}
 							required
 							placeholder="ETB"
-							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-lg px-4 transition-all font-mono uppercase"
+							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono uppercase"
 						/>
 						<p class="text-xs text-muted-foreground/60">e.g. ETB, USD, EUR</p>
 					</div>
@@ -191,7 +191,7 @@
 							value={data.settings.currency_locale}
 							required
 							placeholder="en-ET"
-							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-lg px-4 transition-all font-mono"
+							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
 						<p class="text-xs text-muted-foreground/60">e.g. en-ET, en-US, am-ET</p>
 					</div>
@@ -298,7 +298,7 @@
 							type="text"
 							bind:value={printerAddress}
 							placeholder="192.168.1.100"
-							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-lg px-4 transition-all font-mono"
+							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
 						<p class="text-xs text-muted-foreground/60">Default port 9100 — use ip:port to override</p>
 					</div>

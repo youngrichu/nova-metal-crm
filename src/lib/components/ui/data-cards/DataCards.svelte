@@ -37,17 +37,17 @@
   <div class="flex flex-col gap-3">
     {#each data as row, i (get(row, keyField) ?? `__row_${i}`)}
       {@const rowActions = resolveActions(actions, row)}
-      <div class="border border-border rounded-xl bg-card p-4 shadow-sm">
+      <div class="border-2 border-foreground/15 bg-card p-4 shadow-[4px_4px_0px_0px_theme(colors.foreground_/_8%)]">
         <!-- Card header -->
-        <div class="flex items-start justify-between gap-2 mb-3">
+        <div class="flex items-start justify-between gap-2 mb-3 pb-3 border-b border-foreground/8">
           <div class="min-w-0">
             {#if primaryCol}
-              <p class="font-semibold text-sm text-foreground leading-tight truncate">
+              <p class="font-black text-sm tracking-tight text-foreground leading-tight truncate">
                 {get(row, primaryCol.key) ?? '—'}
               </p>
             {/if}
             {#if secondaryCol}
-              <p class="text-xs text-muted-foreground mt-0.5 truncate">
+              <p class="text-xs text-muted-foreground mt-0.5 truncate font-medium">
                 {get(row, secondaryCol.key) ?? '—'}
               </p>
             {/if}
@@ -56,14 +56,14 @@
             {#if badgeCol}
               {@const badgeValue = get(row, badgeCol.key)}
               {@const badgeClasses = badgeCol.badgeClass ? badgeCol.badgeClass(badgeValue) : 'bg-muted text-muted-foreground'}
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide {badgeClasses}">
+              <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-black tracking-widest border {badgeClasses}">
                 {badgeValue ?? '—'}
               </span>
             {/if}
             {#if rowActions.length > 0}
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger
-                  class="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  class="h-10 w-10 md:h-7 md:w-7 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                   aria-label="Row actions"
                 >
                   <MoreHorizontal class="h-4 w-4" />
@@ -88,8 +88,8 @@
           <div class="grid grid-cols-1 xs:grid-cols-2 gap-x-4 gap-y-2">
             {#each bodyColumns as col}
               <div>
-                <p class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{col.label}</p>
-                <p class="text-xs font-medium text-foreground mt-0.5">{get(row, col.key) ?? '—'}</p>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{col.label}</p>
+                <p class="text-xs font-bold text-foreground mt-0.5">{get(row, col.key) ?? '—'}</p>
               </div>
             {/each}
           </div>

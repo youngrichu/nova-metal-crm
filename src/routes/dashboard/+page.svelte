@@ -66,12 +66,23 @@
   const chartData = $derived(
     trendData.map((d: any) => ({ ...d, date: new Date(d.date) }))
   );
+
+  // Dynamic left padding based on max Y label width (e.g. "5K" vs "100K")
+  const chartLeftPadding = $derived(
+    (() => {
+      const max = Math.max(0, ...trendData.map((d: any) => Number(d.revenue) || 0));
+      if (max >= 800_000) return 48;
+      if (max >= 80_000)  return 38;
+      if (max >= 8_000)   return 30;
+      return 25;
+    })()
+  );
 </script>
 
-<div class="p-4 md:p-8 max-w-[1600px] mx-auto space-y-12">
+<div class="p-4 md:p-8 max-w-[1600px] mx-auto space-y-6 md:space-y-12">
   
   <!-- Avant-Garde Page Header -->
-  <header class="flex flex-col md:flex-row justify-between items-end border-b-2 border-foreground pb-6 gap-6">
+  <header class="flex flex-col md:flex-row justify-between items-start md:items-end border-b-2 border-foreground pb-6 gap-6">
     <div class="space-y-4 relative w-full md:w-auto">
       <div class="absolute -left-6 top-2 w-2 h-16 bg-primary transform -skew-x-12 hidden md:block"></div>
       
@@ -86,30 +97,30 @@
     </div>
     
     <!-- View Options (Day/Week/Month) + Date Range Dropdown -->
-    <div class="flex items-center gap-4 shrink-0 mt-6 md:mt-0 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-      
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-6 md:mt-0 w-full md:w-auto">
+
       <!-- Brutalist Toggle -->
-      <div class="flex border-2 border-foreground/20 p-1 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)] shrink-0">
+      <div class="flex border-2 border-foreground/20 p-1 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)]">
         <button
           onclick={() => setPeriod('day')}
-          class="px-6 py-2 text-xs font-bold tracking-widest uppercase transition-all
+          class="flex-1 px-4 py-2 text-xs font-bold tracking-widest uppercase transition-all
             {activePeriod === 'day' ? 'bg-foreground text-background shadow-inner scale-[0.98]' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
         >Day</button>
         <button
           onclick={() => setPeriod('week')}
-          class="px-6 py-2 text-xs font-bold tracking-widest uppercase transition-all
+          class="flex-1 px-4 py-2 text-xs font-bold tracking-widest uppercase transition-all
             {activePeriod === 'week' ? 'bg-foreground text-background shadow-inner scale-[0.98]' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
         >Week</button>
         <button
           onclick={() => setPeriod('month')}
-          class="px-6 py-2 text-xs font-bold tracking-widest uppercase transition-all
+          class="flex-1 px-4 py-2 text-xs font-bold tracking-widest uppercase transition-all
             {activePeriod === 'month' ? 'bg-foreground text-background shadow-inner scale-[0.98]' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
         >Month</button>
       </div>
 
       <!-- Select Dropdown -->
       <Select.Root type="single" value={selectedRange} onValueChange={setRange}>
-        <Select.Trigger class="w-[200px] h-12 rounded-none border-2 border-foreground/20 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)] font-bold text-xs tracking-widest uppercase">
+        <Select.Trigger class="w-full sm:w-[200px] h-12 rounded-none border-2 border-foreground/20 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)] font-bold text-xs tracking-widest uppercase">
           <CalendarDays class="mr-3 h-4 w-4 opacity-50" />
           <span>{RANGE_LABELS[selectedRange] ?? 'Select range...'}</span>
         </Select.Trigger>
@@ -129,59 +140,59 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     
     <!-- Metrics Side Panel -->
-    <div class="col-span-1 border-2 border-foreground/10 bg-card p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col relative overflow-hidden group">
-      
+    <div class="col-span-1 order-2 lg:order-none border-2 border-foreground/10 bg-card p-4 sm:p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col relative overflow-hidden group">
+
       <!-- Decorative brutalist accent -->
       <div class="absolute -right-12 -top-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors duration-700"></div>
 
-      <h3 class="font-black text-sm tracking-widest uppercase mb-8 text-foreground flex items-center gap-3">
+      <h3 class="font-black text-sm tracking-widest uppercase mb-4 sm:mb-8 text-foreground flex items-center gap-3">
         <Activity class="w-4 h-4 text-primary" /> Inventory Overview
       </h3>
-      
-      <div class="space-y-6 flex-1 relative z-10">
-        <div class="flex justify-between items-center border-b-2 border-foreground/5 pb-4 group/item">
-          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-3">
+
+      <div class="space-y-3 sm:space-y-6 flex-1 relative z-10">
+        <div class="flex justify-between items-center border-b border-foreground/5 pb-3 sm:pb-4 group/item">
+          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-2">
             <Package class="w-4 h-4 opacity-50" /> Total Products
           </span>
-          <span class="font-mono font-black text-xl text-foreground">{data.productCount}</span>
+          <span class="font-mono font-black text-base sm:text-xl text-foreground">{data.productCount}</span>
         </div>
-        
-        <div class="flex justify-between items-center border-b-2 border-foreground/5 pb-4 group/item">
-          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-3">
+
+        <div class="flex justify-between items-center border-b border-foreground/5 pb-3 sm:pb-4 group/item">
+          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-2">
             <Warehouse class="w-4 h-4 opacity-50" /> Storage Depots
           </span>
-          <span class="font-mono font-black text-xl text-foreground">{data.warehouseCount}</span>
+          <span class="font-mono font-black text-base sm:text-xl text-foreground">{data.warehouseCount}</span>
         </div>
-        
-        <div class="flex justify-between items-center border-b-2 border-foreground/5 pb-4 group/item">
-          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-3">
+
+        <div class="flex justify-between items-center border-b border-foreground/5 pb-3 sm:pb-4 group/item">
+          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-2">
             <AlertTriangle class="w-4 h-4 opacity-50" /> {m.inventory_alerts()}
           </span>
-          <span class="font-mono font-black text-lg px-2 py-1 {data.lowStockCount > 0 ? 'bg-rose-500 text-white' : 'bg-muted text-muted-foreground'}">
+          <span class="font-mono font-black text-sm sm:text-lg px-2 py-1 {data.lowStockCount > 0 ? 'bg-rose-500 text-white' : 'bg-muted text-muted-foreground'}">
             {data.lowStockCount}
           </span>
         </div>
 
-        <div class="flex justify-between items-center border-b-2 border-foreground/5 pb-4 group/item">
-          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-3">
+        <div class="flex justify-between items-center border-b border-foreground/5 pb-3 sm:pb-4 group/item">
+          <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-2">
             <Activity class="w-4 h-4 opacity-50" /> {m.active_orders()}
           </span>
-          <span class="font-mono font-black text-xl text-foreground">{data.activeOrderCount}</span>
+          <span class="font-mono font-black text-base sm:text-xl text-foreground">{data.activeOrderCount}</span>
         </div>
       </div>
-      
+
       {#if data.totalSales !== null}
-      <div class="pt-8 mt-4 flex flex-col gap-4">
+      <div class="pt-4 sm:pt-8 mt-3 sm:mt-4 flex flex-col gap-3 sm:gap-4">
         <div>
           <span class="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{m.total_revenue()}</span>
           <div class="flex items-center justify-between">
-            <span class="font-mono font-black text-3xl text-foreground">{formatCurrency(data.totalSales)}</span>
+            <span class="font-mono font-black text-xl sm:text-3xl text-foreground">{formatCurrency(data.totalSales)}</span>
           </div>
         </div>
         <div>
           <span class="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Total Profit</span>
           <div class="flex items-center justify-between">
-            <span class="font-mono font-black text-3xl text-emerald-500">{formatCurrency(data.totalProfit ?? 0)}</span>
+            <span class="font-mono font-black text-xl sm:text-3xl text-emerald-500">{formatCurrency(data.totalProfit ?? 0)}</span>
           </div>
         </div>
       </div>
@@ -208,16 +219,16 @@
     </div>
     
     <!-- Sales Trend Chart -->
-    <div class="col-span-1 lg:col-span-2 border-2 border-foreground/10 bg-card p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col min-h-[400px]">
+    <div class="col-span-1 lg:col-span-2 order-1 lg:order-none border-2 border-foreground/10 bg-card p-4 sm:p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col min-h-[400px]">
 
-      <div class="flex justify-between items-start mb-8 border-b-2 border-foreground/5 pb-6">
-        <div>
-          <h3 class="font-black text-sm tracking-widest uppercase text-foreground mb-1 flex items-center gap-3">
-            <TrendingUp class="w-4 h-4 text-primary" /> Revenue Trajectory
+      <div class="flex justify-between items-start gap-3 mb-2 border-b border-foreground/5 pb-3">
+        <div class="min-w-0">
+          <h3 class="font-black text-sm tracking-widest uppercase text-foreground mb-1 flex items-center gap-2">
+            <TrendingUp class="w-4 h-4 text-primary shrink-0" /> Revenue Trajectory
           </h3>
-          <p class="text-xs font-medium text-muted-foreground/60 tracking-wider">{data.period === 'day' ? 'Daily' : data.period === 'week' ? 'Weekly' : 'Monthly'} revenue — {RANGE_LABELS[data.range]} (excl. draft &amp; cancelled).</p>
+          <p class="text-xs font-medium text-muted-foreground/60 tracking-wider leading-relaxed">{data.period === 'day' ? 'Daily' : data.period === 'week' ? 'Weekly' : 'Monthly'} · {RANGE_LABELS[data.range]}</p>
         </div>
-        <Button variant="outline" size="sm" href="/dashboard/sales/orders" class="h-8 rounded-none border-2 border-foreground/20 text-[10px] font-bold tracking-widest uppercase shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
+        <Button variant="outline" size="sm" href="/dashboard/sales/orders" class="shrink-0 h-8 rounded-none border-2 border-foreground/20 text-[10px] font-bold tracking-widest uppercase shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
           View Orders
         </Button>
       </div>
@@ -235,7 +246,7 @@
             xScale={scaleTime()}
             y="revenue"
             yBaseline={0}
-            padding={{ top: 8, right: 16, bottom: 48, left: 60 }}
+            padding={{ top: 4, right: 4, bottom: 36, left: chartLeftPadding }}
             tooltip={{ mode: 'bisect-x' }}
           >
             <Svg>
