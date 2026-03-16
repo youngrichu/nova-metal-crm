@@ -13,7 +13,7 @@
 	import { tick } from "svelte";
 	import { DataCards } from '$lib/components/ui/data-cards';
 	import { PageFAB } from '$lib/components/ui/fab';
-	import type { Action } from '$lib/components/ui/data-cards/utils';
+	import type { Action } from '$lib/components/ui/data-cards';
 	import { invalidateAll } from '$app/navigation';
 	
 	let { data, form } = $props();
