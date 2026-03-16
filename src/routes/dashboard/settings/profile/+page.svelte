@@ -44,7 +44,7 @@
 	};
 </script>
 
-<div class="p-4 md:p-8 max-w-[1200px] mx-auto space-y-12">
+<div class="p-4 md:p-8 max-w-[1200px] mx-auto space-y-6 md:space-y-12">
 	<header class="flex justify-between items-end border-b-2 border-foreground pb-6 relative">
 		<div class="absolute -left-6 top-2 w-2 h-16 bg-primary transform -skew-x-12 hidden md:block"></div>
 		<div class="space-y-4 relative w-full">
@@ -68,14 +68,14 @@
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 				<div class="space-y-2">
 					<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">Email Address</Label>
-					<div class="h-14 bg-muted/50 border-2 border-foreground/10 rounded-none px-4 flex items-center font-mono text-sm text-foreground/60 select-all">
+					<div class="h-10 sm:h-14 bg-muted/50 border-2 border-foreground/10 rounded-none px-4 flex items-center font-mono text-sm text-foreground/60 select-all">
 						{data.user?.email}
 					</div>
 					<p class="text-xs text-muted-foreground/60">Email cannot be changed here</p>
 				</div>
 				<div class="space-y-2">
 					<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">Role</Label>
-					<div class="h-14 bg-muted/50 border-2 border-foreground/10 rounded-none px-4 flex items-center gap-3">
+					<div class="h-10 sm:h-14 bg-muted/50 border-2 border-foreground/10 rounded-none px-4 flex items-center gap-3">
 						<Shield class="w-4 h-4 text-muted-foreground" />
 						<span class="inline-block px-3 py-1 text-[10px] font-black tracking-widest uppercase {roleColors[data.user?.role ?? 'sales'] ?? 'bg-muted'}">
 							{data.user?.role}
@@ -108,13 +108,13 @@
 					name="name"
 					value={data.user?.name}
 					required
-					class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all"
+					class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm px-4 transition-all"
 				/>
 			</div>
 			<Button
 				type="submit"
 				disabled={isNameSubmitting}
-				class="h-14 rounded-none bg-foreground text-background font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all"
+				class="h-10 sm:h-14 rounded-none bg-foreground text-background text-xs sm:text-sm font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all"
 			>
 				{isNameSubmitting ? 'Saving...' : 'Save Name'}
 			</Button>
@@ -144,7 +144,7 @@
 						name="currentPassword"
 						type="password"
 						required
-						class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all"
+						class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm px-4 transition-all"
 					/>
 				</div>
 				<div class="space-y-2 group">
@@ -156,7 +156,7 @@
 						name="newPassword"
 						type="password"
 						required
-						class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all"
+						class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm px-4 transition-all"
 					/>
 				</div>
 				<div class="space-y-2 group">
@@ -168,14 +168,14 @@
 						name="confirmPassword"
 						type="password"
 						required
-						class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all"
+						class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm px-4 transition-all"
 					/>
 				</div>
 			</div>
 			<Button
 				type="submit"
 				disabled={isPasswordSubmitting}
-				class="h-14 rounded-none bg-foreground text-background font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all"
+				class="h-10 sm:h-14 rounded-none bg-foreground text-background text-xs sm:text-sm font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all"
 			>
 				{isPasswordSubmitting ? 'Updating...' : 'Update Password'}
 			</Button>
