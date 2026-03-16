@@ -6,6 +6,9 @@
   import { Button } from "$lib/components/ui/button";
   import { formatCurrency } from "$lib/utils/currency";
   import { goto } from '$app/navigation';
+  import { Chart, Svg, Area, Spline, Axis, Highlight, Tooltip } from 'layerchart';
+  import { scaleTime } from 'd3-scale';
+  import { timeFormat } from 'd3-time-format';
 
   let { data } = $props();
 
@@ -57,66 +60,10 @@
   );
 
   // --- Sales Trend Chart ---
-  const chartW = 600;
-  const chartH = 200;
-  const padLeft = 60;
-  const padRight = 20;
-  const padTop = 16;
-  const padBottom = 40;
-
   const trendData = $derived(data.salesTrend ?? []);
 
-  const maxRevenue = $derived(
-    trendData.length > 0 ? Math.max(...trendData.map((d: any) => d.revenue), 1) : 1
-  );
-
-  function toX(index: number, total: number) {
-    return padLeft + (index / Math.max(total - 1, 1)) * (chartW - padLeft - padRight);
-  }
-
-  function toY(revenue: number) {
-    return padTop + (1 - revenue / maxRevenue) * (chartH - padTop - padBottom);
-  }
-
-  const linePath = $derived(
-    trendData.length === 0
-      ? ''
-      : trendData
-          .map((d: any, i: number) => `${i === 0 ? 'M' : 'L'} ${toX(i, trendData.length).toFixed(1)} ${toY(d.revenue).toFixed(1)}`)
-          .join(' ')
-  );
-
-  const areaPath = $derived(
-    (() => {
-      if (trendData.length === 0) return '';
-      const baseline = (chartH - padBottom).toFixed(1);
-      const line = trendData
-        .map((d: any, i: number) => `${i === 0 ? 'M' : 'L'} ${toX(i, trendData.length).toFixed(1)} ${toY(d.revenue).toFixed(1)}`)
-        .join(' ');
-      const firstX = toX(0, trendData.length).toFixed(1);
-      const lastX = toX(trendData.length - 1, trendData.length).toFixed(1);
-      return `${line} L ${lastX} ${baseline} L ${firstX} ${baseline} Z`;
-    })()
-  );
-
-  // X-axis tick labels: show every ~5 days
-  const xAxisLabels = $derived(
-    trendData.length === 0
-      ? []
-      : (() => {
-          const step = Math.max(1, Math.floor(trendData.length / 6));
-          return trendData
-            .map((d: any, i: number) => ({ ...d, i }))
-            .filter((_: any, i: number) => i % step === 0 || i === trendData.length - 1);
-        })()
-  );
-
-  // Y-axis tick values
-  const yAxisTicks = $derived(
-    [0, 0.25, 0.5, 0.75, 1].map(f => ({
-      value: maxRevenue * f,
-      y: toY(maxRevenue * f)
-    }))
+  const chartData = $derived(
+    trendData.map((d: any) => ({ ...d, date: new Date(d.date) }))
   );
 </script>
 
@@ -280,73 +227,44 @@
           <p class="text-xs font-bold tracking-widest uppercase text-muted-foreground/50">No Revenue Data Yet</p>
         </div>
       {:else}
-        <div class="flex-1 relative min-h-[260px]">
-          <svg viewBox="0 0 {chartW} {chartH}" class="w-full h-full" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="hsl(var(--primary))" stop-opacity="0.35"/>
-                <stop offset="100%" stop-color="hsl(var(--primary))" stop-opacity="0"/>
-              </linearGradient>
-            </defs>
-
-            <!-- Y-axis grid lines + labels -->
-            {#each yAxisTicks as tick}
-              <line
-                x1={padLeft} y1={tick.y}
-                x2={chartW - padRight} y2={tick.y}
-                stroke="currentColor" stroke-opacity="0.06" stroke-dasharray="4 4"
+        <div class="flex-1 min-h-[280px]">
+          <Chart
+            data={chartData}
+            x="date"
+            xScale={scaleTime()}
+            y="revenue"
+            yBaseline={0}
+            padding={{ top: 8, right: 16, bottom: 48, left: 60 }}
+            tooltip={{ mode: 'bisect-x' }}
+          >
+            <Svg>
+              <Axis
+                placement="left"
+                grid
+                ticks={5}
+                tickLabelProps={{ class: 'font-mono text-[9px] fill-muted-foreground/60 font-bold' }}
+                format={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v)}
               />
-              <text
-                x={padLeft - 6} y={tick.y + 4}
-                text-anchor="end"
-                class="fill-muted-foreground/50"
-                style="font-size: 9px; font-family: monospace; font-weight: 700;"
-              >{tick.value >= 1000 ? (tick.value / 1000).toFixed(0) + 'K' : tick.value.toFixed(0)}</text>
-            {/each}
-
-            <!-- Area fill -->
-            <path d={areaPath} fill="url(#areaGradient)" />
-
-            <!-- Line -->
-            <path
-              d={linePath}
-              fill="none"
-              stroke="hsl(var(--primary))"
-              stroke-width="2"
-              stroke-linejoin="round"
-              stroke-linecap="round"
-            />
-
-            <!-- Data point dots -->
-            {#each trendData as d, i}
-              <circle
-                cx={toX(i, trendData.length)}
-                cy={toY(d.revenue)}
-                r="3"
-                fill="hsl(var(--primary))"
-                stroke="hsl(var(--background))"
-                stroke-width="1.5"
+              <Axis
+                placement="bottom"
+                tickLabelProps={{ class: 'font-mono text-[9px] fill-muted-foreground/60 font-bold' }}
+                format={(d: Date) => timeFormat('%m/%d')(d)}
               />
-            {/each}
-
-            <!-- X-axis labels -->
-            {#each xAxisLabels as tick}
-              <text
-                x={toX(tick.i, trendData.length)}
-                y={chartH - padBottom + 16}
-                text-anchor="middle"
-                class="fill-muted-foreground/50"
-                style="font-size: 9px; font-family: monospace; font-weight: 700;"
-              >{tick.date.slice(5)}</text>
-            {/each}
-
-            <!-- X-axis baseline -->
-            <line
-              x1={padLeft} y1={chartH - padBottom}
-              x2={chartW - padRight} y2={chartH - padBottom}
-              stroke="currentColor" stroke-opacity="0.12"
-            />
-          </svg>
+              <Area class="fill-primary/20" />
+              <Spline class="stroke-primary stroke-[1.5]" />
+              <Highlight points={{ class: 'fill-primary stroke-background stroke-2 r-3' }} />
+            </Svg>
+            <Tooltip.Root>
+              {#snippet children({ data: pt }: { data: any })}
+                <div class="bg-background border-2 border-foreground/10 px-3 py-2 shadow-[4px_4px_0px_0px_theme(colors.foreground/10%)] text-xs font-mono">
+                  <p class="font-black text-[10px] tracking-widest uppercase text-muted-foreground mb-1">
+                    {pt.date instanceof Date ? pt.date.toLocaleDateString('en-ET', { month: 'short', day: 'numeric' }) : pt.date}
+                  </p>
+                  <p class="font-bold text-foreground">{formatCurrency(pt.revenue)}</p>
+                </div>
+              {/snippet}
+            </Tooltip.Root>
+          </Chart>
         </div>
       {/if}
     </div>
