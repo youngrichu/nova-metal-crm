@@ -24,6 +24,9 @@
 
   const role = $derived(page.data.user?.role as string | undefined);
 
+  // When role is undefined the user is unauthenticated — the dashboard layout's
+  // server hook redirects them to /login before this component renders, so
+  // showing all tabs as a fallback is safe and intentional.
   const visibleTabs = $derived(
     allTabs.filter(t => !role || t.roles.includes(role))
   );
@@ -40,11 +43,14 @@
   }
 
   function isMoreItemActive(href: string) {
-    return page.url.pathname.startsWith(href);
+    const path = page.url.pathname;
+    // Exact match, or path is a child of href (href + '/')
+    return path === href || path.startsWith(href + '/');
   }
 </script>
 
 <nav
+  aria-label="Mobile navigation"
   class="block md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border"
   style="padding-bottom: env(safe-area-inset-bottom)"
 >
@@ -54,6 +60,7 @@
         class="flex-1 min-w-[44px] flex flex-col items-center justify-center gap-0.5 h-full text-[10px] font-medium transition-colors
                {isActive(tab) ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}"
         onclick={() => goto(tab.href)}
+        aria-current={isActive(tab) ? 'page' : undefined}
       >
         <tab.icon class="h-5 w-5" />
         <span>{tab.label}</span>
@@ -67,7 +74,7 @@
         <span>More</span>
       </Sheet.Trigger>
       <Sheet.Content side="bottom" class="rounded-t-2xl pb-safe">
-        <div class="w-8 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-4"></div>
+        <div class="w-8 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-4" aria-hidden="true"></div>
         <p class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-3 px-1">More</p>
         <div class="flex flex-col gap-1">
           {#each visibleMoreItems as item}
