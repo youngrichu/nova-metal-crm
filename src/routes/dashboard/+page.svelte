@@ -208,7 +208,7 @@
     </div>
     
     <!-- Sales Trend Chart -->
-    <div class="col-span-1 lg:col-span-2 order-1 lg:order-none border-2 border-foreground/10 bg-card p-4 sm:p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col min-h-[320px] lg:min-h-[400px]">
+    <div class="col-span-1 lg:col-span-2 order-1 lg:order-none border-2 border-foreground/10 bg-card p-4 sm:p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col min-h-[400px]">
 
       <div class="flex justify-between items-start gap-3 mb-2 border-b border-foreground/5 pb-3">
         <div class="min-w-0">
@@ -235,7 +235,7 @@
             xScale={scaleTime()}
             y="revenue"
             yBaseline={0}
-            padding={{ top: 4, right: 8, bottom: 36, left: 48 }}
+            padding={{ top: 4, right: 4, bottom: 36, left: 36 }}
             tooltip={{ mode: 'bisect-x' }}
           >
             <Svg>
