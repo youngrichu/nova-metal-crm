@@ -20,7 +20,7 @@
 </script>
 
 <header class="bg-card flex h-14 items-center gap-4 border-b border-border/40 px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
-	<Sidebar.Trigger class="md:hidden" />
+	<Sidebar.Trigger class="hidden" />
 
 	<div class="flex items-center gap-4 w-full lg:ml-4">
 		<!-- Dynamic Breadcrumbs -->
@@ -42,7 +42,7 @@
 			</Breadcrumb.List>
 		</Breadcrumb.Root>
 
-		<form class="flex-1 max-w-md ml-auto">
+		<form class="flex-1 max-w-md ml-auto min-w-0">
 			<div class="relative group">
 				<Search class="text-muted-foreground/50 absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors group-focus-within:text-foreground" />
 				<Input
