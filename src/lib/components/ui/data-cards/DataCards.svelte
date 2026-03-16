@@ -37,7 +37,7 @@
   <div class="flex flex-col gap-3">
     {#each data as row, i (get(row, keyField) ?? `__row_${i}`)}
       {@const rowActions = resolveActions(actions, row)}
-      <div class="border-2 border-foreground/15 bg-card p-4 shadow-[4px_4px_0px_0px_theme(colors.foreground/8%)]">
+      <div class="border-2 border-foreground/15 bg-card p-4 shadow-[4px_4px_0px_0px_theme(colors.foreground_/_8%)]">
         <!-- Card header -->
         <div class="flex items-start justify-between gap-2 mb-3 pb-3 border-b border-foreground/8">
           <div class="min-w-0">
