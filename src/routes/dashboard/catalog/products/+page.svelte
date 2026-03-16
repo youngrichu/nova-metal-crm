@@ -11,6 +11,10 @@
 	import * as Command from "$lib/components/ui/command";
 	import { cn } from "$lib/utils";
 	import { tick } from "svelte";
+	import { DataCards } from '$lib/components/ui/data-cards';
+	import { PageFAB } from '$lib/components/ui/fab';
+	import type { Action } from '$lib/components/ui/data-cards/utils';
+	import { invalidateAll } from '$app/navigation';
 	
 	let { data, form } = $props();
 	
@@ -22,6 +26,41 @@
 	let selectedCategory = $state('');
 	let catOpen = $state(false);
 	let editCatOpen = $state(false);
+
+	const processedProducts = $derived(
+		data.products.map((row: any) => ({
+			id: row.product.id,
+			name: row.product.name,
+			sku: row.product.sku,
+			categoryName: row.category?.name ?? '—',
+			isActiveLabel: row.product.isActive ? 'Active' : 'Inactive',
+			minStockLevel: row.product.minStockLevel,
+			averageLandingCost: Number(row.product.averageLandingCost).toFixed(2),
+		}))
+	);
+
+	const cardColumns = [
+		{ key: 'name',               label: 'Name',       primary: true },
+		{ key: 'sku',                label: 'SKU',        secondary: true },
+		{ key: 'isActiveLabel',      label: 'Status',     badge: true,
+			badgeClass: (v: unknown) => v === 'Active'
+				? 'bg-green-100 text-green-700'
+				: 'bg-red-100 text-red-700' },
+		{ key: 'categoryName',       label: 'Category' },
+		{ key: 'averageLandingCost', label: 'Cost (ETB)' },
+		{ key: 'minStockLevel',      label: 'Min Stock' },
+	];
+
+	const cardActions: Action[] = [
+		{ label: 'Edit',   onClick: (row: any) => openEdit({ product: data.products.find((p: any) => p.product.id === row.id)?.product, category: data.products.find((p: any) => p.product.id === row.id)?.category }) },
+		{ label: 'Delete', variant: 'destructive', onClick: async (row: any) => {
+				const fd = new FormData();
+				fd.set('id', row.id);
+				await fetch('?/delete', { method: 'POST', body: fd });
+				await invalidateAll();
+			}
+		},
+	];
 
 	function getCategoryLabel(id: string) {
 		const cat = data.categories.find((c: any) => c.id === id);
@@ -79,7 +118,7 @@
 			<Sheet.Root bind:open={isCreateOpen}>
 				<Sheet.Trigger>
 					{#snippet child({ props })}
-						<Button {...props} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] relative">
+						<Button {...props} class="hidden md:flex h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] relative">
 							New Item
 						</Button>
 					{/snippet}
@@ -227,7 +266,18 @@
 		</div>
 	</header>
 
-	<!-- Main Data Presentation -->
+	<!-- Mobile card view -->
+	<div class="md:hidden">
+		<DataCards
+			columns={cardColumns}
+			data={processedProducts}
+			actions={cardActions}
+			emptyMessage="No products indexed."
+		/>
+	</div>
+
+	<!-- Desktop table view -->
+	<div class="hidden md:block">
 	<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)] relative">
 		
 		<Table.Root class="w-full text-left border-collapse">
@@ -336,7 +386,10 @@
 			{data.products.length} product{data.products.length !== 1 ? 's' : ''} total
 		</div>
 	</div>
+	</div>
 </div>
+
+<PageFAB label="Add product" onclick={() => isCreateOpen = true} />
 
 <!-- Edit Product Sheet -->
 <Sheet.Root bind:open={isEditOpen}>
