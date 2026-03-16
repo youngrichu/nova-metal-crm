@@ -7,6 +7,7 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { enhance } from '$app/forms';
 	import { Trash2, MapPin, ChevronDown, Pencil, Warehouse } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
 	import { DataCards } from '$lib/components/ui/data-cards';
 	import type { Action } from '$lib/components/ui/data-cards';
 	import { PageFAB } from '$lib/components/ui/fab';
@@ -54,8 +55,12 @@
 			onClick: async (row: any) => {
 				const fd = new FormData();
 				fd.set('id', row.id);
-				await fetch('?/delete', { method: 'POST', body: fd });
-				await invalidateAll();
+				const res = await fetch('?/delete', { method: 'POST', body: fd });
+				if (res.ok) {
+					await invalidateAll();
+				} else {
+					toast.error('Failed to delete warehouse. It may have linked inventory.');
+				}
 			},
 		},
 	];

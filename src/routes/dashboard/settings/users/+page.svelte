@@ -75,8 +75,12 @@
 					const fd = new FormData();
 					fd.set('userId', r2.id);
 					fd.set('role', r);
-					await fetch('?/updateRole', { method: 'POST', body: fd });
-					await invalidateAll();
+					const res = await fetch('?/updateRole', { method: 'POST', body: fd });
+					if (res.ok) {
+						await invalidateAll();
+					} else {
+						toast.error('Failed to update role.');
+					}
 				},
 			}));
 
@@ -87,8 +91,12 @@
 			onClick: async (r2: any) => {
 				const fd = new FormData();
 				fd.set('userId', r2.id);
-				await fetch('?/toggleVerified', { method: 'POST', body: fd });
-				await invalidateAll();
+				const res = await fetch('?/toggleVerified', { method: 'POST', body: fd });
+				if (res.ok) {
+					await invalidateAll();
+				} else {
+					toast.error('Failed to update user status.');
+				}
 			},
 		};
 

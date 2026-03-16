@@ -7,6 +7,7 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { enhance } from '$app/forms';
 	import { Trash2, Tags, ChevronDown, Pencil } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
 	import { DataCards } from '$lib/components/ui/data-cards';
 	import { PageFAB } from '$lib/components/ui/fab';
 	import { invalidateAll } from '$app/navigation';
@@ -48,8 +49,12 @@
 			onClick: async (row: any) => {
 				const fd = new FormData();
 				fd.set('id', row.id);
-				await fetch('?/delete', { method: 'POST', body: fd });
-				await invalidateAll();
+				const res = await fetch('?/delete', { method: 'POST', body: fd });
+				if (res.ok) {
+					await invalidateAll();
+				} else {
+					toast.error('Failed to delete category. It may have products assigned to it.');
+				}
 			},
 		},
 	];

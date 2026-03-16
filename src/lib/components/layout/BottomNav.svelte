@@ -75,7 +75,8 @@
 
     <!-- More tab — always shown -->
     <Sheet.Root bind:open={moreOpen}>
-      <Sheet.Trigger class="flex-1 min-w-[44px] flex flex-col items-center justify-center gap-0.5 h-full text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors">
+      <Sheet.Trigger class="flex-1 min-w-[44px] flex flex-col items-center justify-center gap-0.5 h-full text-[10px] font-medium transition-colors
+               {activeMoreHref ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}">
         <MoreHorizontal class="h-5 w-5" />
         <span>More</span>
       </Sheet.Trigger>

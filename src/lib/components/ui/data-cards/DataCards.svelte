@@ -72,7 +72,7 @@
                   {#each rowActions as action}
                     <DropdownMenu.Item
                       class={action.variant === 'destructive' ? 'text-destructive focus:text-destructive' : ''}
-                      onclick={() => action.onClick(row)}
+                      onSelect={() => action.onClick(row)}
                     >
                       {action.label}
                     </DropdownMenu.Item>
