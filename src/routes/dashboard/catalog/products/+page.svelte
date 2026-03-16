@@ -11,6 +11,10 @@
 	import * as Command from "$lib/components/ui/command";
 	import { cn } from "$lib/utils";
 	import { tick } from "svelte";
+	import { DataCards } from '$lib/components/ui/data-cards';
+	import { PageFAB } from '$lib/components/ui/fab';
+	import type { Action } from '$lib/components/ui/data-cards';
+	import { invalidateAll } from '$app/navigation';
 	
 	let { data, form } = $props();
 	
@@ -22,6 +26,48 @@
 	let selectedCategory = $state('');
 	let catOpen = $state(false);
 	let editCatOpen = $state(false);
+
+	const processedProducts = $derived(
+		data.products.map((row: any) => ({
+			id: row.product.id,
+			name: row.product.name,
+			sku: row.product.sku,
+			categoryName: row.category?.name ?? '—',
+			isActiveLabel: row.product.isActive ? 'Active' : 'Inactive',
+			minStockLevel: row.product.minStockLevel,
+			averageLandingCost: Number(row.product.averageLandingCost || 0).toFixed(2),
+		}))
+	);
+
+	const cardColumns = [
+		{ key: 'name',               label: 'Name',       primary: true },
+		{ key: 'sku',                label: 'SKU',        secondary: true },
+		{ key: 'isActiveLabel',      label: 'Status',     badge: true,
+			badgeClass: (v: unknown) => v === 'Active'
+				? 'bg-green-100 text-green-700'
+				: 'bg-red-100 text-red-700' },
+		{ key: 'categoryName',       label: 'Category' },
+		{ key: 'averageLandingCost', label: 'Cost (ETB)' },
+		{ key: 'minStockLevel',      label: 'Min Stock' },
+	];
+
+	const cardActions: Action[] = [
+		{ label: 'Edit',   onClick: (row: any) => {
+			const found = data.products.find((p: any) => p.product.id === row.id);
+			if (found) openEdit(found);
+		}},
+		{ label: 'Delete', variant: 'destructive', onClick: async (row: any) => {
+				try {
+					const fd = new FormData();
+					fd.set('id', row.id);
+					const res = await fetch('?/delete', { method: 'POST', body: fd });
+					if (res.ok) await invalidateAll();
+				} catch (err) {
+					console.error('Delete failed:', err);
+				}
+			}
+		},
+	];
 
 	function getCategoryLabel(id: string) {
 		const cat = data.categories.find((c: any) => c.id === id);
@@ -79,24 +125,24 @@
 			<Sheet.Root bind:open={isCreateOpen}>
 				<Sheet.Trigger>
 					{#snippet child({ props })}
-						<Button {...props} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] relative">
+						<Button {...props} class="hidden md:flex h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] relative">
 							New Item
 						</Button>
 					{/snippet}
 				</Sheet.Trigger>
 				<Sheet.Content class="sm:max-w-[700px] overflow-y-auto flex flex-col h-full border-l-[8px] border-primary shadow-2xl p-0">
-					<div class="bg-muted px-10 py-12 border-b border-border relative overflow-hidden">
+					<div class="bg-muted px-4 sm:px-10 py-8 sm:py-12 border-b border-border relative overflow-hidden">
 						<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 						<Sheet.Header class="relative z-10">
 							<span class="inline-block px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">New Product</span>
-							<Sheet.Title class="text-4xl font-black tracking-tight uppercase">Add Product</Sheet.Title>
+							<Sheet.Title class="text-2xl sm:text-4xl font-black tracking-tight uppercase">Add Product</Sheet.Title>
 							<Sheet.Description class="text-base font-medium opacity-70 mt-2">
 								Automated SKU generation based on precise physical dimensions.
 							</Sheet.Description>
 						</Sheet.Header>
 					</div>
 
-					<form method="POST" action="?/create" use:enhance={makeEnhance('create')} class="flex-1 flex flex-col justify-between px-10 py-8 bg-background relative z-10">
+					<form method="POST" action="?/create" use:enhance={makeEnhance('create')} class="flex-1 flex flex-col justify-between px-4 sm:px-10 py-6 sm:py-8 bg-background relative z-10">
 						<div class="space-y-10">
 							{#if form?.error || form?.duplicate}
 								<div class="p-4 text-sm font-medium bg-red-500/10 text-red-600 border-l-4 border-red-600 shadow-sm animate-in fade-in">
@@ -114,7 +160,7 @@
 									<Popover.Root bind:open={catOpen}>
 										<Popover.Trigger
 											class={cn(
-												"flex h-12 w-full items-center justify-between rounded-lg border-2 border-transparent bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors",
+												"flex h-12 w-full items-center justify-between rounded-none border-2 border-foreground/10 bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors",
 												!selectedCategory && "text-muted-foreground"
 											)}
 											role="combobox"
@@ -123,7 +169,7 @@
 											<span class="truncate">{getCategoryLabel(selectedCategory)}</span>
 											<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
 										</Popover.Trigger>
-										<Popover.Content class="w-[300px] p-0 rounded-lg border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
+										<Popover.Content class="w-[min(300px,calc(100vw-2rem))] p-0 rounded-none border-2 border-foreground/10 shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
 											<Command.Root>
 												<Command.Input placeholder="Search category..." class="h-12 border-none font-medium" />
 												<Command.List>
@@ -152,13 +198,13 @@
 
 								<div class="space-y-2 group">
 									<Label for="name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Identifier Name *</Label>
-									<Input id="name" name="name" placeholder="Square Tube 40x40" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+									<Input id="name" name="name" placeholder="Square Tube 40x40" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all" />
 								</div>
 
 								{#if data.barcodeEnabled}
 								<div class="space-y-2 group">
 									<Label for="barcode" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Barcode / EAN</Label>
-									<Input id="barcode" name="barcode" type="text" placeholder="Scan or type barcode..." class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+									<Input id="barcode" name="barcode" type="text" placeholder="Scan or type barcode..." class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all" />
 								</div>
 								{/if}
 							</div>
@@ -170,39 +216,39 @@
 								<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 									<div class="space-y-2 group">
 										<Label for="size1" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Size 1 (mm)</Label>
-										<Input id="size1" name="size1" type="number" step="0.1" placeholder="40" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
+										<Input id="size1" name="size1" type="number" step="0.1" placeholder="40" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 									</div>
 									<div class="space-y-2 group">
 										<Label for="size2" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Size 2 (mm)</Label>
-										<Input id="size2" name="size2" type="number" step="0.1" placeholder="Optional" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
+										<Input id="size2" name="size2" type="number" step="0.1" placeholder="Optional" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 									</div>
 								</div>
 
 								<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 									<div class="space-y-2 group">
 										<Label for="thickness" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Gauge / Thickness (mm)</Label>
-										<Input id="thickness" name="thickness" type="number" step="0.1" placeholder="1.5" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
+										<Input id="thickness" name="thickness" type="number" step="0.1" placeholder="1.5" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 									</div>
 									<div class="space-y-2 group">
 										<Label for="length" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Standard Length (mm)</Label>
-										<Input id="length" name="length" type="number" placeholder="6000" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
+										<Input id="length" name="length" type="number" placeholder="6000" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 									</div>
 								</div>
 
 								<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 									<div class="space-y-2 group">
 										<Label for="weightPerPiece" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Unit Weight (kg)</Label>
-										<Input id="weightPerPiece" name="weightPerPiece" type="number" step="0.01" placeholder="Optional" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
+										<Input id="weightPerPiece" name="weightPerPiece" type="number" step="0.01" placeholder="Optional" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 									</div>
 									<div class="space-y-2 group">
 										<Label for="minStockLevel" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Alert Threshold *</Label>
-										<Input id="minStockLevel" name="minStockLevel" type="number" value="10" required class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
+										<Input id="minStockLevel" name="minStockLevel" type="number" value="10" required class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 									</div>
 								</div>
 
 								<div class="space-y-2 group">
 									<Label for="description" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Specs & Annotations</Label>
-									<Input id="description" name="description" placeholder="Any special remarks..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" />
+									<Input id="description" name="description" placeholder="Any special remarks..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 								</div>
 							</div>
 						</div>
@@ -213,11 +259,11 @@
 								<div class="space-y-2 group">
 									<Label for="averageLandingCost" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Purchase Cost (ETB) *</Label>
 									<p class="text-[11px] text-muted-foreground/60 mb-1">What you paid per piece. The selling price is calculated automatically from this using the markup in Settings.</p>
-									<Input id="averageLandingCost" name="averageLandingCost" type="number" step="0.01" min="0" placeholder="e.g. 150.00" required class="h-14 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+									<Input id="averageLandingCost" name="averageLandingCost" type="number" step="0.01" min="0" placeholder="e.g. 150.00" required class="h-14 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all" />
 								</div>
 							</div>
-						<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
-							<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
+						<div class="pt-6 sm:pt-10 mt-6 sm:mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
+							<Button type="submit" class="w-full h-12 sm:h-16 rounded-none text-sm sm:text-base font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
 								{isSubmitting ? 'Generating SKU...' : 'Save Product Record'}
 							</Button>
 						</div>
@@ -227,7 +273,18 @@
 		</div>
 	</header>
 
-	<!-- Main Data Presentation -->
+	<!-- Mobile card view -->
+	<div class="md:hidden">
+		<DataCards
+			columns={cardColumns}
+			data={processedProducts}
+			actions={cardActions}
+			emptyMessage="No products indexed."
+		/>
+	</div>
+
+	<!-- Desktop table view -->
+	<div class="hidden md:block">
 	<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)] relative">
 		
 		<Table.Root class="w-full text-left border-collapse">
@@ -336,24 +393,27 @@
 			{data.products.length} product{data.products.length !== 1 ? 's' : ''} total
 		</div>
 	</div>
+	</div>
 </div>
+
+<PageFAB label="Add product" onclick={() => isCreateOpen = true} />
 
 <!-- Edit Product Sheet -->
 <Sheet.Root bind:open={isEditOpen}>
 	<Sheet.Content class="sm:max-w-[700px] overflow-y-auto flex flex-col h-full border-l-[8px] border-primary shadow-2xl p-0">
 		{#if editingProduct}
-			<div class="bg-muted px-10 py-12 border-b border-border relative overflow-hidden">
+			<div class="bg-muted px-4 sm:px-10 py-8 sm:py-12 border-b border-border relative overflow-hidden">
 				<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 				<Sheet.Header class="relative z-10">
 					<span class="inline-block px-3 py-1 bg-foreground text-background text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">Edit Product</span>
-					<Sheet.Title class="text-4xl font-black tracking-tight uppercase line-clamp-1">{editingProduct.product.name}</Sheet.Title>
+					<Sheet.Title class="text-2xl sm:text-4xl font-black tracking-tight uppercase line-clamp-1">{editingProduct.product.name}</Sheet.Title>
 					<Sheet.Description class="text-base font-medium opacity-70 mt-2">
 						SKU <span class="font-mono text-primary font-bold">{editingProduct.product.sku}</span>
 					</Sheet.Description>
 				</Sheet.Header>
 			</div>
 
-			<form method="POST" action="?/update" use:enhance={makeEnhance('edit')} class="flex-1 flex flex-col justify-between px-10 py-8 bg-background relative z-10">
+			<form method="POST" action="?/update" use:enhance={makeEnhance('edit')} class="flex-1 flex flex-col justify-between px-4 sm:px-10 py-6 sm:py-8 bg-background relative z-10">
 				<input type="hidden" name="id" value={editingProduct.product.id} />
 				<div class="space-y-10">
 					{#if form?.error}
@@ -380,7 +440,7 @@
 									<span class="truncate">{getCategoryLabel(editingProduct.product.categoryId)}</span>
 									<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
 								</Popover.Trigger>
-								<Popover.Content class="w-[300px] p-0 rounded-none border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
+								<Popover.Content class="w-[min(300px,calc(100vw-2rem))] p-0 rounded-none border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
 									<Command.Root>
 										<Command.Input placeholder="Search category..." class="h-12 border-none font-medium" />
 										<Command.List>
@@ -415,7 +475,7 @@
 						{#if data.barcodeEnabled}
 						<div class="space-y-2 group">
 							<Label for="edit-barcode" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary">Barcode / EAN</Label>
-							<Input id="edit-barcode" name="barcode" type="text" value={editingProduct.product.barcode ?? ''} placeholder="Scan or type barcode..." class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+							<Input id="edit-barcode" name="barcode" type="text" value={editingProduct.product.barcode ?? ''} placeholder="Scan or type barcode..." class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all" />
 						</div>
 						{/if}
 					</div>
@@ -472,8 +532,8 @@
 						<Input id="edit-landingCost" name="averageLandingCost" type="number" step="0.01" min="0" value={editingProduct.product.averageLandingCost ?? '0'} required class="h-14 font-mono bg-transparent border-t-0 border-x-0 border-b-2 border-border/50 focus-visible:border-primary focus-visible:ring-0 rounded-none px-0 text-lg" />
 					</div>
 				</div>
-				<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
-					<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
+				<div class="pt-6 sm:pt-10 mt-6 sm:mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
+					<Button type="submit" class="w-full h-12 sm:h-16 rounded-none text-sm sm:text-base font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
 						{isSubmitting ? 'Saving...' : 'Commit Changes'}
 					</Button>
 				</div>

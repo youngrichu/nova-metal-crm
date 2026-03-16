@@ -1,0 +1,103 @@
+<script lang="ts">
+  import { page } from '$app/state';
+  import { afterNavigate } from '$app/navigation';
+  import * as Sheet from '$lib/components/ui/sheet';
+  import { LayoutDashboard, ShoppingCart, Box, Package, Users, Tags, Warehouse, ClipboardList, Calculator, Settings, MoreHorizontal } from 'lucide-svelte';
+
+  const allTabs = [
+    { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['admin', 'sales', 'warehouse'], exact: true },
+    { key: 'orders',    label: 'Orders',    icon: ShoppingCart,    href: '/dashboard/sales/orders', roles: ['admin', 'sales'], exact: false },
+    { key: 'catalog',   label: 'Products',   icon: Box,             href: '/dashboard/catalog/products', roles: ['admin', 'warehouse'], exact: false, activePrefix: '/dashboard/catalog' },
+  ];
+
+  const allMoreItems = [
+    { label: 'Inventory',      icon: Package,      href: '/dashboard/inventory',           roles: ['admin', 'warehouse'] },
+    { label: 'Warehouses',     icon: Warehouse,    href: '/dashboard/inventory/warehouses', roles: ['admin', 'warehouse'] },
+    { label: 'Stock Takes',    icon: ClipboardList,href: '/dashboard/inventory/counts',     roles: ['admin', 'warehouse'] },
+    { label: 'Reconciliation', icon: Calculator,   href: '/dashboard/sales/reconciliation', roles: ['admin', 'sales'] },
+    { label: 'Customers',      icon: Users,        href: '/dashboard/customers',            roles: ['admin', 'sales'] },
+    { label: 'Categories',     icon: Tags,         href: '/dashboard/catalog/categories',   roles: ['admin', 'warehouse'] },
+    { label: 'Settings',       icon: Settings,     href: '/dashboard/settings',             roles: ['admin', 'sales', 'warehouse'] },
+  ];
+
+  let moreOpen = $state(false);
+
+  afterNavigate(() => { moreOpen = false; });
+
+  const role = $derived(page.data.user?.role as string | undefined);
+
+  // When role is undefined the user is unauthenticated — the dashboard layout's
+  // server hook redirects them to /login before this component renders, so
+  // showing all tabs as a fallback is safe and intentional.
+  const visibleTabs = $derived(
+    allTabs.filter(t => !role || t.roles.includes(role))
+  );
+
+  const visibleMoreItems = $derived(
+    allMoreItems.filter(i => !role || i.roles.includes(role))
+  );
+
+  function isActive(tab: typeof allTabs[number]) {
+    const path = page.url.pathname;
+    const prefix = tab.activePrefix ?? tab.href;
+    if (tab.exact) return path === tab.href;
+    return path.startsWith(prefix);
+  }
+
+  // Compute the single best-matching More item (longest prefix match).
+  // This prevents both "Inventory" and "Warehouses" from being highlighted
+  // simultaneously when the path is /dashboard/inventory/warehouses.
+  const activeMoreHref = $derived(
+    [...visibleMoreItems]
+      .filter(item => {
+        const path = page.url.pathname;
+        return path === item.href || path.startsWith(item.href + '/');
+      })
+      .sort((a, b) => b.href.length - a.href.length)[0]?.href
+  );
+</script>
+
+<nav
+  aria-label="Mobile navigation"
+  class="block md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border"
+  style="padding-bottom: env(safe-area-inset-bottom)"
+>
+  <div class="h-16 flex items-center">
+    {#each visibleTabs as tab}
+      <a
+        href={tab.href}
+        class="flex-1 min-w-[44px] flex flex-col items-center justify-center gap-0.5 h-full text-[10px] font-medium transition-colors
+               {isActive(tab) ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}"
+        aria-current={isActive(tab) ? 'page' : undefined}
+      >
+        <tab.icon class="h-5 w-5" />
+        <span>{tab.label}</span>
+      </a>
+    {/each}
+
+    <!-- More tab — always shown -->
+    <Sheet.Root bind:open={moreOpen}>
+      <Sheet.Trigger class="flex-1 min-w-[44px] flex flex-col items-center justify-center gap-0.5 h-full text-[10px] font-medium transition-colors
+               {activeMoreHref ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}">
+        <MoreHorizontal class="h-5 w-5" />
+        <span>More</span>
+      </Sheet.Trigger>
+      <Sheet.Content side="bottom" class="rounded-t-2xl pb-safe">
+        <div class="w-8 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-4" aria-hidden="true"></div>
+        <p class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-3 px-1">More</p>
+        <div class="flex flex-col gap-1">
+          {#each visibleMoreItems as item}
+            <a
+              href={item.href}
+              class="flex items-center gap-3 px-2 py-2.5 rounded-lg text-sm font-medium transition-colors
+                     {activeMoreHref === item.href ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-accent/50'}"
+            >
+              <item.icon class="h-4 w-4 shrink-0" />
+              {item.label}
+            </a>
+          {/each}
+        </div>
+      </Sheet.Content>
+    </Sheet.Root>
+  </div>
+</nav>
