@@ -54,6 +54,7 @@
 			id: row.count.id,
 			reference: `Count #${row.count.id.slice(0, 8)}`,
 			warehouseName: row.warehouse.name,
+			rawStatus: row.count.status,
 			status: statusLabel(row.count.status),
 			startedAt: new Date(row.count.startedAt).toLocaleDateString(),
 		}))
@@ -73,7 +74,7 @@
 	];
 
 	const cardActions: ActionsInput = (row) => {
-		if (row.status === 'In Progress') {
+		if (row.rawStatus === 'IN_PROGRESS') {
 			return [
 				{ label: 'Continue',   onClick: (r: any) => goto(`/dashboard/inventory/counts/${r.id}`) },
 				{ label: 'Reconcile',  onClick: (r: any) => goto(`/dashboard/inventory/counts/${r.id}/reconcile`) },

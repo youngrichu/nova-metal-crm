@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { goto } from '$app/navigation';
+  import { afterNavigate } from '$app/navigation';
   import * as Sheet from '$lib/components/ui/sheet';
   import { LayoutDashboard, ShoppingCart, Box, Package, Users, Tags, Warehouse, ClipboardList, Calculator, Settings, MoreHorizontal } from 'lucide-svelte';
 
@@ -21,6 +21,8 @@
   ];
 
   let moreOpen = $state(false);
+
+  afterNavigate(() => { moreOpen = false; });
 
   const role = $derived(page.data.user?.role as string | undefined);
 
@@ -62,15 +64,15 @@
 >
   <div class="h-16 flex items-center">
     {#each visibleTabs as tab}
-      <button
+      <a
+        href={tab.href}
         class="flex-1 min-w-[44px] flex flex-col items-center justify-center gap-0.5 h-full text-[10px] font-medium transition-colors
                {isActive(tab) ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}"
-        onclick={() => goto(tab.href)}
         aria-current={isActive(tab) ? 'page' : undefined}
       >
         <tab.icon class="h-5 w-5" />
         <span>{tab.label}</span>
-      </button>
+      </a>
     {/each}
 
     <!-- More tab — always shown -->
@@ -85,14 +87,14 @@
         <p class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-3 px-1">More</p>
         <div class="flex flex-col gap-1">
           {#each visibleMoreItems as item}
-            <button
+            <a
+              href={item.href}
               class="flex items-center gap-3 px-2 py-2.5 rounded-lg text-sm font-medium transition-colors
                      {activeMoreHref === item.href ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-accent/50'}"
-              onclick={() => { moreOpen = false; goto(item.href); }}
             >
               <item.icon class="h-4 w-4 shrink-0" />
               {item.label}
-            </button>
+            </a>
           {/each}
         </div>
       </Sheet.Content>

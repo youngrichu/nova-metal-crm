@@ -20,7 +20,7 @@
 </script>
 
 <header class="bg-card flex h-14 items-center gap-4 border-b border-border/40 px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
-	<Sidebar.Trigger class="hidden" />
+	<Sidebar.Trigger class="hidden md:flex" />
 
 	<div class="flex items-center gap-4 w-full lg:ml-4">
 		<!-- Dynamic Breadcrumbs -->
