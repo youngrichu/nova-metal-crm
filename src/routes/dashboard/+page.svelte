@@ -68,7 +68,7 @@
   );
 </script>
 
-<div class="p-4 md:p-8 max-w-[1600px] mx-auto space-y-12">
+<div class="p-4 md:p-8 max-w-[1600px] mx-auto space-y-6 md:space-y-12">
   
   <!-- Avant-Garde Page Header -->
   <header class="flex flex-col md:flex-row justify-between items-start md:items-end border-b-2 border-foreground pb-6 gap-6">
@@ -210,14 +210,14 @@
     <!-- Sales Trend Chart -->
     <div class="col-span-1 lg:col-span-2 order-1 lg:order-none border-2 border-foreground/10 bg-card p-4 sm:p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col min-h-[400px]">
 
-      <div class="flex flex-col xs:flex-row xs:justify-between xs:items-start gap-3 mb-6 border-b-2 border-foreground/5 pb-4">
-        <div>
-          <h3 class="font-black text-sm tracking-widest uppercase text-foreground mb-1 flex items-center gap-3">
-            <TrendingUp class="w-4 h-4 text-primary" /> Revenue Trajectory
+      <div class="flex justify-between items-start gap-3 mb-4 border-b-2 border-foreground/5 pb-4">
+        <div class="min-w-0">
+          <h3 class="font-black text-sm tracking-widest uppercase text-foreground mb-1 flex items-center gap-2">
+            <TrendingUp class="w-4 h-4 text-primary shrink-0" /> Revenue Trajectory
           </h3>
-          <p class="text-xs font-medium text-muted-foreground/60 tracking-wider">{data.period === 'day' ? 'Daily' : data.period === 'week' ? 'Weekly' : 'Monthly'} revenue — {RANGE_LABELS[data.range]} (excl. draft &amp; cancelled).</p>
+          <p class="text-xs font-medium text-muted-foreground/60 tracking-wider leading-relaxed">{data.period === 'day' ? 'Daily' : data.period === 'week' ? 'Weekly' : 'Monthly'} · {RANGE_LABELS[data.range]}</p>
         </div>
-        <Button variant="outline" size="sm" href="/dashboard/sales/orders" class="self-start h-8 rounded-none border-2 border-foreground/20 text-[10px] font-bold tracking-widest uppercase shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all shrink-0">
+        <Button variant="outline" size="sm" href="/dashboard/sales/orders" class="shrink-0 h-8 rounded-none border-2 border-foreground/20 text-[10px] font-bold tracking-widest uppercase shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
           View Orders
         </Button>
       </div>
