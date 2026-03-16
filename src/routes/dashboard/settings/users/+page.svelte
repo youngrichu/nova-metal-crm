@@ -9,6 +9,10 @@
 	import { enhance } from '$app/forms';
 	import { Users, ChevronDown, Shield, CheckCircle, XCircle, Plus } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
+	import { DataCards } from '$lib/components/ui/data-cards';
+	import { PageFAB } from '$lib/components/ui/fab';
+	import { invalidateAll } from '$app/navigation';
+	import type { ActionsInput } from '$lib/components/ui/data-cards';
 
 	let { data, form } = $props();
 
@@ -41,6 +45,54 @@
 		sales: 'bg-blue-600 text-white',
 		warehouse: 'bg-amber-600 text-white'
 	};
+
+	const processedUsers = $derived(
+		data.users.map((row: any) => ({
+			id: row.id,
+			name: row.name,
+			email: row.email,
+			role: row.role,
+			emailVerified: row.emailVerified,
+			createdAt: row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—',
+		}))
+	);
+
+	const cardColumns = [
+		{ key: 'name',      label: 'Name',     primary: true },
+		{ key: 'email',     label: 'Email',    secondary: true },
+		{ key: 'role',      label: 'Role',     badge: true },
+		{ key: 'createdAt', label: 'Joined' },
+	];
+
+	const cardActions: ActionsInput = (row) => {
+		const allRoles = ['admin', 'sales', 'warehouse'];
+		const roleActions = allRoles
+			.filter(r => r !== row.role)
+			.map(r => ({
+				label: `Change to ${r}`,
+				onClick: async (r2: any) => {
+					const fd = new FormData();
+					fd.set('userId', r2.id);
+					fd.set('role', r);
+					await fetch('?/updateRole', { method: 'POST', body: fd });
+					await invalidateAll();
+				},
+			}));
+
+		const toggleLabel = row.emailVerified ? 'Deactivate' : 'Reactivate';
+		const toggleAction = {
+			label: toggleLabel,
+			variant: (row.emailVerified ? 'destructive' : 'default') as 'destructive' | 'default',
+			onClick: async (r2: any) => {
+				const fd = new FormData();
+				fd.set('userId', r2.id);
+				await fetch('?/toggleVerified', { method: 'POST', body: fd });
+				await invalidateAll();
+			},
+		};
+
+		return [...roleActions, toggleAction];
+	};
 </script>
 
 <div class="p-4 md:p-8 max-w-[1200px] mx-auto space-y-12">
@@ -62,7 +114,7 @@
 				{#snippet child({ props })}
 					<Button
 						{...props}
-						class="h-12 px-6 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] whitespace-nowrap"
+						class="hidden md:flex h-12 px-6 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] whitespace-nowrap"
 					>
 						<Plus class="w-4 h-4 mr-2" /> Add User
 					</Button>
@@ -115,7 +167,10 @@
 		</Dialog.Root>
 	</header>
 
-	<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
+	<div class="md:hidden">
+		<DataCards columns={cardColumns} data={processedUsers} actions={cardActions} emptyMessage="No users found." />
+	</div>
+	<section class="hidden md:block border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
 		<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
 			<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
 				<Users class="w-4 h-4 text-primary" /> All Users
@@ -234,3 +289,5 @@
 		</Table.Root>
 	</section>
 </div>
+
+<PageFAB label="Invite user" onclick={() => createDialogOpen = true} />
