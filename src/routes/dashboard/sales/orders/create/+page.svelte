@@ -426,7 +426,7 @@
 
 					<!-- Stock warning — shown when entered quantity exceeds available stock -->
 					{#if item.availableStock !== null && item.quantity > item.availableStock}
-						<div class="col-span-full md:col-span-4 -mt-2 mb-1 px-2">
+						<div class="col-span-full md:col-span-5 -mt-2 mb-1 px-2">
 							<p class="text-xs font-bold text-amber-600 flex items-center gap-1.5">
 								<AlertTriangle class="w-3.5 h-3.5 shrink-0" />
 								Only {item.availableStock} in stock
