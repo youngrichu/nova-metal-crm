@@ -7,7 +7,7 @@
   const allTabs = [
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['admin', 'sales', 'warehouse'], exact: true },
     { key: 'orders',    label: 'Orders',    icon: ShoppingCart,    href: '/dashboard/sales/orders', roles: ['admin', 'sales'], exact: false },
-    { key: 'catalog',   label: 'Catalog',   icon: Box,             href: '/dashboard/catalog/products', roles: ['admin', 'warehouse'], exact: false, activePrefix: '/dashboard/catalog' },
+    { key: 'catalog',   label: 'Products',   icon: Box,             href: '/dashboard/catalog/products', roles: ['admin', 'warehouse'], exact: false, activePrefix: '/dashboard/catalog' },
   ];
 
   const allMoreItems = [
