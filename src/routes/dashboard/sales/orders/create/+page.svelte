@@ -303,16 +303,16 @@
 					<div class="space-y-2">
 						<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70 block">Pricing Tier</Label>
 						<input type="hidden" name="walkInPricingTier" value={walkInPricingTier} />
-						<div class="flex gap-0 border-2 border-border w-fit">
+						<div class="grid grid-cols-2 sm:grid-cols-4 border-2 border-border gap-px bg-border w-full">
 							{#each WALK_IN_TIERS as tier}
 								<button
 									type="button"
 									onclick={() => { walkInPricingTier = tier; priceRevision++; }}
 									class={cn(
-										"px-4 py-2 text-xs font-bold tracking-widest uppercase transition-colors border-r last:border-r-0 border-border",
+										"px-4 py-2 text-xs font-bold tracking-widest uppercase transition-colors",
 										walkInPricingTier === tier
 											? "bg-primary text-primary-foreground"
-											: "bg-transparent text-muted-foreground hover:text-foreground"
+											: "bg-background text-muted-foreground hover:text-foreground"
 									)}
 								>
 									{tier}
