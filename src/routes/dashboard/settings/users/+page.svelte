@@ -239,7 +239,7 @@
 							{/if}
 						</Table.Cell>
 						<Table.Cell class="px-6 py-4 hidden lg:table-cell">
-							<span class="font-mono text-xs text-foreground/50">{new Date(u.createdAt).toLocaleDateString()}</span>
+							<span class="font-mono text-xs text-foreground/50">{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}</span>
 						</Table.Cell>
 						<Table.Cell class="px-6 py-4 text-right">
 							{#if u.id !== data.currentUserId}
