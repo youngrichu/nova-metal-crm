@@ -7,6 +7,8 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { DataCards } from '$lib/components/ui/data-cards';
+	import { PageFAB } from '$lib/components/ui/fab';
 	import { Trash2, Box, ChevronDown, Pencil, Building2, User, Phone, Mail, MessageCircle, FileText } from 'lucide-svelte';
 	import * as m from '$lib/paraglide/messages';
 	
@@ -16,6 +18,23 @@
 	let isEditOpen = $state(false);
 	let isSubmitting = $state(false);
 	let editingCustomer = $state<any>(null);
+
+	const processedCustomers = $derived(
+		data.customers.map((row: any) => ({
+			id: row.id,
+			name: row.name,
+			email: row.email ?? '—',
+			phone: row.phone ?? '—',
+			createdAt: row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—',
+		}))
+	);
+
+	const cardColumns = [
+		{ key: 'name',      label: 'Name',     primary: true },
+		{ key: 'email',     label: 'Email',    secondary: true },
+		{ key: 'phone',     label: 'Phone' },
+		{ key: 'createdAt', label: 'Joined' },
+	];
 
 	function openEdit(customer: any) {
 		editingCustomer = customer;
@@ -65,7 +84,7 @@
 			<Sheet.Root bind:open={isCreateOpen}>
 				<Sheet.Trigger>
 					{#snippet child({ props })}
-						<Button {...props} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] relative">
+						<Button {...props} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] relative hidden md:flex">
 							{m.customer_add_btn()}
 						</Button>
 					{/snippet}
@@ -199,8 +218,14 @@
 		</div>
 	</header>
 
-	<!-- Main Data Presentation -->
-	<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)] relative">
+	<!-- Mobile card view -->
+	<div class="md:hidden">
+		<DataCards columns={cardColumns} data={processedCustomers} emptyMessage="No customers found." />
+	</div>
+
+	<!-- Desktop table view -->
+	<div class="hidden md:block">
+		<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)] relative">
 		
 		<Table.Root class="w-full text-left border-collapse">
 			<Table.Header>
@@ -299,8 +324,11 @@
 			</Table.Body>
 		</Table.Root>
 		
+		</div>
 	</div>
 </div>
+
+<PageFAB label="Add customer" onclick={() => isCreateOpen = true} />
 
 <!-- Edit Sheet -->
 <Sheet.Root bind:open={isEditOpen}>
