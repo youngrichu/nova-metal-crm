@@ -103,18 +103,18 @@
 					{/snippet}
 				</Sheet.Trigger>
 				<Sheet.Content class="sm:max-w-[600px] overflow-y-auto flex flex-col h-full border-l-[8px] border-primary shadow-2xl p-0">
-					<div class="bg-muted px-10 py-12 border-b border-border relative overflow-hidden">
+					<div class="bg-muted px-4 sm:px-10 py-8 sm:py-12 border-b border-border relative overflow-hidden">
 						<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 						<Sheet.Header class="relative z-10">
 							<span class="inline-block px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">New Registration</span>
-							<Sheet.Title class="text-4xl font-black tracking-tight uppercase">Add Category</Sheet.Title>
+							<Sheet.Title class="text-2xl sm:text-4xl font-black tracking-tight uppercase">Add Category</Sheet.Title>
 							<Sheet.Description class="text-base font-medium opacity-70 mt-2">
 								Create a new classification prefix for SKU generation and inventory grouping.
 							</Sheet.Description>
 						</Sheet.Header>
 					</div>
 
-					<form method="POST" action="?/create" use:enhance={makeEnhance('create')} class="flex-1 flex flex-col justify-between px-10 py-8 bg-background">
+					<form method="POST" action="?/create" use:enhance={makeEnhance('create')} class="flex-1 flex flex-col justify-between px-4 sm:px-10 py-6 sm:py-8 bg-background">
 						<div class="space-y-10">
 							{#if form?.error || form?.duplicate}
 								<div class="p-4 text-sm font-medium bg-red-500/10 text-red-600 border-l-4 border-red-600 animate-in fade-in">
@@ -147,7 +147,7 @@
 							</div>
 						</div>
 
-						<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
+						<div class="pt-6 sm:pt-10 mt-6 sm:mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
 							<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px] transition-all" disabled={isSubmitting}>
 								{isSubmitting ? 'Saving...' : 'Register Category'}
 							</Button>
@@ -241,18 +241,18 @@
 <Sheet.Root bind:open={isEditOpen}>
 	<Sheet.Content class="sm:max-w-[600px] overflow-y-auto flex flex-col h-full border-l-[8px] border-primary shadow-2xl p-0">
 		{#if editingCategory}
-			<div class="bg-muted px-10 py-12 border-b border-border relative overflow-hidden">
+			<div class="bg-muted px-4 sm:px-10 py-8 sm:py-12 border-b border-border relative overflow-hidden">
 				<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 				<Sheet.Header class="relative z-10">
 					<span class="inline-block px-3 py-1 bg-foreground text-background text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">Modulation Mode</span>
-					<Sheet.Title class="text-4xl font-black tracking-tight uppercase">{editingCategory.name}</Sheet.Title>
+					<Sheet.Title class="text-2xl sm:text-4xl font-black tracking-tight uppercase">{editingCategory.name}</Sheet.Title>
 					<Sheet.Description class="text-base font-medium opacity-70 mt-2">
 						Prefix: <span class="font-mono font-black">{editingCategory.prefix}</span>
 					</Sheet.Description>
 				</Sheet.Header>
 			</div>
 
-			<form method="POST" action="?/update" use:enhance={makeEnhance('edit')} class="flex-1 flex flex-col justify-between px-10 py-8 bg-background">
+			<form method="POST" action="?/update" use:enhance={makeEnhance('edit')} class="flex-1 flex flex-col justify-between px-4 sm:px-10 py-6 sm:py-8 bg-background">
 				<input type="hidden" name="id" value={editingCategory.id} />
 				<div class="space-y-10">
 					<div class="space-y-6">
@@ -275,7 +275,7 @@
 					</div>
 				</div>
 
-				<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
+				<div class="pt-6 sm:pt-10 mt-6 sm:mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
 					<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px] transition-all" disabled={isSubmitting}>
 						{isSubmitting ? 'Saving...' : 'Commit Changes'}
 					</Button>

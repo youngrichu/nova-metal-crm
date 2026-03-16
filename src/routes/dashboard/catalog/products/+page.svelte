@@ -127,18 +127,18 @@
 					{/snippet}
 				</Sheet.Trigger>
 				<Sheet.Content class="sm:max-w-[700px] overflow-y-auto flex flex-col h-full border-l-[8px] border-primary shadow-2xl p-0">
-					<div class="bg-muted px-10 py-12 border-b border-border relative overflow-hidden">
+					<div class="bg-muted px-4 sm:px-10 py-8 sm:py-12 border-b border-border relative overflow-hidden">
 						<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 						<Sheet.Header class="relative z-10">
 							<span class="inline-block px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">New Product</span>
-							<Sheet.Title class="text-4xl font-black tracking-tight uppercase">Add Product</Sheet.Title>
+							<Sheet.Title class="text-2xl sm:text-4xl font-black tracking-tight uppercase">Add Product</Sheet.Title>
 							<Sheet.Description class="text-base font-medium opacity-70 mt-2">
 								Automated SKU generation based on precise physical dimensions.
 							</Sheet.Description>
 						</Sheet.Header>
 					</div>
 
-					<form method="POST" action="?/create" use:enhance={makeEnhance('create')} class="flex-1 flex flex-col justify-between px-10 py-8 bg-background relative z-10">
+					<form method="POST" action="?/create" use:enhance={makeEnhance('create')} class="flex-1 flex flex-col justify-between px-4 sm:px-10 py-6 sm:py-8 bg-background relative z-10">
 						<div class="space-y-10">
 							{#if form?.error || form?.duplicate}
 								<div class="p-4 text-sm font-medium bg-red-500/10 text-red-600 border-l-4 border-red-600 shadow-sm animate-in fade-in">
@@ -165,7 +165,7 @@
 											<span class="truncate">{getCategoryLabel(selectedCategory)}</span>
 											<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
 										</Popover.Trigger>
-										<Popover.Content class="w-[300px] p-0 rounded-lg border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
+										<Popover.Content class="w-[min(300px,calc(100vw-2rem))] p-0 rounded-lg border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
 											<Command.Root>
 												<Command.Input placeholder="Search category..." class="h-12 border-none font-medium" />
 												<Command.List>
@@ -258,7 +258,7 @@
 									<Input id="averageLandingCost" name="averageLandingCost" type="number" step="0.01" min="0" placeholder="e.g. 150.00" required class="h-14 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
 								</div>
 							</div>
-						<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
+						<div class="pt-6 sm:pt-10 mt-6 sm:mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
 							<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
 								{isSubmitting ? 'Generating SKU...' : 'Save Product Record'}
 							</Button>
@@ -398,18 +398,18 @@
 <Sheet.Root bind:open={isEditOpen}>
 	<Sheet.Content class="sm:max-w-[700px] overflow-y-auto flex flex-col h-full border-l-[8px] border-primary shadow-2xl p-0">
 		{#if editingProduct}
-			<div class="bg-muted px-10 py-12 border-b border-border relative overflow-hidden">
+			<div class="bg-muted px-4 sm:px-10 py-8 sm:py-12 border-b border-border relative overflow-hidden">
 				<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 				<Sheet.Header class="relative z-10">
 					<span class="inline-block px-3 py-1 bg-foreground text-background text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">Edit Product</span>
-					<Sheet.Title class="text-4xl font-black tracking-tight uppercase line-clamp-1">{editingProduct.product.name}</Sheet.Title>
+					<Sheet.Title class="text-2xl sm:text-4xl font-black tracking-tight uppercase line-clamp-1">{editingProduct.product.name}</Sheet.Title>
 					<Sheet.Description class="text-base font-medium opacity-70 mt-2">
 						SKU <span class="font-mono text-primary font-bold">{editingProduct.product.sku}</span>
 					</Sheet.Description>
 				</Sheet.Header>
 			</div>
 
-			<form method="POST" action="?/update" use:enhance={makeEnhance('edit')} class="flex-1 flex flex-col justify-between px-10 py-8 bg-background relative z-10">
+			<form method="POST" action="?/update" use:enhance={makeEnhance('edit')} class="flex-1 flex flex-col justify-between px-4 sm:px-10 py-6 sm:py-8 bg-background relative z-10">
 				<input type="hidden" name="id" value={editingProduct.product.id} />
 				<div class="space-y-10">
 					{#if form?.error}
@@ -436,7 +436,7 @@
 									<span class="truncate">{getCategoryLabel(editingProduct.product.categoryId)}</span>
 									<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
 								</Popover.Trigger>
-								<Popover.Content class="w-[300px] p-0 rounded-none border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
+								<Popover.Content class="w-[min(300px,calc(100vw-2rem))] p-0 rounded-none border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] bg-card" align="start">
 									<Command.Root>
 										<Command.Input placeholder="Search category..." class="h-12 border-none font-medium" />
 										<Command.List>
@@ -528,7 +528,7 @@
 						<Input id="edit-landingCost" name="averageLandingCost" type="number" step="0.01" min="0" value={editingProduct.product.averageLandingCost ?? '0'} required class="h-14 font-mono bg-transparent border-t-0 border-x-0 border-b-2 border-border/50 focus-visible:border-primary focus-visible:ring-0 rounded-none px-0 text-lg" />
 					</div>
 				</div>
-				<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
+				<div class="pt-6 sm:pt-10 mt-6 sm:mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
 					<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
 						{isSubmitting ? 'Saving...' : 'Commit Changes'}
 					</Button>
