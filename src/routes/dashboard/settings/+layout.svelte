@@ -24,7 +24,7 @@
 				{@const isActive = page.url.pathname === item.href || page.url.pathname.startsWith(item.href + '/')}
 				<a
 					href={item.href}
-					class="flex-1 flex items-center justify-center gap-1.5 py-3 text-[10px] md:text-xs font-bold tracking-wider md:tracking-widest uppercase transition-all border-b-2 -mb-px
+					class="flex-1 flex items-center justify-center gap-1.5 py-3 text-xs md:text-sm font-bold tracking-wide md:tracking-widest uppercase transition-all border-b-2 -mb-px
 						{isActive
 							? 'border-primary text-foreground'
 							: 'border-transparent text-foreground/50 hover:text-foreground/80 hover:border-foreground/20'}"
