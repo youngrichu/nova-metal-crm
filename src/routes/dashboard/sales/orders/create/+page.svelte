@@ -3,7 +3,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { enhance } from '$app/forms';
-	import { Trash2, Box, ChevronLeft, Save, FileText, User, PlusCircle, Check, ChevronsUpDown } from 'lucide-svelte';
+	import { Trash2, Box, ChevronLeft, Save, FileText, User, PlusCircle, Check, ChevronsUpDown, AlertTriangle } from 'lucide-svelte';
 	import { formatCurrency } from '$lib/utils/currency';
 	import { goto } from '$app/navigation';
     import * as Popover from "$lib/components/ui/popover";
@@ -18,7 +18,7 @@
 	let customerOpen = $state(false);
 	
 	// Line items state
-	let items = $state([{ productId: '', quantity: 1, unitPrice: 0, _isOpen: false }]);
+	let items = $state([{ productId: '', quantity: 1, unitPrice: 0, availableStock: null as number | null, _isOpen: false }]);
 
     function getCustomerLabel(id: string) {
         const cust = data.customers.find((c: any) => c.id === id);
@@ -38,7 +38,7 @@
 	let totalAmount = $derived(subtotal + taxAmount);
 
 	function addItem() {
-		items = [...items, { productId: '', quantity: 1, unitPrice: 0, _isOpen: false }];
+		items = [...items, { productId: '', quantity: 1, unitPrice: 0, availableStock: null as number | null, _isOpen: false }];
 	}
 
 	function removeItem(index: number) {
@@ -54,6 +54,13 @@
     async function fetchAndUpdatePrice(index: number, productId: string, quantity: number, customerId: string) {
         if (!productId) return;
         const capturedRevision = priceRevision;
+        const capturedQuantity = quantity;
+        const capturedCustomerId = customerId;
+        const capturedTier = walkInPricingTier;
+        // Clear stale stock immediately so a previous product's warning can't linger
+        const resetItems = [...items];
+        resetItems[index].availableStock = null;
+        items = resetItems;
         try {
             const body: Record<string, unknown> = { productId, quantity };
             if (customerId) {
@@ -69,9 +76,20 @@
             if (res.ok) {
                 const data = await res.json();
                 const newItems = [...items];
-                // Discard stale responses: only update if the product and pricing mode haven't changed
-                if (newItems[index].productId === productId && priceRevision === capturedRevision) {
+                // Discard stale responses: product, pricing mode, quantity, and customer/tier must
+                // all still match what this request was for, otherwise a later fetch has superseded it.
+                if (!newItems[index]) return;
+                const contextMatches = isWalkIn
+                    ? capturedTier === walkInPricingTier
+                    : capturedCustomerId === selectedCustomerId;
+                if (
+                    newItems[index].productId === productId &&
+                    priceRevision === capturedRevision &&
+                    newItems[index].quantity === capturedQuantity &&
+                    contextMatches
+                ) {
                     newItems[index].unitPrice = data.finalUnitPrice;
+                    newItems[index].availableStock = data.availableStock ?? null;
                     items = newItems;
                 }
             }
@@ -405,6 +423,16 @@
 								class="h-12 border-t-0 border-x-0 border-b-2 border-border/50 rounded-none bg-transparent px-2 font-mono font-bold focus-visible:border-primary focus-visible:ring-0 text-center md:text-left" 
 							/>
 						</div>
+
+					<!-- Stock warning — shown when entered quantity exceeds available stock -->
+					{#if item.availableStock !== null && item.quantity > item.availableStock}
+						<div class="col-span-full md:col-span-5 -mt-2 mb-1 px-2">
+							<p class="text-xs font-bold text-amber-600 flex items-center gap-1.5">
+								<AlertTriangle class="w-3.5 h-3.5 shrink-0" />
+								Only {item.availableStock} in stock
+							</p>
+						</div>
+					{/if}
 
 						<!-- Unit Price -->
 						<div class="space-y-1.5 md:space-y-0 w-full">

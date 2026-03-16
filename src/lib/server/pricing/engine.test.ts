@@ -17,6 +17,9 @@ vi.mock('$lib/server/db', () => ({
         },
         select: vi.fn().mockReturnValue({
             from: vi.fn().mockReturnValue({
+                innerJoin: vi.fn().mockReturnValue({
+                    where: vi.fn().mockResolvedValue([]) // active warehouse stock query → 0 stock
+                }),
                 where: vi.fn().mockResolvedValue([]) // no system settings overrides → use hardcoded defaults
             })
         })
@@ -89,5 +92,14 @@ describe('calculateDynamicPrice with pricingTierOverride', () => {
     it('falls back to RETAIL when an unknown override is passed', async () => {
         const result = await calculateDynamicPrice('test-product-id', null, 1, undefined, 'GARBAGE_TIER');
         expect(result.unitPriceBeforeDiscount).toBe(115); // 100 * 1.15 (RETAIL)
+    });
+});
+
+describe('calculateDynamicPrice — availableStock', () => {
+    it('returns 0 when no inventory rows exist', async () => {
+        // The existing mock returns [] for all select() calls.
+        // The inventory SUM query returns [], so totalQty is undefined → 0.
+        const result = await calculateDynamicPrice('test-product-id', null, 1, undefined, 'RETAIL');
+        expect(result.availableStock).toBe(0);
     });
 });

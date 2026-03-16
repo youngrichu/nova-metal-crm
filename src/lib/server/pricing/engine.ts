@@ -1,13 +1,13 @@
 // src/lib/server/pricing/engine.ts
 import { db } from '$lib/server/db';
-import { products, customers, salesOrders, salesOrderItems, priceHistory, systemSettings } from '$lib/server/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { products, customers, salesOrders, salesOrderItems, priceHistory, systemSettings, inventory, warehouses } from '$lib/server/db/schema';
+import { eq, and, inArray, sum } from 'drizzle-orm';
 
 const PRICING_RULES = {
     TIERS: {
         RETAIL: 1.15,      // 15% markup
         WHOLESALE: 1.05,   // 5% markup
-        PREFERRED: 1.05,   // 5% markup
+        PREFERRED: 1.08,   // 8% markup
         VIP: 1.05          // 5% markup
     },
     BULK_DISCOUNT: {
@@ -22,9 +22,10 @@ export type PricingResult = {
     discountPercent: number;
     finalUnitPrice: number;
     lineTotal: number;
+    availableStock: number; // total units in stock across all warehouses
 };
 
-export function computePrice(baseCost: number, pricingTier: string, quantity: number, tiersOverride?: typeof PRICING_RULES.TIERS): PricingResult {
+export function computePrice(baseCost: number, pricingTier: string, quantity: number, tiersOverride?: typeof PRICING_RULES.TIERS): Omit<PricingResult, 'availableStock'> {
     const tiers = tiersOverride ?? PRICING_RULES.TIERS;
     let markupMultiplier = tiers.RETAIL; // Default
 
@@ -111,6 +112,14 @@ export async function calculateDynamicPrice(
 
     const baseCost = Number(product.averageLandingCost || 0);
 
+    // Fetch available stock — sum across active warehouses for this product.
+    const stockRows = await db
+        .select({ totalQty: sum(inventory.quantity) })
+        .from(inventory)
+        .innerJoin(warehouses, eq(inventory.warehouseId, warehouses.id))
+        .where(and(eq(inventory.productId, productId), eq(warehouses.isActive, true)));
+    const availableStock = Number(stockRows[0]?.totalQty ?? 0);
+
     // 2. Quote Lock-in Check
     if (orderId) {
         const now = new Date();
@@ -138,7 +147,8 @@ export async function calculateDynamicPrice(
                     unitPriceBeforeDiscount: lockedUnitPrice,
                     discountPercent: 0,
                     finalUnitPrice: lockedUnitPrice,
-                    lineTotal: lockedLineTotal
+                    lineTotal: lockedLineTotal,
+                    availableStock,
                 };
             }
         }
@@ -168,7 +178,10 @@ export async function calculateDynamicPrice(
     // Callers processing multiple items should pass prefetchedTiers to avoid N DB queries.
     const dynamicTiers = prefetchedTiers ?? await fetchMarkupTiers();
 
-    return computePrice(baseCost, pricingTier, quantity, dynamicTiers);
+    return {
+        ...computePrice(baseCost, pricingTier, quantity, dynamicTiers),
+        availableStock,
+    };
 }
 
 /**

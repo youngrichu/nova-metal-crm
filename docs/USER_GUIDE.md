@@ -59,9 +59,9 @@ The sidebar on the left is your main navigation. It shows only the sections your
 
 The Dashboard gives you a live snapshot of the business. It is the first screen you see after logging in.
 
-### Reading the KPI panel
+### Reading the Inventory Overview panel
 
-The left panel shows:
+The **Inventory Overview** panel on the left shows:
 
 | Metric | What it means |
 |---|---|
@@ -70,7 +70,7 @@ The left panel shows:
 | **Inventory Alerts** | Products at or below their minimum stock level |
 | **Active Orders** | Orders currently in QUOTE or CONFIRMED status |
 | **Total Revenue** | Sum of all non-cancelled, non-draft orders in the selected period *(admin & sales only)* |
-| **Total Profit** | Revenue minus landing costs for the same period *(admin & sales only)* |
+| **Total Profit** | Revenue minus purchase costs for the same period *(admin & sales only)* |
 | **Margin by Category** | Gross profit % per product category *(admin & sales only)* |
 
 > **Warehouse staff** see counts and alerts but not revenue or profit figures.
@@ -113,21 +113,66 @@ The bottom-right panel lists every product whose current stock is at or below it
 
 1. In the sidebar, go to **Sales**.
 2. Click **New Order** (top-right button).
-3. **Choose the customer:**
-   - Select an existing customer from the dropdown, **or**
-   - Leave the dropdown empty and fill in the **Walk-In Phone** and **Pricing Tier** for an anonymous customer.
+3. **Choose the customer mode** using the **Registered / Walk-In** toggle:
+
+   **Registered customer:**
+   - Keep the **Registered** tab selected (default).
+   - Search for and select the customer from the combobox. The pricing tier is read automatically from their profile.
+
+   **Walk-in customer (no account):**
+   - Click the **Walk-In** tab.
+   - Select the **Pricing Tier** — **RETAIL**, **WHOLESALE**, **VIP**, or **PREFERRED** — using the tier buttons. The unit prices update immediately.
+   - Optionally enter a **Phone** number so the order can be linked to a customer account later.
+
 4. **Add products:**
    - Click **Add Item**.
-   - Select a product from the dropdown — the unit price is calculated automatically based on the customer's pricing tier.
+   - Select a product from the dropdown — the unit price is calculated automatically based on the pricing tier.
    - Enter the **Quantity**.
-   - Optionally enter a **Discount %** for that line item.
    - Repeat for each product.
 5. Review the **Subtotal**, **VAT**, and **Total** at the bottom.
-6. Click **Create Order**.
+6. Click **Save Order**.
 
 The order is created in **DRAFT** status.
 
 > **Tip:** Unit prices are locked at the moment the order is created. Changing system settings later does not affect existing orders.
+
+---
+
+### How prices are calculated
+
+Every product has a **purchase cost** — the average price the business paid to stock it. The unit price shown to the customer is the purchase cost multiplied by a **markup** that depends on the customer's pricing tier.
+
+**VAT (15%) is added on top of the order subtotal — it is not part of the unit price.**
+
+#### Pricing tiers
+
+**For orders with a registered customer:**
+
+- **Standard (Retail)** — the normal selling price. Applied to occasional or first-time customers. Unit price = purchase cost + 15%.
+- **Preferred** — a loyalty discount for customers who buy regularly. Unit price = purchase cost + 8%.
+- **VIP (Wholesale)** — the lowest price, reserved for high-volume buyers or established business accounts. Unit price = purchase cost + 5%.
+
+**For walk-in orders (no customer account):**
+
+- **RETAIL** — the normal selling price, same rate as Standard (Retail). Use this for any customer you do not recognise as a regular.
+- **PREFERRED** — use this when you know the customer is a regular buyer but their details have not been saved in the system yet. Same rate as the Preferred tier (+8%).
+- **WHOLESALE** — use this for bulk or business buyers who do not have an account. Same rate as VIP (Wholesale) (+5%).
+- **VIP** — an alternative wholesale label for walk-in buyers, identical in price to WHOLESALE (+5%).
+
+#### Order total formula
+
+- **Unit Price** = `Purchase Cost × Markup`
+- **Subtotal** = sum of all line totals (`Unit Price × Quantity`)
+- **VAT** = `Subtotal × 15%`
+- **Order Total** = `Subtotal + VAT`
+
+**Example** — Standard (Retail) customer, product purchase cost ETB 100, qty 10:
+- Unit price = 100 × 1.15 = **ETB 115.00**
+- Subtotal = 115.00 × 10 = **ETB 1,150.00**
+- VAT (15%) = **ETB 172.50**
+- **Total = ETB 1,322.50**
+
+> Markup rates can be adjusted by an Admin under **Settings → System → Pricing Configuration**.
 
 ---
 
@@ -224,12 +269,12 @@ Run this at the end of each working day.
 2. Click **New Customer**.
 3. Fill in at minimum:
    - **Name** (required)
-   - **Pricing Tier** — RETAIL, WHOLESALE, or VIP (determines markup applied to their orders)
+   - **Pricing Tier** — Standard (Retail), Preferred (+8% markup), or VIP (Wholesale) (determines markup applied to their orders)
 4. Optionally add:
-   - Company Name, Phone, WhatsApp, Email
+   - Company Name, Primary Phone, WhatsApp Number, Email
    - TIN Number (required for VAT-registered businesses)
-   - Customer Type: Individual or Workshop
-   - Address and Notes
+   - Customer Type: Individual Walk-in, Fabrication Workshop, or Enterprise / B2B
+   - Address and Internal Annotations
 5. Click **Save**.
 
 ---
@@ -256,18 +301,20 @@ On the Customers list page, use the search box. It matches against the customer'
 
 *Available to: Admin, Warehouse*
 
+> **Note:** When an order is moved to **INVOICED**, the system automatically records a Stock Out for each item using the sales order number as the reference. Manual Stock Out entries are still used for goods dispatched before invoicing, supplier returns, damage adjustments, and other corrections.
+
 ### How to record a stock movement
 
 1. Go to **Inventory**.
 2. Click **Record Transaction**.
 3. Select the **Transaction Type**:
-   - **Stock In** — goods received from supplier
-   - **Stock Out** — goods dispatched to a customer or transferred out
+   - **Stock In** — goods received from a supplier and added to the warehouse
+   - **Stock Out** — goods physically dispatched to a customer. For invoiced sales orders, this is recorded automatically. Use manual Stock Out for pre-invoice dispatches, returns, or transfers.
    - **Adjustment** — corrections for damage, loss, or count discrepancies
-4. Select the **Product** and **Warehouse**.
+4. Select the **Product** and **Target Warehouse**.
 5. Enter the **Quantity**.
-6. For **Stock In**, you may enter the **Unit Cost** (ETB per piece). This updates the product's running average landing cost used in profit calculations.
-7. Optionally enter a **Reference Document** (GRN number, invoice number, or reason).
+6. For **Stock In**, you may enter the **Purchase Cost (ETB)** per piece. This updates the product's running average purchase cost used in profit calculations.
+7. Optionally enter a **Ref Document** (GRN number, sales order number, or reason).
 8. Click **Save**.
 
 > **Stock Out** will be rejected if there is insufficient quantity in the selected warehouse.
@@ -278,7 +325,7 @@ On the Customers list page, use the search box. It matches against the customer'
 
 1. Go to **Inventory → Warehouses**.
 2. Click **New Warehouse** to add a storage location.
-3. Enter the **Name** and **Location** (address or description).
+3. Enter the **Depot Name** and **Physical Address**.
 4. Click **Save**.
 
 ---
@@ -344,7 +391,7 @@ A stock take lets you physically count all items in a warehouse and reconcile wi
 
 Go to **Settings → System** to configure business rules and hardware integrations. All changes take effect immediately.
 
-### Pricing & Tax
+### Pricing Configuration
 
 | Setting | Default | Description |
 |---|---|---|
@@ -358,7 +405,7 @@ Go to **Settings → System** to configure business rules and hardware integrati
 
 ---
 
-### Currency & Localisation
+### Currency Formatting
 
 | Setting | Default | Description |
 |---|---|---|
@@ -420,8 +467,8 @@ The user can log in immediately with the provided credentials.
 ### How to change a user's role
 
 1. Find the user in the list.
-2. Select the new role from the role dropdown next to their name.
-3. Click **Save** or confirm the change.
+2. Click the **Actions** dropdown button on the right side of the user's row.
+3. Under **Change Role**, click **Set as admin**, **Set as sales**, or **Set as warehouse**.
 
 > The user will be **logged out immediately** and must sign in again. Their new permissions take effect on next login.
 
@@ -432,7 +479,8 @@ The user can log in immediately with the provided credentials.
 ### How to deactivate a user
 
 1. Find the user in the list.
-2. Click the **Active / Inactive** toggle next to their name.
+2. Click the **Actions** dropdown button on the right side of the user's row.
+3. Click **Deactivate**.
 
 A deactivated user cannot log in. All their active sessions are terminated immediately. Their historical data (orders, transactions) is preserved.
 
@@ -457,7 +505,7 @@ Set on the customer's profile and used automatically when creating an order for 
 | Tier | UI Label | Markup |
 |---|---|---|
 | STANDARD | Standard (Retail) | +15% |
-| PREFERRED | Preferred | +5% |
+| PREFERRED | Preferred | +8% |
 | VIP | VIP (Wholesale) | +5% |
 
 ### Walk-in order tiers (anonymous customers)
@@ -473,9 +521,9 @@ Selected manually when creating an order without a registered customer.
 
 ### How prices are calculated
 
-Markups are applied to the product's **average landing cost** to produce the **unit price**. VAT is then calculated on the order subtotal — it is **not** included in the unit price.
+Markups are applied to the product's **average purchase cost** to produce the **unit price**. VAT is then calculated on the order subtotal — it is **not** included in the unit price.
 
-**Unit Price** = `Landing Cost × Markup`
+**Unit Price** = `Purchase Cost × Markup`
 
 **Order Total** = `Subtotal + (Subtotal × VAT Rate)`
 
