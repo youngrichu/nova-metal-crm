@@ -42,7 +42,7 @@
         <div class="flex items-start justify-between gap-2 mb-3 pb-3 border-b border-foreground/8">
           <div class="min-w-0">
             {#if primaryCol}
-              <p class="font-black text-sm tracking-tight text-foreground leading-tight truncate uppercase">
+              <p class="font-black text-sm tracking-tight text-foreground leading-tight truncate">
                 {get(row, primaryCol.key) ?? '—'}
               </p>
             {/if}

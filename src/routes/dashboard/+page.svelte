@@ -71,9 +71,9 @@
   const chartLeftPadding = $derived(
     (() => {
       const max = Math.max(0, ...trendData.map((d: any) => Number(d.revenue) || 0));
-      if (max >= 1_000_000) return 48;
-      if (max >= 100_000)  return 38;
-      if (max >= 10_000)   return 30;
+      if (max >= 800_000) return 48;
+      if (max >= 80_000)  return 38;
+      if (max >= 8_000)   return 30;
       return 25;
     })()
   );
