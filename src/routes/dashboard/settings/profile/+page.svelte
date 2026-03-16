@@ -64,7 +64,7 @@
 				<User class="w-4 h-4 text-primary" /> Account Details
 			</h2>
 		</div>
-		<div class="p-6 md:p-8 space-y-6">
+		<div class="p-4 md:p-8 space-y-6">
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 				<div class="space-y-2">
 					<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">Email Address</Label>
@@ -93,7 +93,7 @@
 				<User class="w-4 h-4 text-primary" /> Display Name
 			</h2>
 		</div>
-		<form method="POST" action="?/updateName" use:enhance={enhanceName} class="p-6 md:p-8 space-y-6">
+		<form method="POST" action="?/updateName" use:enhance={enhanceName} class="p-4 md:p-8 space-y-6">
 			{#if form?.nameError}
 				<div class="p-4 text-sm font-medium bg-red-500/10 text-red-600 border-l-4 border-red-600">
 					{form.nameError}
@@ -128,7 +128,7 @@
 				<Lock class="w-4 h-4 text-primary" /> Change Password
 			</h2>
 		</div>
-		<form method="POST" action="?/updatePassword" use:enhance={enhancePassword} class="p-6 md:p-8 space-y-6">
+		<form method="POST" action="?/updatePassword" use:enhance={enhancePassword} class="p-4 md:p-8 space-y-6">
 			{#if form?.pwError}
 				<div class="p-4 text-sm font-medium bg-red-500/10 text-red-600 border-l-4 border-red-600">
 					{form.pwError}
