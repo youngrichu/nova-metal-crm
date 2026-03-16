@@ -208,16 +208,16 @@
     </div>
     
     <!-- Sales Trend Chart -->
-    <div class="col-span-1 lg:col-span-2 order-1 lg:order-none border-2 border-foreground/10 bg-card p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col min-h-[400px]">
+    <div class="col-span-1 lg:col-span-2 order-1 lg:order-none border-2 border-foreground/10 bg-card p-4 sm:p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col min-h-[400px]">
 
-      <div class="flex justify-between items-start mb-8 border-b-2 border-foreground/5 pb-6">
+      <div class="flex flex-col xs:flex-row xs:justify-between xs:items-start gap-3 mb-6 border-b-2 border-foreground/5 pb-4">
         <div>
           <h3 class="font-black text-sm tracking-widest uppercase text-foreground mb-1 flex items-center gap-3">
             <TrendingUp class="w-4 h-4 text-primary" /> Revenue Trajectory
           </h3>
           <p class="text-xs font-medium text-muted-foreground/60 tracking-wider">{data.period === 'day' ? 'Daily' : data.period === 'week' ? 'Weekly' : 'Monthly'} revenue — {RANGE_LABELS[data.range]} (excl. draft &amp; cancelled).</p>
         </div>
-        <Button variant="outline" size="sm" href="/dashboard/sales/orders" class="h-8 rounded-none border-2 border-foreground/20 text-[10px] font-bold tracking-widest uppercase shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
+        <Button variant="outline" size="sm" href="/dashboard/sales/orders" class="self-start h-8 rounded-none border-2 border-foreground/20 text-[10px] font-bold tracking-widest uppercase shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all shrink-0">
           View Orders
         </Button>
       </div>
@@ -235,7 +235,7 @@
             xScale={scaleTime()}
             y="revenue"
             yBaseline={0}
-            padding={{ top: 8, right: 16, bottom: 48, left: 60 }}
+            padding={{ top: 8, right: 8, bottom: 40, left: 52 }}
             tooltip={{ mode: 'bisect-x' }}
           >
             <Svg>
