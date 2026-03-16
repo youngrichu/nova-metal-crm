@@ -127,7 +127,7 @@ The bottom-right panel lists every product whose current stock is at or below it
 4. **Add products:**
    - Click **Add Item**.
    - Select a product from the dropdown — the unit price is calculated automatically based on the pricing tier.
-   - Enter the **Quantity**.
+   - Enter the **Quantity**. If the quantity exceeds available stock, an inline warning appears on that row (e.g., *"Only 4 in stock"*). The warning is advisory — you can still save the order.
    - Repeat for each product.
 5. Review the **Subtotal**, **VAT**, and **Total** at the bottom.
 6. Click **Save Order**.

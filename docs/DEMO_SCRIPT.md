@@ -43,7 +43,7 @@ Before starting, confirm:
 
 | | |
 |---|---|
-| **Action** | Go to **Settings → System**. Set the following values and click **Save Settings**: VAT Rate `0.15`, Retail Markup `1.15`, Wholesale Markup `1.05`, Currency Code `ETB`, Currency Locale `en-ET`, Company Name `NOVA METAL PLC`, Company Address `Addis Ababa, Ethiopia`. |
+| **Action** | Go to **Settings → System**. Set the following values and click **Save Settings**: VAT Rate `0.15`, Retail Markup `1.15`, Wholesale Markup `1.05`, VIP Markup `1.05`, Preferred Markup `1.08`, Currency Code `ETB`, Currency Locale `en-ET`, Company Name `NOVA METAL PLC`, Company Address `Addis Ababa, Ethiopia`. |
 | **Expected** | A success toast notification appears. Reloading the page shows the saved values. |
 
 ---
@@ -249,8 +249,13 @@ Keep all three windows open (admin, Sara, Dawit) for subsequent sections.
 
 | | |
 |---|---|
-| **Action** | Go to **Sales → Orders**. Click **New Order**. Select Customer: `Haile Construction`. Add item: Product `RHS 20x30x1.5 L6000`, Quantity `10`. Note the auto-calculated unit price. Add a second item: Product `SHS 40x40x2 L6000`, Quantity `5`. Click **Create Order**. |
-| **Expected** | Order created in **DRAFT** status with an order number (e.g., SO-2026-0001). Subtotal, VAT (15%), and Total are displayed correctly. Unit price for RHS = ETB 450 × 1.05 = **ETB 472.50** (Wholesale markup only — VAT is on the order total, not the unit price). |
+| **Action** | Go to **Sales → Orders**. Click **New Order**. Select Customer: `Haile Construction`. Add item: Product `RHS 20x30x1.5 L6000`. Before entering quantity, type `60` in the Quantity field. |
+| **Expected** | An inline warning appears beneath that row: *"Only 50 in stock"*. The Save Order button remains enabled. |
+
+| | |
+|---|---|
+| **Action** | Change the quantity back to `10`. Add a second item: Product `SHS 40x40x2 L6000`, Quantity `5`. Click **Create Order**. |
+| **Expected** | Warning disappears on the RHS row. Order created in **DRAFT** status with an order number (e.g., SO-2026-0001). Subtotal, VAT (15%), and Total are displayed correctly. Unit price for RHS = ETB 450 × 1.05 = **ETB 472.50** (Wholesale markup only — VAT is on the order total, not the unit price). |
 
 > **Spot-check the maths:**
 > RHS unit price: 450 × 1.05 = **ETB 472.50** × 10 pcs = **ETB 4,725.00**
@@ -306,7 +311,16 @@ Keep all three windows open (admin, Sara, Dawit) for subsequent sections.
 
 ---
 
-### 5.7 Download PDF Invoice
+### 5.7 Verify auto stock deduction
+
+| | |
+|---|---|
+| **Action** | As Admin or Warehouse user, go to **Inventory**. Check the stock levels for both products. |
+| **Expected** | `RHS 20x30x1.5 L6000` shows **40 units** (was 50 — auto-deducted 10 on invoice). `SHS 40x40x2 L6000` shows **25 units** (was 30 — auto-deducted 5). The recent transactions list shows two `STOCK_OUT` entries referencing the invoice order number (e.g., SO-2026-0001). |
+
+---
+
+### 5.8 Download PDF Invoice
 
 | | |
 |---|---|
@@ -315,16 +329,16 @@ Keep all three windows open (admin, Sara, Dawit) for subsequent sections.
 
 ---
 
-### 5.8 Create a Walk-In Order
+### 5.9 Create a Walk-In Order
 
 | | |
 |---|---|
-| **Action** | Click **New Order**. Leave the Customer dropdown empty. Enter Walk-In Phone: `0922 334455`, Pricing Tier: `Retail`. Add item: `RHS 20x30x1.5 L6000`, Quantity `2`. Click **Create Order**. |
+| **Action** | Click **New Order**. Switch to the **Walk-In** tab. Enter Walk-In Phone: `0922 334455`. Select Pricing Tier: `RETAIL`. Add item: `RHS 20x30x1.5 L6000`, Quantity `2`. Click **Create Order**. |
 | **Expected** | Order created in DRAFT. Unit price = 450 × 1.15 = **ETB 517.50** (RETAIL markup, higher than the Wholesale price of ETB 472.50 used on Haile's order). |
 
 ---
 
-### 5.9 Link Walk-In Order to a Customer
+### 5.10 Link Walk-In Order to a Customer
 
 | | |
 |---|---|
@@ -398,7 +412,7 @@ Keep all three windows open (admin, Sara, Dawit) for subsequent sections.
 | | |
 |---|---|
 | **Action** | Go to **Inventory → Stock Takes**. Click **Start New Count**. Select Warehouse: `Main Store`. Click **Start**. |
-| **Expected** | A new count session opens showing all products in Main Store with their expected quantities (RHS: 50, SHS: 30). |
+| **Expected** | A new count session opens showing all products in Main Store with their expected quantities (RHS: 40, SHS: 25 — stock was auto-deducted when the invoice was generated in Section 5.6). |
 
 ---
 
@@ -406,12 +420,12 @@ Keep all three windows open (admin, Sara, Dawit) for subsequent sections.
 
 | | |
 |---|---|
-| **Action** | For `RHS 20x30x1.5 L6000`, enter Physical Quantity: `48` and Note: `2 units damaged`. Click **Save**. |
+| **Action** | For `RHS 20x30x1.5 L6000`, enter Physical Quantity: `38` and Note: `2 units damaged`. Click **Save**. |
 | **Expected** | Item is saved. |
 
 | | |
 |---|---|
-| **Action** | For `SHS 40x40x2 L6000`, enter Physical Quantity: `30`. Click **Save**. |
+| **Action** | For `SHS 40x40x2 L6000`, enter Physical Quantity: `25`. Click **Save**. |
 | **Expected** | Both items now have physical quantities entered. |
 
 ---
@@ -426,7 +440,7 @@ Keep all three windows open (admin, Sara, Dawit) for subsequent sections.
 | | |
 |---|---|
 | **Action** | Click **Close Count**. |
-| **Expected** | Count status changes to CLOSED. RHS inventory in Main Store is now 48. The System Telemetry feed on the Dashboard shows a `±` ADJUSTMENT entry for the RHS product. |
+| **Expected** | Count status changes to CLOSED. RHS inventory in Main Store is now 38. The System Telemetry feed on the Dashboard shows a `±` ADJUSTMENT entry for the RHS product. |
 
 ---
 
@@ -435,11 +449,11 @@ Keep all three windows open (admin, Sara, Dawit) for subsequent sections.
 | | |
 |---|---|
 | **Action** | Go to the Dashboard. |
-| **Expected** | RHS 20x30x1.5 L6000 still has 48 units vs. minimum 10 — **no alert**. The Critical Deficits panel still shows "Grid Operational". |
+| **Expected** | RHS 20x30x1.5 L6000 still has 38 units vs. minimum 10 — **no alert**. The Critical Deficits panel still shows "Grid Operational". |
 
 | | |
 |---|---|
-| **Action** | As Admin, record a **Stock Out** of 42 units for the RHS product (bringing stock to 6, below the minimum of 10). |
+| **Action** | As Admin, record a **Stock Out** of 32 units for the RHS product (bringing stock to 6, below the minimum of 10). |
 | **Expected** | Dashboard Critical Deficits panel now lists `RHS20x30x1.5x6000` with `6 / 10`. The Inventory Alerts KPI counter shows `1`. |
 
 ---
@@ -552,6 +566,8 @@ Before signing off, confirm all sections passed:
 - [ ] Section 3 — Warehouses and stock-in recorded
 - [ ] Section 4 — Customer created and searchable
 - [ ] Section 5 — Full order cycle: DRAFT → QUOTE → CONFIRMED → INVOICED
+- [ ] Section 5 — Low-stock warning shown at order creation
+- [ ] Section 5 — Auto stock deduction verified after invoice
 - [ ] Section 5 — Payments recorded, PDF invoice downloaded
 - [ ] Section 5 — Walk-in order created and linked to customer
 - [ ] Section 6 — Dashboard filters affect KPIs and chart correctly
