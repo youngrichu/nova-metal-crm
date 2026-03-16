@@ -86,30 +86,30 @@
     </div>
     
     <!-- View Options (Day/Week/Month) + Date Range Dropdown -->
-    <div class="flex items-center gap-4 shrink-0 mt-6 md:mt-0 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-      
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-6 md:mt-0 w-full md:w-auto">
+
       <!-- Brutalist Toggle -->
-      <div class="flex border-2 border-foreground/20 p-1 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)] shrink-0">
+      <div class="flex border-2 border-foreground/20 p-1 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)]">
         <button
           onclick={() => setPeriod('day')}
-          class="px-6 py-2 text-xs font-bold tracking-widest uppercase transition-all
+          class="flex-1 px-4 py-2 text-xs font-bold tracking-widest uppercase transition-all
             {activePeriod === 'day' ? 'bg-foreground text-background shadow-inner scale-[0.98]' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
         >Day</button>
         <button
           onclick={() => setPeriod('week')}
-          class="px-6 py-2 text-xs font-bold tracking-widest uppercase transition-all
+          class="flex-1 px-4 py-2 text-xs font-bold tracking-widest uppercase transition-all
             {activePeriod === 'week' ? 'bg-foreground text-background shadow-inner scale-[0.98]' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
         >Week</button>
         <button
           onclick={() => setPeriod('month')}
-          class="px-6 py-2 text-xs font-bold tracking-widest uppercase transition-all
+          class="flex-1 px-4 py-2 text-xs font-bold tracking-widest uppercase transition-all
             {activePeriod === 'month' ? 'bg-foreground text-background shadow-inner scale-[0.98]' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
         >Month</button>
       </div>
 
       <!-- Select Dropdown -->
       <Select.Root type="single" value={selectedRange} onValueChange={setRange}>
-        <Select.Trigger class="w-[200px] h-12 rounded-none border-2 border-foreground/20 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)] font-bold text-xs tracking-widest uppercase">
+        <Select.Trigger class="w-full sm:w-[200px] h-12 rounded-none border-2 border-foreground/20 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)] font-bold text-xs tracking-widest uppercase">
           <CalendarDays class="mr-3 h-4 w-4 opacity-50" />
           <span>{RANGE_LABELS[selectedRange] ?? 'Select range...'}</span>
         </Select.Trigger>
