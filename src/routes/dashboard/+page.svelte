@@ -7,6 +7,7 @@
   import { formatCurrency } from "$lib/utils/currency";
   import { goto } from '$app/navigation';
   import { Chart, Svg, Area, Spline, Axis, Highlight, Tooltip } from 'layerchart';
+  import DataPoints from '$lib/components/ui/chart/DataPoints.svelte';
   import { scaleTime } from 'd3-scale';
   import { timeFormat } from 'd3-time-format';
 
@@ -252,6 +253,7 @@
               />
               <Area class="fill-primary/20" />
               <Spline class="stroke-primary stroke-[1.5]" />
+              <DataPoints />
               <Highlight points={{ class: 'fill-primary stroke-background stroke-2 r-3' }} />
             </Svg>
             <Tooltip.Root>
