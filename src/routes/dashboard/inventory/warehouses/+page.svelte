@@ -7,6 +7,11 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { enhance } from '$app/forms';
 	import { Trash2, MapPin, ChevronDown, Pencil, Warehouse } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
+	import { DataCards } from '$lib/components/ui/data-cards';
+	import type { Action } from '$lib/components/ui/data-cards';
+	import { PageFAB } from '$lib/components/ui/fab';
+	import { invalidateAll } from '$app/navigation';
 	
 	let { data, form } = $props();
 	
@@ -19,6 +24,50 @@
 		editingWarehouse = wh;
 		isEditOpen = true;
 	}
+
+	const processedWarehouses = $derived(
+		data.warehouses.map((row: any) => ({
+			id: row.id,
+			name: row.name,
+			location: row.location ?? '—',
+			isActiveLabel: row.isActive ? 'Active' : 'Inactive',
+		}))
+	);
+
+	const cardColumns = [
+		{ key: 'name',          label: 'Name',     primary: true },
+		{ key: 'location',      label: 'Location', secondary: true },
+		{ key: 'isActiveLabel', label: 'Status',   badge: true,
+			badgeClass: (v: unknown) => v === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' },
+	];
+
+	const cardActions: Action[] = [
+		{
+			label: 'Edit',
+			onClick: (row: any) => {
+				const original = data.warehouses.find((w: any) => w.id === row.id);
+				if (original) openEdit(original);
+			},
+		},
+		{
+			label: 'Delete',
+			variant: 'destructive',
+			onClick: async (row: any) => {
+				try {
+					const fd = new FormData();
+					fd.set('id', row.id);
+					const res = await fetch('?/delete', { method: 'POST', body: fd });
+					if (res.ok) {
+						await invalidateAll();
+					} else {
+						toast.error('Failed to delete warehouse. It may have linked inventory.');
+					}
+				} catch {
+					toast.error('Failed to delete warehouse. It may have linked inventory.');
+				}
+			},
+		},
+	];
 
 	function makeEnhance(closeKey: 'create' | 'edit') {
 		return () => {
@@ -53,7 +102,7 @@
 			<Sheet.Root bind:open={isCreateOpen}>
 				<Sheet.Trigger>
 					{#snippet child({ props })}
-						<Button {...props} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]">
+						<Button {...props} class="hidden md:flex h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]">
 							Register Depot
 						</Button>
 					{/snippet}
@@ -83,20 +132,20 @@
 
 								<div class="space-y-2 group">
 									<Label for="name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Depot Name *</Label>
-									<Input id="name" name="name" placeholder="E.g., Head Office Depot" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+									<Input id="name" name="name" placeholder="E.g., Head Office Depot" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all" />
 								</div>
 
 								<div class="space-y-2 group">
 									<Label for="location" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors flex items-center gap-2">
 										<MapPin class="w-3.5 h-3.5" /> Physical Address
 									</Label>
-									<Input id="location" name="location" placeholder="Zone, District, or full address..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg" />
+									<Input id="location" name="location" placeholder="Zone, District, or full address..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none" />
 								</div>
 							</div>
 						</div>
 
 						<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
-							<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px] transition-all" disabled={isSubmitting}>
+							<Button type="submit" class="w-full h-12 sm:h-16 rounded-none text-sm sm:text-base font-bold tracking-widest uppercase bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px] transition-all" disabled={isSubmitting}>
 								{isSubmitting ? 'Processing...' : 'Register Depot'}
 							</Button>
 						</div>
@@ -107,7 +156,10 @@
 	</header>
 
 	<!-- Data Table -->
-	<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)]">
+	<div class="md:hidden">
+		<DataCards columns={cardColumns} data={processedWarehouses} actions={cardActions} emptyMessage="No warehouses found." />
+	</div>
+	<div class="hidden md:block bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)]">
 		<Table.Root class="w-full">
 			<Table.Header>
 				<Table.Row class="bg-muted/50 hover:bg-muted/50 border-b-2 border-foreground/10">
@@ -176,6 +228,8 @@
 	</div>
 </div>
 
+<PageFAB label="Add warehouse" onclick={() => isCreateOpen = true} />
+
 <!-- Edit Warehouse Sheet -->
 <Sheet.Root bind:open={isEditOpen}>
 	<Sheet.Content class="sm:max-w-[600px] overflow-y-auto flex flex-col h-full border-l-[8px] border-primary shadow-2xl p-0">
@@ -209,7 +263,7 @@
 				</div>
 
 				<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
-					<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px] transition-all" disabled={isSubmitting}>
+					<Button type="submit" class="w-full h-12 sm:h-16 rounded-none text-sm sm:text-base font-bold tracking-widest uppercase bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px] transition-all" disabled={isSubmitting}>
 						{isSubmitting ? 'Saving...' : 'Commit Changes'}
 					</Button>
 				</div>

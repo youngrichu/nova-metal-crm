@@ -7,6 +7,8 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { DataCards } from '$lib/components/ui/data-cards';
+	import { PageFAB } from '$lib/components/ui/fab';
 	import { Trash2, Box, ChevronDown, Pencil, Building2, User, Phone, Mail, MessageCircle, FileText } from 'lucide-svelte';
 	import * as m from '$lib/paraglide/messages';
 	
@@ -16,6 +18,23 @@
 	let isEditOpen = $state(false);
 	let isSubmitting = $state(false);
 	let editingCustomer = $state<any>(null);
+
+	const processedCustomers = $derived(
+		data.customers.map((row: any) => ({
+			id: row.id,
+			name: row.name,
+			email: row.email ?? '—',
+			phone: row.phone ?? '—',
+			createdAt: row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—',
+		}))
+	);
+
+	const cardColumns = [
+		{ key: 'name',      label: 'Name',     primary: true },
+		{ key: 'email',     label: 'Email',    secondary: true },
+		{ key: 'phone',     label: 'Phone' },
+		{ key: 'createdAt', label: 'Joined' },
+	];
 
 	function openEdit(customer: any) {
 		editingCustomer = customer;
@@ -65,7 +84,7 @@
 			<Sheet.Root bind:open={isCreateOpen}>
 				<Sheet.Trigger>
 					{#snippet child({ props })}
-						<Button {...props} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] relative">
+						<Button {...props} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] relative hidden md:flex">
 							{m.customer_add_btn()}
 						</Button>
 					{/snippet}
@@ -118,7 +137,7 @@
 										<Label for="name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors flex items-center gap-2">
 											<User class="w-3.5 h-3.5" /> {m.customer_name()}
 										</Label>
-										<Input id="name" name="name" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+										<Input id="name" name="name" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all" />
 									</div>
 								</div>
 
@@ -127,13 +146,13 @@
 										<Label for="companyName" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary flex items-center gap-2">
 											<Building2 class="w-3.5 h-3.5" /> {m.customer_org()}
 										</Label>
-										<Input id="companyName" name="companyName" class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg" />
+										<Input id="companyName" name="companyName" class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none" />
 									</div>
 									<div class="space-y-2 group">
 										<Label for="tinNumber" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary flex items-center gap-2">
 											<FileText class="w-3.5 h-3.5" /> {m.customer_tin()}
 										</Label>
-										<Input id="tinNumber" name="tinNumber" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg" />
+										<Input id="tinNumber" name="tinNumber" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none" />
 									</div>
 								</div>
 							</div>
@@ -145,7 +164,7 @@
 								<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 									<div class="space-y-2">
 										<Label for="customerType" class="text-xs font-bold tracking-wider uppercase text-foreground/70">{m.customer_type()}</Label>
-										<select id="customerType" name="customerType" class="flex h-12 w-full items-center justify-between rounded-lg border-2 border-transparent bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors">
+										<select id="customerType" name="customerType" class="flex h-12 w-full items-center justify-between rounded-none border-2 border-foreground/10 bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors">
 											<option value="INDIVIDUAL">{m.customer_type_individual()}</option>
 											<option value="WORKSHOP">{m.customer_type_workshop()}</option>
 											<option value="ENTERPRISE">{m.customer_type_enterprise()}</option>
@@ -153,7 +172,7 @@
 									</div>
 									<div class="space-y-2">
 										<Label for="pricingTier" class="text-xs font-bold tracking-wider uppercase text-foreground/70">{m.customer_tier()}</Label>
-										<select id="pricingTier" name="pricingTier" class="flex h-12 w-full items-center justify-between rounded-lg border-2 border-transparent bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors">
+										<select id="pricingTier" name="pricingTier" class="flex h-12 w-full items-center justify-between rounded-none border-2 border-foreground/10 bg-muted/30 px-4 text-sm focus:bg-transparent focus:border-primary focus:outline-none transition-colors">
 											<option value="STANDARD">{m.customer_tier_std()}</option>
 											<option value="PREFERRED">{m.customer_tier_pref()}</option>
 											<option value="VIP">{m.customer_tier_vip()}</option>
@@ -171,25 +190,25 @@
 										<Label for="phone" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary flex items-center gap-2">
 											<Phone class="w-3.5 h-3.5" /> {m.customer_phone()}
 										</Label>
-										<Input id="phone" type="tel" name="phone" placeholder="+251..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg font-mono" />
+										<Input id="phone" type="tel" name="phone" placeholder="+251..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none font-mono" />
 									</div>
 									<div class="space-y-2 group">
 										<Label for="whatsapp" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-[var(--color-whatsapp,#25D366)] flex items-center gap-2">
 											<MessageCircle class="w-3.5 h-3.5" /> {m.customer_whatsapp()}
 										</Label>
-										<Input id="whatsapp" type="tel" name="whatsapp" placeholder="+251..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-[var(--color-whatsapp,#25D366)] focus-visible:ring-0 rounded-lg font-mono" />
+										<Input id="whatsapp" type="tel" name="whatsapp" placeholder="+251..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-[var(--color-whatsapp,#25D366)] focus-visible:ring-0 rounded-none font-mono" />
 									</div>
 								</div>
 								
 								<div class="space-y-2 group">
 									<Label for="notes" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary">{m.customer_notes()}</Label>
-									<Input id="notes" name="notes" placeholder="" class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg" />
+									<Input id="notes" name="notes" placeholder="" class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none" />
 								</div>
 							</div>
 						</div>
 
 						<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
-							<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
+							<Button type="submit" class="w-full h-12 sm:h-16 rounded-none text-sm sm:text-base font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
 								{isSubmitting ? '...' : m.customer_submit()}
 							</Button>
 						</div>
@@ -199,8 +218,14 @@
 		</div>
 	</header>
 
-	<!-- Main Data Presentation -->
-	<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)] relative">
+	<!-- Mobile card view -->
+	<div class="md:hidden">
+		<DataCards columns={cardColumns} data={processedCustomers} emptyMessage="No customers found." />
+	</div>
+
+	<!-- Desktop table view -->
+	<div class="hidden md:block">
+		<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)] relative">
 		
 		<Table.Root class="w-full text-left border-collapse">
 			<Table.Header>
@@ -299,8 +324,11 @@
 			</Table.Body>
 		</Table.Root>
 		
+		</div>
 	</div>
 </div>
+
+<PageFAB label="Add customer" onclick={() => isCreateOpen = true} />
 
 <!-- Edit Sheet -->
 <Sheet.Root bind:open={isEditOpen}>
@@ -407,7 +435,7 @@
 				</div>
 
 				<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
-					<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
+					<Button type="submit" class="w-full h-12 sm:h-16 rounded-none text-sm sm:text-base font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
 						{isSubmitting ? '...' : m.customer_edit_save()}
 					</Button>
 				</div>

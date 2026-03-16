@@ -7,6 +7,11 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { enhance } from '$app/forms';
 	import { Trash2, Tags, ChevronDown, Pencil } from 'lucide-svelte';
+	import { toast } from 'svelte-sonner';
+	import { DataCards } from '$lib/components/ui/data-cards';
+	import { PageFAB } from '$lib/components/ui/fab';
+	import { invalidateAll } from '$app/navigation';
+	import type { Action } from '$lib/components/ui/data-cards';
 	
 	let { data, form } = $props();
 	
@@ -14,6 +19,45 @@
 	let isEditOpen = $state(false);
 	let isSubmitting = $state(false);
 	let editingCategory = $state<any>(null);
+
+	const processedCategories = $derived(
+		data.categories.map((row: any) => ({
+			id: row.id,
+			name: row.name,
+			prefix: row.prefix,
+			description: row.description ?? '—',
+		}))
+	);
+
+	const cardColumns = [
+		{ key: 'name',        label: 'Name',        primary: true },
+		{ key: 'prefix',      label: 'Prefix',      secondary: true },
+		{ key: 'description', label: 'Description' },
+	];
+
+	const cardActions: Action[] = [
+		{
+			label: 'Edit',
+			onClick: (row: any) => {
+				const original = data.categories.find((c: any) => c.id === row.id);
+				if (original) openEdit(original);
+			},
+		},
+		{
+			label: 'Delete',
+			variant: 'destructive',
+			onClick: async (row: any) => {
+				const fd = new FormData();
+				fd.set('id', row.id);
+				const res = await fetch('?/delete', { method: 'POST', body: fd });
+				if (res.ok) {
+					await invalidateAll();
+				} else {
+					toast.error('Failed to delete category. It may have products assigned to it.');
+				}
+			},
+		},
+	];
 
 	function openEdit(cat: any) {
 		editingCategory = cat;
@@ -53,24 +97,24 @@
 			<Sheet.Root bind:open={isCreateOpen}>
 				<Sheet.Trigger>
 					{#snippet child({ props })}
-						<Button {...props} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]">
+						<Button {...props} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] hidden md:flex">
 							New Category
 						</Button>
 					{/snippet}
 				</Sheet.Trigger>
 				<Sheet.Content class="sm:max-w-[600px] overflow-y-auto flex flex-col h-full border-l-[8px] border-primary shadow-2xl p-0">
-					<div class="bg-muted px-10 py-12 border-b border-border relative overflow-hidden">
+					<div class="bg-muted px-4 sm:px-10 py-8 sm:py-12 border-b border-border relative overflow-hidden">
 						<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 						<Sheet.Header class="relative z-10">
 							<span class="inline-block px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">New Registration</span>
-							<Sheet.Title class="text-4xl font-black tracking-tight uppercase">Add Category</Sheet.Title>
+							<Sheet.Title class="text-2xl sm:text-4xl font-black tracking-tight uppercase">Add Category</Sheet.Title>
 							<Sheet.Description class="text-base font-medium opacity-70 mt-2">
 								Create a new classification prefix for SKU generation and inventory grouping.
 							</Sheet.Description>
 						</Sheet.Header>
 					</div>
 
-					<form method="POST" action="?/create" use:enhance={makeEnhance('create')} class="flex-1 flex flex-col justify-between px-10 py-8 bg-background">
+					<form method="POST" action="?/create" use:enhance={makeEnhance('create')} class="flex-1 flex flex-col justify-between px-4 sm:px-10 py-6 sm:py-8 bg-background">
 						<div class="space-y-10">
 							{#if form?.error || form?.duplicate}
 								<div class="p-4 text-sm font-medium bg-red-500/10 text-red-600 border-l-4 border-red-600 animate-in fade-in">
@@ -87,24 +131,24 @@
 
 								<div class="space-y-2 group">
 									<Label for="name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Category Name *</Label>
-									<Input id="name" name="name" placeholder="E.g., Rectangular Hollow Section" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg text-lg px-4 transition-all" />
+									<Input id="name" name="name" placeholder="E.g., Rectangular Hollow Section" required class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all" />
 								</div>
 
 								<div class="space-y-2 group">
 									<Label for="prefix" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">SKU Prefix *</Label>
-									<Input id="prefix" name="prefix" placeholder="E.g., RHS" class="uppercase h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg transition-all" required />
+									<Input id="prefix" name="prefix" placeholder="E.g., RHS" class="uppercase h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" required />
 									<p class="text-[0.7rem] text-muted-foreground/60 font-medium tracking-wide">Must be unique. Auto-generates product identifiers.</p>
 								</div>
 
 								<div class="space-y-2 group">
 									<Label for="description" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Description / Notes</Label>
-									<Input id="description" name="description" placeholder="Optional context..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-lg" />
+									<Input id="description" name="description" placeholder="Optional context..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none" />
 								</div>
 							</div>
 						</div>
 
-						<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
-							<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px] transition-all" disabled={isSubmitting}>
+						<div class="pt-6 sm:pt-10 mt-6 sm:mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
+							<Button type="submit" class="w-full h-12 sm:h-16 rounded-none text-sm sm:text-base font-bold tracking-widest uppercase bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px] transition-all" disabled={isSubmitting}>
 								{isSubmitting ? 'Saving...' : 'Register Category'}
 							</Button>
 						</div>
@@ -114,7 +158,13 @@
 		</div>
 	</header>
 
-	<!-- Data Table -->
+	<!-- Mobile card view -->
+	<div class="md:hidden">
+		<DataCards columns={cardColumns} data={processedCategories} actions={cardActions} emptyMessage="No categories found." />
+	</div>
+
+	<!-- Desktop table view -->
+	<div class="hidden md:block">
 	<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)]">
 		<Table.Root class="w-full">
 			<Table.Header>
@@ -182,24 +232,27 @@
 			{data.categories.length} categor{data.categories.length !== 1 ? 'ies' : 'y'} total
 		</div>
 	</div>
+	</div>
 </div>
+
+<PageFAB label="Add category" onclick={() => isCreateOpen = true} />
 
 <!-- Edit Category Sheet -->
 <Sheet.Root bind:open={isEditOpen}>
 	<Sheet.Content class="sm:max-w-[600px] overflow-y-auto flex flex-col h-full border-l-[8px] border-primary shadow-2xl p-0">
 		{#if editingCategory}
-			<div class="bg-muted px-10 py-12 border-b border-border relative overflow-hidden">
+			<div class="bg-muted px-4 sm:px-10 py-8 sm:py-12 border-b border-border relative overflow-hidden">
 				<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 				<Sheet.Header class="relative z-10">
 					<span class="inline-block px-3 py-1 bg-foreground text-background text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">Modulation Mode</span>
-					<Sheet.Title class="text-4xl font-black tracking-tight uppercase">{editingCategory.name}</Sheet.Title>
+					<Sheet.Title class="text-2xl sm:text-4xl font-black tracking-tight uppercase">{editingCategory.name}</Sheet.Title>
 					<Sheet.Description class="text-base font-medium opacity-70 mt-2">
 						Prefix: <span class="font-mono font-black">{editingCategory.prefix}</span>
 					</Sheet.Description>
 				</Sheet.Header>
 			</div>
 
-			<form method="POST" action="?/update" use:enhance={makeEnhance('edit')} class="flex-1 flex flex-col justify-between px-10 py-8 bg-background">
+			<form method="POST" action="?/update" use:enhance={makeEnhance('edit')} class="flex-1 flex flex-col justify-between px-4 sm:px-10 py-6 sm:py-8 bg-background">
 				<input type="hidden" name="id" value={editingCategory.id} />
 				<div class="space-y-10">
 					<div class="space-y-6">
@@ -222,8 +275,8 @@
 					</div>
 				</div>
 
-				<div class="pt-10 mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
-					<Button type="submit" class="w-full h-16 rounded-none text-lg font-bold tracking-widest uppercase bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px] transition-all" disabled={isSubmitting}>
+				<div class="pt-6 sm:pt-10 mt-6 sm:mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
+					<Button type="submit" class="w-full h-12 sm:h-16 rounded-none text-sm sm:text-base font-bold tracking-widest uppercase bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px] transition-all" disabled={isSubmitting}>
 						{isSubmitting ? 'Saving...' : 'Commit Changes'}
 					</Button>
 				</div>
