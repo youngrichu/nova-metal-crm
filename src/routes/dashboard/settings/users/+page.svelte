@@ -60,7 +60,8 @@
 	const cardColumns = [
 		{ key: 'name',      label: 'Name',     primary: true },
 		{ key: 'email',     label: 'Email',    secondary: true },
-		{ key: 'role',      label: 'Role',     badge: true },
+		{ key: 'role',      label: 'Role',     badge: true,
+			badgeClass: (v: unknown) => roleColors[String(v)] ?? 'bg-muted text-foreground' },
 		{ key: 'createdAt', label: 'Joined' },
 	];
 

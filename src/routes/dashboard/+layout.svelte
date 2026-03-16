@@ -10,7 +10,7 @@
   <AppSidebar />
   <div class="flex flex-col flex-1 w-full overflow-hidden">
     <AppHeader />
-    <main class="flex-1 overflow-auto bg-slate-50/50 p-4 md:p-6 lg:p-8 pb-20 md:pb-0">
+    <main class="flex-1 overflow-auto bg-slate-50/50 p-4 md:p-6 lg:p-8 pb-nav-safe md:pb-6 lg:pb-8">
       {@render children()}
     </main>
   </div>

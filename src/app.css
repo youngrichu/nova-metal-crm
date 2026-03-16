@@ -27,6 +27,11 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Bottom padding that clears the BottomNav + iOS safe-area — used on <main> */
+@utility pb-nav-safe {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+
 @layer base {
   :root {
     --radius: 0.625rem;

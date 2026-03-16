@@ -8,7 +8,9 @@
 	import { enhance } from '$app/forms';
 	import { Trash2, MapPin, ChevronDown, Pencil, Warehouse } from 'lucide-svelte';
 	import { DataCards } from '$lib/components/ui/data-cards';
+	import type { Action } from '$lib/components/ui/data-cards';
 	import { PageFAB } from '$lib/components/ui/fab';
+	import { invalidateAll } from '$app/navigation';
 	
 	let { data, form } = $props();
 	
@@ -36,6 +38,26 @@
 		{ key: 'location',      label: 'Location', secondary: true },
 		{ key: 'isActiveLabel', label: 'Status',   badge: true,
 			badgeClass: (v: unknown) => v === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' },
+	];
+
+	const cardActions: Action[] = [
+		{
+			label: 'Edit',
+			onClick: (row: any) => {
+				const original = data.warehouses.find((w: any) => w.id === row.id);
+				if (original) openEdit(original);
+			},
+		},
+		{
+			label: 'Delete',
+			variant: 'destructive',
+			onClick: async (row: any) => {
+				const fd = new FormData();
+				fd.set('id', row.id);
+				await fetch('?/delete', { method: 'POST', body: fd });
+				await invalidateAll();
+			},
+		},
 	];
 
 	function makeEnhance(closeKey: 'create' | 'edit') {
@@ -126,7 +148,7 @@
 
 	<!-- Data Table -->
 	<div class="md:hidden">
-		<DataCards columns={cardColumns} data={processedWarehouses} emptyMessage="No warehouses found." />
+		<DataCards columns={cardColumns} data={processedWarehouses} actions={cardActions} emptyMessage="No warehouses found." />
 	</div>
 	<div class="hidden md:block bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)]">
 		<Table.Root class="w-full">

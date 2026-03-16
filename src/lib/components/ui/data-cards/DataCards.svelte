@@ -35,7 +35,7 @@
   <p class="text-muted-foreground text-sm text-center py-8">{emptyMessage}</p>
 {:else}
   <div class="flex flex-col gap-3">
-    {#each data as row (get(row, keyField))}
+    {#each data as row, i (get(row, keyField) ?? `__row_${i}`)}
       {@const rowActions = resolveActions(actions, row)}
       <div class="border border-border rounded-xl bg-card p-4 shadow-sm">
         <!-- Card header -->

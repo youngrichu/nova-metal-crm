@@ -42,11 +42,17 @@
     return path.startsWith(prefix);
   }
 
-  function isMoreItemActive(href: string) {
-    const path = page.url.pathname;
-    // Exact match, or path is a child of href (href + '/')
-    return path === href || path.startsWith(href + '/');
-  }
+  // Compute the single best-matching More item (longest prefix match).
+  // This prevents both "Inventory" and "Warehouses" from being highlighted
+  // simultaneously when the path is /dashboard/inventory/warehouses.
+  const activeMoreHref = $derived(
+    [...visibleMoreItems]
+      .filter(item => {
+        const path = page.url.pathname;
+        return path === item.href || path.startsWith(item.href + '/');
+      })
+      .sort((a, b) => b.href.length - a.href.length)[0]?.href
+  );
 </script>
 
 <nav
@@ -80,7 +86,7 @@
           {#each visibleMoreItems as item}
             <button
               class="flex items-center gap-3 px-2 py-2.5 rounded-lg text-sm font-medium transition-colors
-                     {isMoreItemActive(item.href) ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-accent/50'}"
+                     {activeMoreHref === item.href ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-accent/50'}"
               onclick={() => { moreOpen = false; goto(item.href); }}
             >
               <item.icon class="h-4 w-4 shrink-0" />
