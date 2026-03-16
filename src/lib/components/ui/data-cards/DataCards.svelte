@@ -56,14 +56,14 @@
             {#if badgeCol}
               {@const badgeValue = get(row, badgeCol.key)}
               {@const badgeClasses = badgeCol.badgeClass ? badgeCol.badgeClass(badgeValue) : 'bg-muted text-muted-foreground'}
-              <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-black uppercase tracking-widest border {badgeClasses}">
+              <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-black tracking-widest border {badgeClasses}">
                 {badgeValue ?? '—'}
               </span>
             {/if}
             {#if rowActions.length > 0}
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger
-                  class="h-7 w-7 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  class="h-10 w-10 md:h-7 md:w-7 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                   aria-label="Row actions"
                 >
                   <MoreHorizontal class="h-4 w-4" />
