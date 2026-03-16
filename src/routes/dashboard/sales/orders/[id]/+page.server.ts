@@ -91,14 +91,23 @@ export const actions: Actions = {
 
         try {
             await db.transaction(async (tx) => {
-                // 1. Fetch order for orderNumber (needed as referenceDoc) and existence check
+                // 1. Fetch order for orderNumber (needed as referenceDoc), existence check,
+                //    and terminal-state guard.
                 const [currentOrder] = await tx
-                    .select({ orderNumber: salesOrders.orderNumber })
+                    .select({ status: salesOrders.status, orderNumber: salesOrders.orderNumber })
                     .from(salesOrders)
                     .where(eq(salesOrders.id, params.id))
                     .limit(1);
 
-                if (!currentOrder) throw new Error("Order not found");
+                if (!currentOrder) throw Object.assign(new Error("Order not found"), { statusCode: 404 });
+
+                // Enforce terminal states: INVOICED and CANCELLED cannot be changed.
+                if (currentOrder.status === 'INVOICED' || currentOrder.status === 'CANCELLED') {
+                    throw Object.assign(
+                        new Error(`Cannot change status: order is already ${currentOrder.status}`),
+                        { statusCode: 400 }
+                    );
+                }
 
                 // 2. Update order status.
                 //    For INVOICED: conditional update (WHERE status != 'INVOICED') makes the
@@ -130,18 +139,20 @@ export const actions: Actions = {
                         .from(salesOrderItems)
                         .where(eq(salesOrderItems.orderId, params.id));
 
-                    // Get the first active warehouse
-                    const [warehouse] = await tx
+                    // Require exactly one active warehouse (deterministic deduction).
+                    // Multiple active warehouses would cause nondeterministic stock movements.
+                    const activeWarehouses = await tx
                         .select({ id: warehouses.id })
                         .from(warehouses)
-                        .where(eq(warehouses.isActive, true))
-                        .limit(1);
+                        .where(eq(warehouses.isActive, true));
 
-                    if (!warehouse) {
-                        // No warehouse configured — abort the entire transaction so the order
-                        // is not marked INVOICED without stock being deducted.
-                        throw new Error('Cannot invoice order: no active warehouse found. Please configure a warehouse first.');
+                    if (activeWarehouses.length !== 1) {
+                        throw new Error(
+                            `Cannot invoice order: expected exactly 1 active warehouse, found ${activeWarehouses.length}.`
+                        );
                     }
+
+                    const [warehouse] = activeWarehouses;
 
                     // Deduct stock for each line item
                     for (const item of items) {
@@ -164,8 +175,11 @@ export const actions: Actions = {
             });
 
             return { success: true };
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to update status:", err);
+            if (err?.statusCode === 400 || err?.statusCode === 404) {
+                return fail(err.statusCode, { error: err.message });
+            }
             return fail(500, { error: "Could not update status" });
         }
 	}

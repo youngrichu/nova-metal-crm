@@ -105,12 +105,13 @@ When `updateStatus` receives `newStatus === 'INVOICED'`, the entire operation ru
 
 ```text
 db.transaction(async (tx) => {
-  1. Read current order status — if already INVOICED, skip deduction and return early (idempotency guard)
-  2. Update order status to INVOICED
+  1. Read current order (status + orderNumber) — throw 400 if already INVOICED or CANCELLED (terminal states)
+  2. Atomic conditional UPDATE: SET status='INVOICED' WHERE id=$id AND status != 'INVOICED'
+     - If 0 rows updated: already INVOICED, return early (race-safe idempotency guard)
   3. Query order items — SELECT productId, quantity FROM sales_order_items WHERE order_id = $orderId
-  4. Get first active warehouse — SELECT id FROM warehouses WHERE is_active = true LIMIT 1
-  5. If no active warehouse found: log structured warning and skip deduction (status still updates)
-  6. For each item:
+  4. Verify exactly one active warehouse — SELECT id FROM warehouses WHERE is_active = true
+     - If count != 1: throw error and abort (status not changed, no partial deductions)
+  5. For each item:
      a. Coerce quantity: const qty = Math.round(Number(item.quantity))  // numeric column returns string
      b. Call recordTransaction(tx, { transactionType: 'STOCK_OUT', quantityChange: -qty, referenceDoc: order.orderNumber, ... })
 })
@@ -118,10 +119,11 @@ db.transaction(async (tx) => {
 
 **Key points:**
 
-- **Idempotency guard (step 1):** The current order status is read inside the transaction before any writes. If the order is already `INVOICED`, the function returns early without creating duplicate Stock Out transactions.
-- **Quantity coercion (step 6a):** `salesOrderItems.quantity` is a `numeric(10,2)` column — Drizzle returns it as a `string`. It must be coerced to an integer with `Math.round(Number(item.quantity))` before being passed to `recordTransaction`.
+- **Terminal state guard (step 1):** `INVOICED` and `CANCELLED` are terminal. Any attempt to change status from these states is rejected with a 400 error before any writes occur.
+- **Atomic idempotency (step 2):** The conditional `UPDATE WHERE status != 'INVOICED'` is the idempotency guard. If two concurrent requests race, only one will get a non-empty `RETURNING` result; the other exits early. No separate read-before-write needed.
+- **Warehouse guard (step 4):** Exactly one active warehouse is required. Zero warehouses aborts the transaction. More than one aborts to prevent nondeterministic stock movements across depots.
+- **Quantity coercion (step 5a):** `salesOrderItems.quantity` is a `numeric(10,2)` column — Drizzle returns it as a `string`. It must be coerced with `Math.round(Number(item.quantity))` before being passed to `recordTransaction`.
 - **Negative stock allowed:** `recordTransaction` does not throw if stock goes below zero. The warning was already shown at order creation time.
-- **No active warehouse (step 5):** If no warehouse exists, log a structured warning: `console.warn('[invoice:stock-deduction] skipped — no active warehouse found', { orderId, orderNumber })`. The status update still proceeds so the order is not stuck.
 - **Rollback:** If any step inside the transaction throws, the entire transaction rolls back — the order stays at its previous status and no partial stock deductions are committed.
 
 ---
@@ -144,8 +146,9 @@ db.transaction(async (tx) => {
 |---|---|
 | Quantity > available stock at order creation | Inline warning shown on that line item; order can still be saved |
 | Stock goes negative on invoice | Allowed — deduction proceeds without error |
-| Order is already INVOICED when `updateStatus` is called again | Idempotency guard: deduction skipped, no duplicate transactions created |
-| No active warehouse found at invoice time | Status updated to INVOICED; deduction skipped; structured warning logged |
+| Order is already INVOICED when `updateStatus` is called again | Atomic conditional update returns 0 rows; exits early — no duplicate transactions |
+| Order is INVOICED or CANCELLED when any status change is attempted | 400 error returned; no writes performed |
+| No active warehouse, or more than one active warehouse, at invoice time | Transaction aborted; order stays at previous status; error returned to caller |
 | Database error during invoice transaction | Entire `db.transaction()` rolls back — order stays at previous status, no partial stock changes |
 
 ---

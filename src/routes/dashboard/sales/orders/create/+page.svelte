@@ -54,6 +54,9 @@
     async function fetchAndUpdatePrice(index: number, productId: string, quantity: number, customerId: string) {
         if (!productId) return;
         const capturedRevision = priceRevision;
+        const capturedQuantity = quantity;
+        const capturedCustomerId = customerId;
+        const capturedTier = walkInPricingTier;
         // Clear stale stock immediately so a previous product's warning can't linger
         const resetItems = [...items];
         resetItems[index].availableStock = null;
@@ -73,8 +76,17 @@
             if (res.ok) {
                 const data = await res.json();
                 const newItems = [...items];
-                // Discard stale responses: only update if the product and pricing mode haven't changed
-                if (newItems[index].productId === productId && priceRevision === capturedRevision) {
+                // Discard stale responses: product, pricing mode, quantity, and customer/tier must
+                // all still match what this request was for, otherwise a later fetch has superseded it.
+                const contextMatches = isWalkIn
+                    ? capturedTier === walkInPricingTier
+                    : capturedCustomerId === selectedCustomerId;
+                if (
+                    newItems[index].productId === productId &&
+                    priceRevision === capturedRevision &&
+                    newItems[index].quantity === capturedQuantity &&
+                    contextMatches
+                ) {
                     newItems[index].unitPrice = data.finalUnitPrice;
                     newItems[index].availableStock = data.availableStock ?? null;
                     items = newItems;
