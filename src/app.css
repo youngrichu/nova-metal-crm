@@ -20,6 +20,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@custom-variant xs (@media (width >= 475px));
+
+/* Safe-area utility for iOS notched devices — used by BottomNav and its More sheet */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 @layer base {
   :root {
     --radius: 0.625rem;
