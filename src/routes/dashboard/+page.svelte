@@ -129,7 +129,7 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     
     <!-- Metrics Side Panel -->
-    <div class="col-span-1 border-2 border-foreground/10 bg-card p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col relative overflow-hidden group">
+    <div class="col-span-1 order-2 lg:order-none border-2 border-foreground/10 bg-card p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col relative overflow-hidden group">
       
       <!-- Decorative brutalist accent -->
       <div class="absolute -right-12 -top-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors duration-700"></div>
@@ -208,7 +208,7 @@
     </div>
     
     <!-- Sales Trend Chart -->
-    <div class="col-span-1 lg:col-span-2 border-2 border-foreground/10 bg-card p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col min-h-[400px]">
+    <div class="col-span-1 lg:col-span-2 order-1 lg:order-none border-2 border-foreground/10 bg-card p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col min-h-[400px]">
 
       <div class="flex justify-between items-start mb-8 border-b-2 border-foreground/5 pb-6">
         <div>
