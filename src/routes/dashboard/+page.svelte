@@ -208,9 +208,9 @@
     </div>
     
     <!-- Sales Trend Chart -->
-    <div class="col-span-1 lg:col-span-2 order-1 lg:order-none border-2 border-foreground/10 bg-card p-4 sm:p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col min-h-[400px]">
+    <div class="col-span-1 lg:col-span-2 order-1 lg:order-none border-2 border-foreground/10 bg-card p-4 sm:p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col min-h-[320px] lg:min-h-[400px]">
 
-      <div class="flex justify-between items-start gap-3 mb-4 border-b-2 border-foreground/5 pb-4">
+      <div class="flex justify-between items-start gap-3 mb-2 border-b border-foreground/5 pb-3">
         <div class="min-w-0">
           <h3 class="font-black text-sm tracking-widest uppercase text-foreground mb-1 flex items-center gap-2">
             <TrendingUp class="w-4 h-4 text-primary shrink-0" /> Revenue Trajectory
@@ -235,7 +235,7 @@
             xScale={scaleTime()}
             y="revenue"
             yBaseline={0}
-            padding={{ top: 8, right: 8, bottom: 40, left: 52 }}
+            padding={{ top: 4, right: 8, bottom: 36, left: 48 }}
             tooltip={{ mode: 'bisect-x' }}
           >
             <Svg>
