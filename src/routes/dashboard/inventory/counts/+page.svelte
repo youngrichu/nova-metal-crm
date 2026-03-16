@@ -61,7 +61,12 @@
 		{ key: 'reference',     label: 'Reference', primary: true },
 		{ key: 'warehouseName', label: 'Warehouse', secondary: true },
 		{ key: 'status',        label: 'Status',    badge: true,
-			badgeClass: (_v: unknown) => statusBadgeClass(String(_v)) },
+			badgeClass: (v: unknown) => {
+				const s = String(v);
+				if (s === 'In Progress') return 'bg-amber-500/10 text-amber-700 border-amber-500/30';
+				if (s === 'Closed') return 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30';
+				return 'bg-muted text-muted-foreground';
+			}},
 		{ key: 'startedAt',     label: 'Date' },
 	];
 </script>
