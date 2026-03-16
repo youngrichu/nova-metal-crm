@@ -7,6 +7,8 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { enhance } from '$app/forms';
 	import { Trash2, MapPin, ChevronDown, Pencil, Warehouse } from 'lucide-svelte';
+	import { DataCards } from '$lib/components/ui/data-cards';
+	import { PageFAB } from '$lib/components/ui/fab';
 	
 	let { data, form } = $props();
 	
@@ -19,6 +21,22 @@
 		editingWarehouse = wh;
 		isEditOpen = true;
 	}
+
+	const processedWarehouses = $derived(
+		data.warehouses.map((row: any) => ({
+			id: row.id,
+			name: row.name,
+			location: row.location ?? '—',
+			isActiveLabel: row.isActive ? 'Active' : 'Inactive',
+		}))
+	);
+
+	const cardColumns = [
+		{ key: 'name',          label: 'Name',     primary: true },
+		{ key: 'location',      label: 'Location', secondary: true },
+		{ key: 'isActiveLabel', label: 'Status',   badge: true,
+			badgeClass: (v: unknown) => v === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' },
+	];
 
 	function makeEnhance(closeKey: 'create' | 'edit') {
 		return () => {
@@ -53,7 +71,7 @@
 			<Sheet.Root bind:open={isCreateOpen}>
 				<Sheet.Trigger>
 					{#snippet child({ props })}
-						<Button {...props} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]">
+						<Button {...props} class="hidden md:flex h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]">
 							Register Depot
 						</Button>
 					{/snippet}
@@ -107,7 +125,10 @@
 	</header>
 
 	<!-- Data Table -->
-	<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)]">
+	<div class="md:hidden">
+		<DataCards columns={cardColumns} data={processedWarehouses} emptyMessage="No warehouses found." />
+	</div>
+	<div class="hidden md:block bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)]">
 		<Table.Root class="w-full">
 			<Table.Header>
 				<Table.Row class="bg-muted/50 hover:bg-muted/50 border-b-2 border-foreground/10">
@@ -175,6 +196,8 @@
 		</div>
 	</div>
 </div>
+
+<PageFAB label="Add warehouse" onclick={() => isCreateOpen = true} />
 
 <!-- Edit Warehouse Sheet -->
 <Sheet.Root bind:open={isEditOpen}>
