@@ -5,6 +5,8 @@
 	import { enhance } from '$app/forms';
 	import { ClipboardList, Package, AlertTriangle, Plus, X } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
+	import { DataCards } from '$lib/components/ui/data-cards';
+	import { PageFAB } from '$lib/components/ui/fab';
 
 	let { data, form } = $props();
 
@@ -44,6 +46,24 @@
 			toast.error(form.error);
 		}
 	});
+
+	const processedCounts = $derived(
+		data.counts.map((row: any) => ({
+			id: row.count.id,
+			reference: `Count #${row.count.id.slice(0, 8)}`,
+			warehouseName: row.warehouse.name,
+			status: statusLabel(row.count.status),
+			startedAt: new Date(row.count.startedAt).toLocaleDateString(),
+		}))
+	);
+
+	const cardColumns = [
+		{ key: 'reference',     label: 'Reference', primary: true },
+		{ key: 'warehouseName', label: 'Warehouse', secondary: true },
+		{ key: 'status',        label: 'Status',    badge: true,
+			badgeClass: (_v: unknown) => statusBadgeClass(String(_v)) },
+		{ key: 'startedAt',     label: 'Date' },
+	];
 </script>
 
 <div class="p-4 md:p-8 max-w-[1600px] mx-auto space-y-8">
@@ -62,7 +82,7 @@
 		<div class="flex items-center gap-4 w-full md:w-auto">
 			<Button
 				onclick={() => (showStartForm = !showStartForm)}
-				class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]"
+				class="hidden md:flex h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]"
 			>
 				{#if showStartForm}
 					<X class="w-3.5 h-3.5 mr-2" /> Cancel
@@ -115,7 +135,10 @@
 
 	<!-- Counts Table -->
 	<section>
-		<div class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
+		<div class="md:hidden">
+			<DataCards columns={cardColumns} data={processedCounts} emptyMessage="No stock takes found." />
+		</div>
+		<div class="hidden md:block border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
 			<Table.Root class="w-full text-left border-collapse">
 				<Table.Header>
 					<Table.Row class="bg-muted/50 hover:bg-muted/50 border-b-2 border-foreground/10">
@@ -191,3 +214,5 @@
 		</div>
 	</section>
 </div>
+
+<PageFAB label="Start stock take" onclick={() => showStartForm = true} />
