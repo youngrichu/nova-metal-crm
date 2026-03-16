@@ -66,19 +66,26 @@
 	];
 
 	const cardActions: ActionsInput = (row) => {
+		// Mirror the desktop table guard — no actions on the current user's own row
+		if (row.id === data.currentUserId) return [];
+
 		const allRoles = ['admin', 'sales', 'warehouse'];
 		const roleActions = allRoles
 			.filter(r => r !== row.role)
 			.map(r => ({
 				label: `Change to ${r}`,
 				onClick: async (r2: any) => {
-					const fd = new FormData();
-					fd.set('userId', r2.id);
-					fd.set('role', r);
-					const res = await fetch('?/updateRole', { method: 'POST', body: fd });
-					if (res.ok) {
-						await invalidateAll();
-					} else {
+					try {
+						const fd = new FormData();
+						fd.set('userId', r2.id);
+						fd.set('role', r);
+						const res = await fetch('?/updateRole', { method: 'POST', body: fd });
+						if (res.ok) {
+							await invalidateAll();
+						} else {
+							toast.error('Failed to update role.');
+						}
+					} catch {
 						toast.error('Failed to update role.');
 					}
 				},
@@ -89,12 +96,16 @@
 			label: toggleLabel,
 			variant: (row.emailVerified ? 'destructive' : 'default') as 'destructive' | 'default',
 			onClick: async (r2: any) => {
-				const fd = new FormData();
-				fd.set('userId', r2.id);
-				const res = await fetch('?/toggleVerified', { method: 'POST', body: fd });
-				if (res.ok) {
-					await invalidateAll();
-				} else {
+				try {
+					const fd = new FormData();
+					fd.set('userId', r2.id);
+					const res = await fetch('?/toggleVerified', { method: 'POST', body: fd });
+					if (res.ok) {
+						await invalidateAll();
+					} else {
+						toast.error('Failed to update user status.');
+					}
+				} catch {
 					toast.error('Failed to update user status.');
 				}
 			},

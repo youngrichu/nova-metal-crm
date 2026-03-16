@@ -53,12 +53,16 @@
 			label: 'Delete',
 			variant: 'destructive',
 			onClick: async (row: any) => {
-				const fd = new FormData();
-				fd.set('id', row.id);
-				const res = await fetch('?/delete', { method: 'POST', body: fd });
-				if (res.ok) {
-					await invalidateAll();
-				} else {
+				try {
+					const fd = new FormData();
+					fd.set('id', row.id);
+					const res = await fetch('?/delete', { method: 'POST', body: fd });
+					if (res.ok) {
+						await invalidateAll();
+					} else {
+						toast.error('Failed to delete warehouse. It may have linked inventory.');
+					}
+				} catch {
 					toast.error('Failed to delete warehouse. It may have linked inventory.');
 				}
 			},
