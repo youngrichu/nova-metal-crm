@@ -6,6 +6,9 @@
 	import { ShoppingCart, Search, FileText, ChevronDown, Plus, Banknote, Calendar } from 'lucide-svelte';
 	import { formatCurrency } from '$lib/utils/currency';
 	import { goto } from '$app/navigation';
+	import { DataCards } from '$lib/components/ui/data-cards';
+	import { PageFAB } from '$lib/components/ui/fab';
+	import type { ActionsInput } from '$lib/components/ui/data-cards';
 	import * as m from '$lib/paraglide/messages';
 
 	let { data } = $props();
@@ -20,6 +23,36 @@
 			default: return 'bg-slate-100 text-slate-700 border-slate-300';
 		}
 	}
+
+	const processedOrders = $derived(
+		data.orders.map((row: any) => ({
+			id: row.id,
+			orderNumber: row.orderNumber,
+			customerName: row.customer?.name ?? '—',
+			status: row.status,
+			total: row.totalAmount != null ? `ETB ${Number(row.totalAmount).toFixed(2)}` : '—',
+			createdAt: row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—',
+		}))
+	);
+
+	const cardColumns = [
+		{ key: 'orderNumber',  label: 'Order',    primary: true },
+		{ key: 'customerName', label: 'Customer', secondary: true },
+		{ key: 'status',       label: 'Status',   badge: true,
+			badgeClass: (v: unknown) => getStatusColor(String(v)) },
+		{ key: 'total',        label: 'Total' },
+		{ key: 'createdAt',    label: 'Date' },
+	];
+
+	const cardActions: ActionsInput = (row) => {
+		const actions: any[] = [
+			{ label: 'View Details', onClick: (r: any) => goto(`/dashboard/sales/orders/${r.id}`) },
+		];
+		if (row.status === 'CONFIRMED' || row.status === 'INVOICED') {
+			actions.push({ label: 'Record Payment', onClick: (r: any) => goto(`/dashboard/sales/orders/${r.id}/payments`) });
+		}
+		return actions;
+	};
 </script>
 
 <div class="p-4 md:p-8 max-w-[1600px] mx-auto space-y-8">
@@ -46,14 +79,20 @@
 				/>
 			</form>
 
-			<Button onclick={() => goto('/dashboard/sales/orders/create')} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] relative">
+			<Button onclick={() => goto('/dashboard/sales/orders/create')} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] relative hidden md:flex">
 				<Plus class="w-4 h-4 mr-2" /> New Order
 			</Button>
 		</div>
 	</header>
 
-	<!-- Main Data Presentation -->
-	<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)] relative">
+	<!-- Mobile card view -->
+	<div class="md:hidden">
+		<DataCards columns={cardColumns} data={processedOrders} actions={cardActions} emptyMessage="No orders found." />
+	</div>
+
+	<!-- Desktop table view -->
+	<div class="hidden md:block">
+		<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)] relative">
 		
 		<Table.Root class="w-full text-left border-collapse">
 			<Table.Header>
@@ -133,4 +172,7 @@
 			</Table.Body>
 		</Table.Root>
 	</div>
+	</div>
 </div>
+
+<PageFAB label="Create order" onclick={() => goto('/dashboard/sales/orders/create')} />
