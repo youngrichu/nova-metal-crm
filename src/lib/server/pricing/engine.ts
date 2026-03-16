@@ -1,6 +1,6 @@
 // src/lib/server/pricing/engine.ts
 import { db } from '$lib/server/db';
-import { products, customers, salesOrders, salesOrderItems, priceHistory, systemSettings, inventory } from '$lib/server/db/schema';
+import { products, customers, salesOrders, salesOrderItems, priceHistory, systemSettings, inventory, warehouses } from '$lib/server/db/schema';
 import { eq, and, inArray, sum } from 'drizzle-orm';
 
 const PRICING_RULES = {
@@ -112,11 +112,12 @@ export async function calculateDynamicPrice(
 
     const baseCost = Number(product.averageLandingCost || 0);
 
-    // Fetch available stock — sum across all warehouses for this product.
+    // Fetch available stock — sum across active warehouses for this product.
     const stockRows = await db
         .select({ totalQty: sum(inventory.quantity) })
         .from(inventory)
-        .where(eq(inventory.productId, productId));
+        .innerJoin(warehouses, eq(inventory.warehouseId, warehouses.id))
+        .where(and(eq(inventory.productId, productId), eq(warehouses.isActive, true)));
     const availableStock = Number(stockRows[0]?.totalQty ?? 0);
 
     // 2. Quote Lock-in Check

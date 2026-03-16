@@ -78,6 +78,7 @@
                 const newItems = [...items];
                 // Discard stale responses: product, pricing mode, quantity, and customer/tier must
                 // all still match what this request was for, otherwise a later fetch has superseded it.
+                if (!newItems[index]) return;
                 const contextMatches = isWalkIn
                     ? capturedTier === walkInPricingTier
                     : capturedCustomerId === selectedCustomerId;

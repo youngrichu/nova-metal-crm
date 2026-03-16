@@ -17,6 +17,9 @@ vi.mock('$lib/server/db', () => ({
         },
         select: vi.fn().mockReturnValue({
             from: vi.fn().mockReturnValue({
+                innerJoin: vi.fn().mockReturnValue({
+                    where: vi.fn().mockResolvedValue([]) // active warehouse stock query → 0 stock
+                }),
                 where: vi.fn().mockResolvedValue([]) // no system settings overrides → use hardcoded defaults
             })
         })

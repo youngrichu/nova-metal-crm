@@ -1,7 +1,7 @@
 import { error, redirect, fail } from "@sveltejs/kit";
 import { db } from "$lib/server/db";
 import { salesOrders, salesOrderItems, customers, products, payments, inventory, warehouses } from "$lib/server/db/schema";
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import type { PageServerLoad, Actions } from "./$types";
 import { recordTransaction } from "$lib/server/inventory/recordTransaction";
 
@@ -101,31 +101,27 @@ export const actions: Actions = {
 
                 if (!currentOrder) throw Object.assign(new Error("Order not found"), { statusCode: 404 });
 
-                // Enforce terminal states: INVOICED and CANCELLED cannot be changed.
-                if (currentOrder.status === 'INVOICED' || currentOrder.status === 'CANCELLED') {
-                    throw Object.assign(
-                        new Error(`Cannot change status: order is already ${currentOrder.status}`),
-                        { statusCode: 400 }
-                    );
+                // Enforce terminal states. INVOICED→INVOICED is a no-op (idempotent retry).
+                if (currentOrder.status === 'INVOICED') {
+                    if (newStatus === 'INVOICED') return; // Idempotent — already done
+                    throw Object.assign(new Error('Cannot change status: order is already INVOICED'), { statusCode: 400 });
+                }
+                if (currentOrder.status === 'CANCELLED') {
+                    throw Object.assign(new Error('Cannot change status: order is already CANCELLED'), { statusCode: 400 });
                 }
 
-                // 2. Update order status.
-                //    For INVOICED: conditional update (WHERE status != 'INVOICED') makes the
-                //    transition atomic — concurrent requests cannot both proceed past this point.
-                if (newStatus === 'INVOICED') {
-                    const updated = await tx.update(salesOrders)
-                        .set({ status: 'INVOICED', updatedAt: new Date() })
-                        .where(and(eq(salesOrders.id, params.id), ne(salesOrders.status, 'INVOICED')))
-                        .returning({ id: salesOrders.id });
+                // 2. Compare-and-set update: WHERE status = currentOrder.status prevents a concurrent
+                //    request from overwriting a status change that happened after our read.
+                const updated = await tx.update(salesOrders)
+                    .set({ status: newStatus, updatedAt: new Date() })
+                    .where(and(eq(salesOrders.id, params.id), eq(salesOrders.status, currentOrder.status)))
+                    .returning({ id: salesOrders.id });
 
-                    if (updated.length === 0) {
-                        // Already INVOICED — idempotent, skip deduction
-                        return;
-                    }
-                } else {
-                    await tx.update(salesOrders)
-                        .set({ status: newStatus, updatedAt: new Date() })
-                        .where(eq(salesOrders.id, params.id));
+                if (updated.length === 0) {
+                    throw Object.assign(
+                        new Error('Order status was changed by another request. Please refresh.'),
+                        { statusCode: 409 }
+                    );
                 }
 
                 // 3. Auto-deduct stock only when transitioning TO INVOICED
@@ -177,8 +173,9 @@ export const actions: Actions = {
             return { success: true };
         } catch (err: any) {
             console.error("Failed to update status:", err);
-            if (err?.statusCode === 400 || err?.statusCode === 404) {
-                return fail(err.statusCode, { error: err.message });
+            const code = err?.statusCode;
+            if (code === 400 || code === 404 || code === 409) {
+                return fail(code, { error: err.message });
             }
             return fail(500, { error: "Could not update status" });
         }
