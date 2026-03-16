@@ -71,7 +71,7 @@
 <div class="p-4 md:p-8 max-w-[1600px] mx-auto space-y-12">
   
   <!-- Avant-Garde Page Header -->
-  <header class="flex flex-col md:flex-row justify-between items-end border-b-2 border-foreground pb-6 gap-6">
+  <header class="flex flex-col md:flex-row justify-between items-start md:items-end border-b-2 border-foreground pb-6 gap-6">
     <div class="space-y-4 relative w-full md:w-auto">
       <div class="absolute -left-6 top-2 w-2 h-16 bg-primary transform -skew-x-12 hidden md:block"></div>
       
