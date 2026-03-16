@@ -363,7 +363,7 @@
         </h3>
       </div>
       
-      <div class="flex-1 overflow-y-auto p-6">
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6">
         {#if data.recentTransactions.length === 0}
           <div class="flex items-start gap-5 p-4 border-2 border-dashed border-border/50 bg-muted/10">
             <div class="p-3 bg-muted border-2 border-foreground/10 shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)]">
@@ -388,7 +388,7 @@
                   </div>
                 </div>
                 
-                <div class="min-w-0 border-b-2 border-border/20 pb-5 w-full">
+                <div class="min-w-0 border-b-2 border-border/20 pb-4 w-full">
                   <div class="flex justify-between items-start gap-2 mb-1">
                     <p class="text-sm font-bold text-foreground tracking-tight line-clamp-1">{tx.productName}</p>
                     <span class="text-[9px] font-mono font-bold text-muted-foreground whitespace-nowrap">
@@ -402,12 +402,12 @@
                     </span>
                   </div>
                   
-                  <p class="text-[11px] font-mono font-medium text-muted-foreground/70">
-                    <span class="font-bold text-foreground">{tx.quantityChange > 0 ? '+' : ''}{tx.quantityChange}</span> UNT 
-                    <span class="opacity-50 mx-2">|</span> 
+                  <p class="text-[11px] font-mono font-medium text-muted-foreground/70 leading-relaxed flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    <span class="font-bold text-foreground">{tx.quantityChange > 0 ? '+' : ''}{tx.quantityChange}</span> UNT
+                    <span class="opacity-30">·</span>
                     {tx.warehouseName}
                     {#if tx.referenceDoc}
-                      <span class="opacity-50 mx-2">|</span> 
+                      <span class="opacity-30">·</span>
                       <span class="text-primary">{tx.referenceDoc}</span>
                     {/if}
                   </p>
