@@ -68,13 +68,15 @@
   );
 
   // Dynamic left padding based on max Y label width (e.g. "5K" vs "100K")
-  const chartLeftPadding = $derived(() => {
-    const max = Math.max(0, ...trendData.map((d: any) => Number(d.revenue) || 0));
-    if (max >= 1_000_000) return 48; // "1000K" or switch to "1M" style
-    if (max >= 100_000)  return 38;  // "100K"
-    if (max >= 10_000)   return 30;  // "10K"
-    return 25;                       // "5K" / "9K"
-  })();
+  const chartLeftPadding = $derived(
+    (() => {
+      const max = Math.max(0, ...trendData.map((d: any) => Number(d.revenue) || 0));
+      if (max >= 1_000_000) return 48;
+      if (max >= 100_000)  return 38;
+      if (max >= 10_000)   return 30;
+      return 25;
+    })()
+  );
 </script>
 
 <div class="p-4 md:p-8 max-w-[1600px] mx-auto space-y-6 md:space-y-12">
