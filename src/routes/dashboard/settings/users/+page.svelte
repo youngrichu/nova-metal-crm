@@ -71,14 +71,14 @@
 
 		const allRoles = ['admin', 'sales', 'warehouse'];
 		const roleActions = allRoles
-			.filter(r => r !== row.role)
-			.map(r => ({
-				label: `Change to ${r}`,
-				onClick: async (r2: any) => {
+			.filter(targetRole => targetRole !== row.role)
+			.map(targetRole => ({
+				label: `Change to ${targetRole}`,
+				onClick: async (userRow: any) => {
 					try {
 						const fd = new FormData();
-						fd.set('userId', r2.id);
-						fd.set('role', r);
+						fd.set('userId', userRow.id);
+						fd.set('role', targetRole);
 						const res = await fetch('?/updateRole', { method: 'POST', body: fd });
 						if (res.ok) {
 							await invalidateAll();
@@ -95,10 +95,10 @@
 		const toggleAction = {
 			label: toggleLabel,
 			variant: (row.emailVerified ? 'destructive' : 'default') as 'destructive' | 'default',
-			onClick: async (r2: any) => {
+			onClick: async (userRow: any) => {
 				try {
 					const fd = new FormData();
-					fd.set('userId', r2.id);
+					fd.set('userId', userRow.id);
 					const res = await fetch('?/toggleVerified', { method: 'POST', body: fd });
 					if (res.ok) {
 						await invalidateAll();

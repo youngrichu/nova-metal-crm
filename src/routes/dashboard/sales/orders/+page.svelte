@@ -30,7 +30,7 @@
 			orderNumber: row.orderNumber,
 			customerName: row.customer?.name ?? '—',
 			status: row.status,
-			total: row.totalAmount != null ? `ETB ${Number(row.totalAmount).toFixed(2)}` : '—',
+			total: row.totalAmount != null ? formatCurrency(Number(row.totalAmount)) : '—',
 			createdAt: row.createdAt ? new Date(row.createdAt).toLocaleDateString() : '—',
 		}))
 	);

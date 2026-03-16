@@ -52,7 +52,10 @@
 	];
 
 	const cardActions: Action[] = [
-		{ label: 'Edit',   onClick: (row: any) => openEdit({ product: data.products.find((p: any) => p.product.id === row.id)?.product, category: data.products.find((p: any) => p.product.id === row.id)?.category }) },
+		{ label: 'Edit',   onClick: (row: any) => {
+			const found = data.products.find((p: any) => p.product.id === row.id);
+			if (found) openEdit(found);
+		}},
 		{ label: 'Delete', variant: 'destructive', onClick: async (row: any) => {
 				const fd = new FormData();
 				fd.set('id', row.id);
