@@ -235,7 +235,7 @@
             xScale={scaleTime()}
             y="revenue"
             yBaseline={0}
-            padding={{ top: 4, right: 4, bottom: 36, left: 36 }}
+            padding={{ top: 4, right: 4, bottom: 36, left: 32 }}
             tooltip={{ mode: 'bisect-x' }}
           >
             <Svg>
