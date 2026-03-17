@@ -26,7 +26,12 @@
 				return;
 			}
 			const data = await res.json();
-			if (typeof data.currentVersion !== 'string' || typeof data.latestVersion !== 'string') {
+			if (
+				typeof data.currentVersion !== 'string' ||
+				typeof data.latestVersion !== 'string' ||
+				typeof data.changelog !== 'string' ||
+				typeof data.hasUpdate !== 'boolean'
+			) {
 				toast.error('Invalid response from update server.');
 				updateStatus = 'idle';
 				return;

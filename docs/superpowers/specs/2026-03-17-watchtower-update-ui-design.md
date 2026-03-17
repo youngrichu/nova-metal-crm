@@ -68,8 +68,8 @@ VERSION_CHECK_URL=https://raw.githubusercontent.com/<owner>/<repo>/main/version.
   ```json
   { "currentVersion": "1.0.0", "latestVersion": "1.1.0", "hasUpdate": true, "changelog": "..." }
   ```
-- Returns 502 with `{ error: "..." }` if the remote fetch fails, times out, or returns non-200
-- Returns 502 with `{ error: "Invalid version data from update server" }` if the response is not valid JSON or is missing `version`/`changelog` fields
+- Returns 502 with `{ message: "..." }` if the remote fetch fails, times out, or returns non-200
+- Returns 502 with `{ message: "Invalid version data from update server" }` if the response is not valid JSON or is missing `version`/`changelog` fields
 
 **`POST /api/update/trigger`**
 - Admin-only (403 if not admin — matches existing `/api/backup` pattern)

@@ -36,10 +36,17 @@ export const GET: RequestHandler = async ({ locals }) => {
     throw error(502, 'Invalid version data from update server');
   }
 
+  let hasUpdate: boolean;
+  try {
+    hasUpdate = compareVersions(currentVersion, latestVersion);
+  } catch {
+    throw error(500, 'Invalid PUBLIC_APP_VERSION format. Expected X.Y.Z.');
+  }
+
   return json({
     currentVersion,
     latestVersion,
-    hasUpdate: compareVersions(currentVersion, latestVersion),
+    hasUpdate,
     changelog
   });
 };
