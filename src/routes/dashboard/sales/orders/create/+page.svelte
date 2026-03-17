@@ -6,6 +6,7 @@
 	import { Trash2, Box, ChevronLeft, Save, FileText, User, PlusCircle, Check, ChevronsUpDown, AlertTriangle } from 'lucide-svelte';
 	import { formatCurrency } from '$lib/utils/currency';
 	import { goto } from '$app/navigation';
+	import { toast } from 'svelte-sonner';
     import * as Popover from "$lib/components/ui/popover";
     import * as Command from "$lib/components/ui/command";
     import { cn } from "$lib/utils";
@@ -173,11 +174,21 @@
 	function handleSubmit() {
 		isSubmitting = true;
 		return async ({ result, update }: any) => {
-			if (result.type === 'success' && result.data?.success) {
-				goto(`/dashboard/sales/orders/${result.data.orderId}`);
+			try {
+				if (result.type === 'success' && result.data?.success) {
+					toast.success('Order saved successfully!');
+					await goto(`/dashboard/sales/orders/${result.data.orderId}`);
+					return;
+				}
+				if (result.type === 'failure') {
+					toast.error(result.data?.error || 'Failed to save order');
+				} else if (result.type === 'error') {
+					toast.error(result.error?.message || 'An unexpected error occurred');
+				}
+				await update();
+			} finally {
+				isSubmitting = false;
 			}
-			isSubmitting = false;
-			await update();
 		};
 	}
 </script>
@@ -195,12 +206,6 @@
 			</h1>
 		</div>
 	</header>
-
-	{#if form?.error}
-		<div class="bg-red-500/10 border-l-4 border-red-600 p-4 text-red-600 font-medium">
-			{form.error}
-		</div>
-	{/if}
 
 	<form method="POST" action="?/create" use:enhance={handleSubmit} class="space-y-12">
 		<!-- Hidden field for complex items array -->
