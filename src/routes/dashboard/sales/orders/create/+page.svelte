@@ -6,6 +6,7 @@
 	import { Trash2, Box, ChevronLeft, Save, FileText, User, PlusCircle, Check, ChevronsUpDown, AlertTriangle } from 'lucide-svelte';
 	import { formatCurrency } from '$lib/utils/currency';
 	import { goto } from '$app/navigation';
+	import { toast } from 'svelte-sonner';
     import * as Popover from "$lib/components/ui/popover";
     import * as Command from "$lib/components/ui/command";
     import { cn } from "$lib/utils";
@@ -174,7 +175,10 @@
 		isSubmitting = true;
 		return async ({ result, update }: any) => {
 			if (result.type === 'success' && result.data?.success) {
+				toast.success('Order saved successfully!');
 				goto(`/dashboard/sales/orders/${result.data.orderId}`);
+			} else if (result.type === 'failure') {
+				toast.error(result.data?.error || 'Failed to save order');
 			}
 			isSubmitting = false;
 			await update();
