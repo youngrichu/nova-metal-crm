@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Sidebar from "$lib/components/ui/sidebar";
+	import NovaLogo from "$lib/components/ui/NovaLogo.svelte";
 	import { cn } from "$lib/utils";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
 	import { Collapsible } from "bits-ui";
@@ -97,15 +98,14 @@
 <Sidebar.Root id="app-sidebar" class="border-r-0" collapsible="icon">
 	<!-- ── HEADER / WORDMARK ── -->
 	<Sidebar.Header class="px-0 pt-0 pb-0 border-b-2 border-white/10">
-		<div class="flex items-center gap-0 group-data-[collapsible=icon]:justify-center h-14">
-			<div class="flex items-center justify-center shrink-0 w-14 h-14 border-r-2 border-white/10 group-data-[collapsible=icon]:border-r-0 group-data-[collapsible=icon]:w-full">
-				<div class="w-8 h-8 bg-white flex items-center justify-center">
-					<span class="text-zinc-900 text-base font-black tracking-tighter select-none leading-none">N</span>
-				</div>
+		<div class="flex items-center gap-0 group-data-[collapsible=icon]:justify-center" style="background: white;">
+			<!-- Icon: only visible when sidebar is collapsed -->
+			<div class="hidden items-center justify-center shrink-0 w-full h-16 group-data-[collapsible=icon]:flex">
+				<NovaLogo class="h-10 w-10" idSuffix="sidebar-icon" />
 			</div>
-			<div class="flex flex-col leading-none px-5 group-data-[collapsible=icon]:hidden overflow-hidden">
-				<span class="text-sm font-black tracking-[0.15em] text-sidebar-foreground uppercase leading-tight">Nova Metal</span>
-				<span class="text-[0.65rem] font-bold tracking-[0.2em] text-sidebar-foreground/40 uppercase mt-0.5">ERP System</span>
+			<!-- Full logo: only visible when sidebar is expanded -->
+			<div class="flex flex-col leading-none px-4 py-3 group-data-[collapsible=icon]:hidden overflow-hidden w-full">
+				<NovaLogo class="w-full h-auto" idSuffix="sidebar-full" />
 			</div>
 		</div>
 	</Sidebar.Header>
@@ -226,11 +226,13 @@
 								size="lg"
 								class="h-14 rounded-none px-6 data-[state=open]:bg-white/10 outline-none group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center border-b-0"
 							>
-								<div class="flex shrink-0 items-center justify-center size-8 bg-white/15 border border-white/20">
+								<!-- Avatar initial: only visible when collapsed -->
+								<div class="hidden shrink-0 items-center justify-center size-8 bg-white/15 border border-white/20 group-data-[collapsible=icon]:flex">
 									<span class="text-xs font-black text-sidebar-foreground uppercase">
 										{(page.data.user?.name ?? "A").charAt(0)}
 									</span>
 								</div>
+								<!-- Name/role: only visible when expanded -->
 								<div class="flex flex-col flex-1 text-left leading-none overflow-hidden group-data-[collapsible=icon]:hidden">
 									<span class="truncate text-xs font-black tracking-[0.12em] uppercase text-sidebar-foreground">{page.data.user?.name ?? "Admin"}</span>
 									<span class="truncate text-[0.65rem] font-bold tracking-[0.15em] uppercase text-sidebar-foreground/40 mt-0.5">{page.data.user?.role ?? "admin"}</span>

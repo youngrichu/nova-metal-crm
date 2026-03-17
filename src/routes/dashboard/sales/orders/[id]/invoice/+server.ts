@@ -4,6 +4,7 @@ import { salesOrders, salesOrderItems, customers, products } from "$lib/server/d
 import { eq } from "drizzle-orm";
 import { createRequire } from "module";
 import path from "path";
+import fs from "fs";
 
 const require = createRequire(import.meta.url);
 const { default: Printer } = require("pdfmake/js/Printer.js");
@@ -27,6 +28,20 @@ const noopUrlResolver = {
 
 import type { TDocumentDefinitions } from "pdfmake/interfaces";
 import type { RequestHandler } from "./$types";
+
+// Cached logo data URL — loaded once on first request
+let cachedLogoData: string | null = null;
+async function getLogoData(): Promise<string> {
+	if (cachedLogoData) return cachedLogoData;
+	try {
+		const logoPath = path.join(process.cwd(), "static", "nova_logo.jpeg");
+		const data = await fs.promises.readFile(logoPath);
+		cachedLogoData = `data:image/jpeg;base64,${data.toString("base64")}`;
+		return cachedLogoData;
+	} catch {
+		return "";
+	}
+}
 
 export const GET: RequestHandler = async ({ params }) => {
 	const orderId = params.id;
@@ -73,12 +88,15 @@ export const GET: RequestHandler = async ({ params }) => {
         // Format Date
         const orderDate = new Date(order.createdAt).toLocaleDateString('en-GB');
 
+        // Load logo as base64 data URL (cached after first request)
+        const logoData = await getLogoData();
+
         // Build PDF Document Definition
         const docDefinition: TDocumentDefinitions = {
             content: [
                 {
-                    text: 'NOVA METAL PLC',
-                    style: 'header',
+                    image: logoData,
+                    width: 180,
                     alignment: 'center',
                     margin: [0, 0, 0, 5]
                 },
