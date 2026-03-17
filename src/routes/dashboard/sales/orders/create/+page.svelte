@@ -200,12 +200,6 @@
 		</div>
 	</header>
 
-	{#if form?.error}
-		<div class="bg-red-500/10 border-l-4 border-red-600 p-4 text-red-600 font-medium">
-			{form.error}
-		</div>
-	{/if}
-
 	<form method="POST" action="?/create" use:enhance={handleSubmit} class="space-y-12">
 		<!-- Hidden field for complex items array -->
 		<input type="hidden" name="items" value={JSON.stringify(items)} />
