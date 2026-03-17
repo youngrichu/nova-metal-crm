@@ -62,7 +62,7 @@ VERSION_CHECK_URL=https://raw.githubusercontent.com/<owner>/<repo>/main/version.
 ### New API Routes
 
 **`GET /api/update/check`**
-- Admin-only (401 if not admin)
+- Admin-only (403 if not admin — matches existing `/api/backup` pattern)
 - Fetches `VERSION_CHECK_URL` with a 5-second timeout
 - Returns:
   ```json
@@ -72,12 +72,12 @@ VERSION_CHECK_URL=https://raw.githubusercontent.com/<owner>/<repo>/main/version.
 - Returns 502 with `{ error: "Invalid version data from update server" }` if the response is not valid JSON or is missing `version`/`changelog` fields
 
 **`POST /api/update/trigger`**
-- Admin-only (401 if not admin)
+- Admin-only (403 if not admin — matches existing `/api/backup` pattern)
 - Admin-only: uses the same `locals.user` session check as other admin API routes in this codebase (e.g. `/api/backup`)
 - This is a fetch-based POST (not a form action), so SvelteKit's form CSRF token does not apply automatically. Mitigation: the endpoint requires an active admin session, is only accessible on localhost/LAN, and the `Authorization` header to Watchtower is a server-side secret never exposed to the browser. No additional CSRF token is added.
 - Calls `POST ${WATCHTOWER_API_URL}/v1/update` with `Authorization: Bearer ${WATCHTOWER_API_TOKEN}`, 10-second timeout (longer than check timeout to account for Watchtower pulling the image)
 - Returns `{ success: true }` on 200 from Watchtower
-- For all non-200 responses from Watchtower (including 401 token mismatch, 503 unavailable, or timeout), returns **502** to the frontend with a descriptive `{ error: "..." }` message — the frontend never needs to distinguish Watchtower-specific error codes
+- For all non-200 responses from Watchtower (including 401 token mismatch, 503 unavailable, or timeout), returns **502** to the frontend with a descriptive `{ message: "..." }` field — this follows SvelteKit's `throw error()` convention used throughout the codebase (e.g. `/api/backup`)
 - Error messages by case:
   - Watchtower unreachable / timeout: `"Could not reach Watchtower. Is it running?"`
   - Watchtower 401: `"Update service authentication failed. Check WATCHTOWER_API_TOKEN."`
@@ -139,7 +139,7 @@ Added as a new `<section>` card on `src/routes/dashboard/settings/backup/+page.s
 - **Watchtower not running / timeout:** `/api/update/trigger` returns 502 → toast "Could not reach Watchtower. Is it running?"
 - **Watchtower token mismatch:** `/api/update/trigger` returns 502 → toast "Update service authentication failed. Check WATCHTOWER_API_TOKEN."
 - **Other Watchtower error:** `/api/update/trigger` returns 502 → toast with HTTP status included
-- **Not admin:** Both endpoints return 401 (the UI section is only rendered for admin users anyway)
+- **Not admin:** Both endpoints return 403 (the UI section is only rendered for admin users anyway)
 
 ---
 
@@ -160,5 +160,5 @@ Added as a new `<section>` card on `src/routes/dashboard/settings/backup/+page.s
 
 - `GET /api/update/check` returns correct shape when remote is reachable
 - `GET /api/update/check` returns 502 when remote URL is unreachable
-- `POST /api/update/trigger` returns 401 for non-admin users
+- `POST /api/update/trigger` returns 403 for non-admin users
 - UI shows "Up to date" when versions match, update UI when they differ
