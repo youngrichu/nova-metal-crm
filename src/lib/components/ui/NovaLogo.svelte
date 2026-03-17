@@ -1,10 +1,6 @@
 <script lang="ts">
-	import { onMount } from "svelte";
-	let { class: className = "", idSuffix = "" }: { class?: string; idSuffix?: string } = $props();
-	let uid = $state(idSuffix || "ssr");
-	onMount(() => {
-		if (!idSuffix) uid = Math.random().toString(36).slice(2, 8);
-	});
+	let { class: className = "", idSuffix }: { class?: string; idSuffix: string } = $props();
+	const uid = idSuffix;
 </script>
 
 <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 1536 672" class={className} role="img" aria-label="Nova Metal">

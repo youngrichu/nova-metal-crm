@@ -34,7 +34,7 @@
 <div class="flex h-screen w-full items-center justify-center px-4">
   <div class="mx-auto w-full max-w-sm space-y-6">
     <div class="space-y-2 text-center">
-      <NovaLogo class="mx-auto h-20 w-auto" />
+      <NovaLogo class="mx-auto h-20 w-auto" idSuffix="login" />
       <h1 class="sr-only">Sign in</h1>
       <p class="text-muted-foreground">Enter your credentials to access the system</p>
     </div>
