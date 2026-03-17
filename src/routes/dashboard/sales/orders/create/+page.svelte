@@ -174,14 +174,19 @@
 	function handleSubmit() {
 		isSubmitting = true;
 		return async ({ result, update }: any) => {
-			if (result.type === 'success' && result.data?.success) {
-				toast.success('Order saved successfully!');
-				goto(`/dashboard/sales/orders/${result.data.orderId}`);
-			} else if (result.type === 'failure') {
-				toast.error(result.data?.error || 'Failed to save order');
+			try {
+				if (result.type === 'success' && result.data?.success) {
+					toast.success('Order saved successfully!');
+					await goto(`/dashboard/sales/orders/${result.data.orderId}`);
+					return;
+				}
+				if (result.type === 'failure') {
+					toast.error(result.data?.error || 'Failed to save order');
+				}
+				await update();
+			} finally {
+				isSubmitting = false;
 			}
-			isSubmitting = false;
-			await update();
 		};
 	}
 </script>
