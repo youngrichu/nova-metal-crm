@@ -1,7 +1,14 @@
+const SEMVER_RE = /^\d+\.\d+\.\d+$/;
+
+function parseSegments(v: string): [number, number, number] {
+  if (!SEMVER_RE.test(v)) throw new Error(`Invalid version format: "${v}" (expected X.Y.Z)`);
+  const [maj, min, pat] = v.split('.').map(Number);
+  return [maj, min, pat];
+}
+
 export function compareVersions(current: string, latest: string): boolean {
-  const parse = (v: string) => v.split('.').map(Number);
-  const [cMaj, cMin, cPat] = parse(current);
-  const [lMaj, lMin, lPat] = parse(latest);
+  const [cMaj, cMin, cPat] = parseSegments(current);
+  const [lMaj, lMin, lPat] = parseSegments(latest);
   if (lMaj !== cMaj) return lMaj > cMaj;
   if (lMin !== cMin) return lMin > cMin;
   return lPat > cPat;
@@ -22,5 +29,9 @@ export function parseVersionJson(raw: string): { version: string; changelog: str
   ) {
     throw new Error('Invalid version data: missing version or changelog fields');
   }
-  return parsed as { version: string; changelog: string };
+  const version = ((parsed as Record<string, unknown>).version as string).trim();
+  if (!SEMVER_RE.test(version)) {
+    throw new Error(`Invalid version format in version file: "${version}" (expected X.Y.Z)`);
+  }
+  return { version, changelog: (parsed as Record<string, unknown>).changelog as string };
 }

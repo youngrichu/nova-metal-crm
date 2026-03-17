@@ -21,6 +21,18 @@ describe('compareVersions', () => {
   it('returns false when current is higher than latest', () => {
     expect(compareVersions('1.1.0', '1.0.0')).toBe(false);
   });
+
+  it('throws on pre-release version string', () => {
+    expect(() => compareVersions('1.0.0-beta.1', '1.0.1')).toThrow();
+  });
+
+  it('throws on version with leading v', () => {
+    expect(() => compareVersions('v1.0.0', '1.0.1')).toThrow();
+  });
+
+  it('throws on incomplete version (missing patch)', () => {
+    expect(() => compareVersions('1.0', '1.0.1')).toThrow();
+  });
 });
 
 describe('parseVersionJson', () => {

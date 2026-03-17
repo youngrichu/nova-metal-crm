@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ locals }) => {
     throw error(500, 'VERSION_CHECK_URL not configured');
   }
 
-  const currentVersion = PUBLIC_APP_VERSION ?? '0.0.0';
+  const currentVersion = PUBLIC_APP_VERSION || '0.0.0';
 
   let raw: string;
   try {

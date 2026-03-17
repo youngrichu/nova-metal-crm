@@ -40,6 +40,8 @@
 				return;
 			}
 			toast.success('Update triggered — the app will restart in ~30 seconds.');
+			// Reset after 60s in case the app doesn't restart (e.g. already up to date)
+			setTimeout(() => { updateStatus = 'update-available'; }, 60000);
 		} catch {
 			toast.error('Could not reach Watchtower. Is it running?');
 			updateStatus = 'update-available';

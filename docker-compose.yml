@@ -21,6 +21,8 @@ services:
   app:
     build: .
     restart: always
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     ports:
       - "3000:3000"
     environment:
@@ -61,6 +63,7 @@ services:
       WATCHTOWER_HTTP_API_UPDATE: "true"
       WATCHTOWER_HTTP_API_TOKEN: "${WATCHTOWER_API_TOKEN}"
       WATCHTOWER_HTTP_API_PERIODIC_POLLS: "false"
+      WATCHTOWER_LABEL_ENABLE: "true"
     ports:
       - "127.0.0.1:8080:8080"
 
