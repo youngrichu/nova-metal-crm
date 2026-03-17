@@ -34,7 +34,7 @@
 
 Open `.env.example` and append:
 
-```
+```env
 # App version (must match version.json at release time)
 PUBLIC_APP_VERSION=1.0.0
 

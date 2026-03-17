@@ -47,7 +47,7 @@ The developer bumps this file manually and commits it as part of every release. 
 
 ## Environment Variables
 
-```
+```env
 # .env
 PUBLIC_APP_VERSION=1.0.0          # baked into build via SvelteKit $env/static/public
 WATCHTOWER_API_URL=http://watchtower:8080   # internal Docker service URL
@@ -121,7 +121,7 @@ Added as a new `<section>` card on `src/routes/dashboard/settings/backup/+page.s
 
 ### Component Flow
 
-```
+```text
 [Check for Updates]
   → GET /api/update/check
     → hasUpdate: false → show "Up to date"

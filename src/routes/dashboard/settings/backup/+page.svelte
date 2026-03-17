@@ -9,6 +9,11 @@
 
 	let updateStatus = $state<UpdateStatus>('idle');
 	let updateInfo = $state<{ currentVersion: string; latestVersion: string; changelog: string } | null>(null);
+	let updateTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
+	$effect(() => {
+		return () => { if (updateTimeoutId) clearTimeout(updateTimeoutId); };
+	});
 
 	async function handleCheckUpdate() {
 		updateStatus = 'checking';
@@ -21,6 +26,11 @@
 				return;
 			}
 			const data = await res.json();
+			if (typeof data.currentVersion !== 'string' || typeof data.latestVersion !== 'string') {
+				toast.error('Invalid response from update server.');
+				updateStatus = 'idle';
+				return;
+			}
 			updateInfo = { currentVersion: data.currentVersion, latestVersion: data.latestVersion, changelog: data.changelog };
 			updateStatus = data.hasUpdate ? 'update-available' : 'up-to-date';
 		} catch {
@@ -41,7 +51,7 @@
 			}
 			toast.success('Update triggered — the app will restart in ~30 seconds.');
 			// Reset after 60s in case the app doesn't restart (e.g. already up to date)
-			setTimeout(() => { updateStatus = 'update-available'; }, 60000);
+			updateTimeoutId = setTimeout(() => { updateStatus = 'update-available'; }, 60000);
 		} catch {
 			toast.error('Could not reach Watchtower. Is it running?');
 			updateStatus = 'update-available';
