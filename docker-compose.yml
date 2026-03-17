@@ -29,6 +29,10 @@ services:
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
       NODE_ENV: production
       PORT: 3000
+      WATCHTOWER_API_URL: ${WATCHTOWER_API_URL:-http://watchtower:8080}
+      WATCHTOWER_API_TOKEN: ${WATCHTOWER_API_TOKEN}
+      VERSION_CHECK_URL: ${VERSION_CHECK_URL}
+      PUBLIC_APP_VERSION: ${PUBLIC_APP_VERSION:-1.0.0}
     depends_on:
       db:
         condition: service_healthy
@@ -47,6 +51,18 @@ services:
       - ./scripts/backup.sh:/backup.sh
       - ./backups:/mnt/backup
     entrypoint: ["/bin/sh", "-c", "echo '0 2 * * * /backup.sh' > /etc/crontabs/root && crond -f -l 2"]
+
+  watchtower:
+    image: containrrr/watchtower
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      WATCHTOWER_HTTP_API_UPDATE: "true"
+      WATCHTOWER_HTTP_API_TOKEN: "${WATCHTOWER_API_TOKEN}"
+      WATCHTOWER_HTTP_API_PERIODIC_POLLS: "false"
+    ports:
+      - "127.0.0.1:8080:8080"
 
 volumes:
   pgdata:
