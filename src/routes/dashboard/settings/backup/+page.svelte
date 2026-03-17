@@ -1,9 +1,50 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { Database, Download, Shield, HardDrive, Clock } from 'lucide-svelte';
+	import { Database, Download, Shield, HardDrive, Clock, RefreshCw, Zap } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let isDownloading = $state(false);
+
+	type UpdateStatus = 'idle' | 'checking' | 'up-to-date' | 'update-available' | 'updating';
+
+	let updateStatus = $state<UpdateStatus>('idle');
+	let updateInfo = $state<{ currentVersion: string; latestVersion: string; changelog: string } | null>(null);
+
+	async function handleCheckUpdate() {
+		updateStatus = 'checking';
+		try {
+			const res = await fetch('/api/update/check');
+			if (!res.ok) {
+				const body = await res.json().catch(() => ({}));
+				toast.error(body.message ?? 'Could not reach update server. Check your internet connection.');
+				updateStatus = 'idle';
+				return;
+			}
+			const data = await res.json();
+			updateInfo = { currentVersion: data.currentVersion, latestVersion: data.latestVersion, changelog: data.changelog };
+			updateStatus = data.hasUpdate ? 'update-available' : 'up-to-date';
+		} catch {
+			toast.error('Could not reach update server. Check your internet connection.');
+			updateStatus = 'idle';
+		}
+	}
+
+	async function handleTriggerUpdate() {
+		updateStatus = 'updating';
+		try {
+			const res = await fetch('/api/update/trigger', { method: 'POST' });
+			if (!res.ok) {
+				const body = await res.json().catch(() => ({}));
+				toast.error(body.message ?? 'Failed to trigger update');
+				updateStatus = 'update-available';
+				return;
+			}
+			toast.success('Update triggered — the app will restart in ~30 seconds.');
+		} catch {
+			toast.error('Could not reach Watchtower. Is it running?');
+			updateStatus = 'update-available';
+		}
+	}
 
 	async function handleExport() {
 		isDownloading = true;
@@ -115,6 +156,77 @@
 					<p class="text-xs text-muted-foreground/60">Compressed SQL dump of the full database. Size depends on data volume.</p>
 				</div>
 			</div>
+		</div>
+	</section>
+
+	<!-- System Updates Card -->
+	<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
+		<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
+			<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
+				<Zap class="w-4 h-4 text-primary" /> System Updates
+			</h2>
+		</div>
+		<div class="p-6 md:p-8 space-y-6">
+			<p class="text-sm text-muted-foreground leading-relaxed">
+				Connect to the internet and check for available application updates. When an update is ready, clicking <strong>Update Now</strong> will pull the latest version and restart the app automatically.
+			</p>
+
+			<!-- Version status display -->
+			<div class="flex flex-wrap items-center gap-3">
+				{#if updateInfo}
+					<div class="flex items-center gap-2 font-mono text-sm bg-muted/40 border border-foreground/10 px-3 py-2">
+						Current: <span class="font-bold">v{updateInfo.currentVersion}</span>
+					</div>
+					{#if updateStatus === 'up-to-date'}
+						<span class="inline-block px-2 py-0.5 bg-green-500 text-white text-[10px] font-black tracking-widest uppercase">
+							Up to date
+						</span>
+					{:else if updateStatus === 'update-available' || updateStatus === 'updating'}
+						<span class="inline-block px-2 py-0.5 bg-amber-500 text-white text-[10px] font-black tracking-widest uppercase">
+							v{updateInfo.latestVersion} available
+						</span>
+					{/if}
+				{/if}
+			</div>
+
+			<!-- Changelog -->
+			{#if updateStatus === 'update-available' || updateStatus === 'updating'}
+				<div class="bg-muted/40 border-l-4 border-primary/40 p-4 space-y-1">
+					<p class="text-xs font-bold tracking-widest uppercase text-foreground/50">What's new in v{updateInfo?.latestVersion}</p>
+					<p class="text-sm text-foreground/80">{updateInfo?.changelog}</p>
+				</div>
+			{/if}
+
+			<!-- Actions -->
+			<div class="flex flex-wrap gap-4">
+				<Button
+					onclick={handleCheckUpdate}
+					disabled={updateStatus === 'checking' || updateStatus === 'updating'}
+					variant="outline"
+					class="h-14 px-12 rounded-none border-2 border-foreground font-bold uppercase tracking-widest hover:bg-foreground hover:text-background transition-all flex items-center gap-3 disabled:opacity-50"
+				>
+					<RefreshCw class="w-4 h-4 {updateStatus === 'checking' ? 'animate-spin' : ''}" />
+					{updateStatus === 'checking' ? 'Checking...' : 'Check for Updates'}
+				</Button>
+
+				{#if updateStatus === 'update-available' || updateStatus === 'updating'}
+					<Button
+						onclick={handleTriggerUpdate}
+						disabled={updateStatus === 'updating'}
+						class="h-14 px-12 rounded-none bg-foreground text-background font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all flex items-center gap-3 disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+					>
+						<Zap class="w-4 h-4" />
+						{updateStatus === 'updating' ? 'Updating...' : 'Update Now'}
+					</Button>
+				{/if}
+			</div>
+
+			<!-- Post-update note -->
+			{#if updateStatus === 'updating'}
+				<p class="text-xs text-muted-foreground/60">
+					The app is restarting. Your browser will lose connection briefly — reload the page in ~30 seconds.
+				</p>
+			{/if}
 		</div>
 	</section>
 </div>
