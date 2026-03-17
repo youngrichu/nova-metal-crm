@@ -3,6 +3,7 @@
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
   import { authClient } from "$lib/auth-client";
+  import NovaLogo from "$lib/components/ui/NovaLogo.svelte";
   import { goto } from "$app/navigation";
 
   let email = $state("");
@@ -33,7 +34,8 @@
 <div class="flex h-screen w-full items-center justify-center px-4">
   <div class="mx-auto w-full max-w-sm space-y-6">
     <div class="space-y-2 text-center">
-      <h1 class="text-3xl font-bold tracking-tighter">Nova Metal</h1>
+      <NovaLogo class="mx-auto h-20 w-auto" idSuffix="login" />
+      <h1 class="sr-only">Sign in</h1>
       <p class="text-muted-foreground">Enter your credentials to access the system</p>
     </div>
     
