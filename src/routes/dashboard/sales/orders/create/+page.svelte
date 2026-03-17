@@ -182,6 +182,8 @@
 				}
 				if (result.type === 'failure') {
 					toast.error(result.data?.error || 'Failed to save order');
+				} else if (result.type === 'error') {
+					toast.error(result.error?.message || 'An unexpected error occurred');
 				}
 				await update();
 			} finally {
