@@ -4,6 +4,7 @@ import { salesOrders, salesOrderItems, customers, products } from "$lib/server/d
 import { eq } from "drizzle-orm";
 import { createRequire } from "module";
 import path from "path";
+import fs from "fs";
 
 const require = createRequire(import.meta.url);
 const { default: Printer } = require("pdfmake/js/Printer.js");
@@ -73,12 +74,16 @@ export const GET: RequestHandler = async ({ params }) => {
         // Format Date
         const orderDate = new Date(order.createdAt).toLocaleDateString('en-GB');
 
+        // Load logo as base64 data URL
+        const logoPath = path.join(process.cwd(), 'static', 'nova_logo.jpeg');
+        const logoData = `data:image/jpeg;base64,${fs.readFileSync(logoPath).toString('base64')}`;
+
         // Build PDF Document Definition
         const docDefinition: TDocumentDefinitions = {
             content: [
                 {
-                    text: 'NOVA METAL PLC',
-                    style: 'header',
+                    image: logoData,
+                    width: 180,
                     alignment: 'center',
                     margin: [0, 0, 0, 5]
                 },
