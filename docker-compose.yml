@@ -43,7 +43,8 @@ services:
     image: postgres:16-alpine
     restart: always
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       PGHOST: db
       PGUSER: nova_dev
@@ -52,7 +53,7 @@ services:
     volumes:
       - ./scripts/backup.sh:/backup.sh
       - ./backups:/mnt/backup
-    entrypoint: ["/bin/sh", "-c", "echo '0 2 * * * /backup.sh' > /etc/crontabs/root && crond -f -l 2"]
+    entrypoint: ["/bin/sh", "-c", "echo '0 * * * * /backup.sh' > /etc/crontabs/root && crond -f -l 2"]
 
   watchtower:
     image: containrrr/watchtower
