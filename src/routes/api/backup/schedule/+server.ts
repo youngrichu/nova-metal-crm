@@ -36,20 +36,23 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     throw error(400, result.message);
   }
 
+  const valueJson = JSON.stringify(result.value);
+  const now = new Date();
+
   await db
     .insert(systemSettings)
     .values({
       key: 'backup_schedule',
-      value: JSON.stringify(result.value),
+      value: valueJson,
       updatedBy: locals.user.id,
-      updatedAt: new Date()
+      updatedAt: now
     })
     .onConflictDoUpdate({
       target: systemSettings.key,
       set: {
-        value: JSON.stringify(result.value),
+        value: valueJson,
         updatedBy: locals.user.id,
-        updatedAt: new Date()
+        updatedAt: now
       }
     });
 

@@ -34,7 +34,7 @@ if ! echo "${SCHED_HOUR}" | grep -qE '^[0-9]+$' || [ "${SCHED_HOUR}" -lt 0 ] || 
   SCHED_HOUR=2
 fi
 
-CURRENT_HOUR=$(date +%H | sed 's/^0*//' || echo 0)
+CURRENT_HOUR=$(date +%-H 2>/dev/null || date +%H | sed 's/^0*//; s/^$/0/')
 CURRENT_DOW=$(( $(date +%u) % 7 ))  # date +%u: 1=Mon…7=Sun; % 7 → Sun=0
 
 if [ "${FREQ}" = "daily" ]; then
