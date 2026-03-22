@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { Database, Download, Shield, HardDrive, Clock, RefreshCw, Zap } from 'lucide-svelte';
+	import { Database, Download, Shield, HardDrive, Clock, RefreshCw, Zap, Calendar } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 
 	let isDownloading = $state(false);
@@ -62,6 +62,75 @@
 			updateStatus = 'update-available';
 		}
 	}
+
+	// ── Backup Schedule ──────────────────────────────────────────────────────────
+	type BackupFrequency = 'daily' | 'weekly';
+
+	let scheduleLoading = $state(true);
+	let scheduleError = $state(false);
+	let scheduleSaving = $state(false);
+	let scheduleFrequency = $state<BackupFrequency>('daily');
+	let scheduleHour = $state(2);
+	let scheduleDayOfWeek = $state(0);
+
+	const HOURS = Array.from({ length: 24 }, (_, i) => {
+		const period = i < 12 ? 'AM' : 'PM';
+		const display = i === 0 ? 12 : i > 12 ? i - 12 : i;
+		return { value: i, label: `${display}:00 ${period}` };
+	});
+
+	const DAYS = [
+		{ value: 0, label: 'Sunday' },
+		{ value: 1, label: 'Monday' },
+		{ value: 2, label: 'Tuesday' },
+		{ value: 3, label: 'Wednesday' },
+		{ value: 4, label: 'Thursday' },
+		{ value: 5, label: 'Friday' },
+		{ value: 6, label: 'Saturday' }
+	];
+
+	async function loadSchedule() {
+		scheduleLoading = true;
+		scheduleError = false;
+		try {
+			const res = await fetch('/api/backup/schedule');
+			if (!res.ok) throw new Error();
+			const data = await res.json();
+			scheduleFrequency = data.frequency ?? 'daily';
+			scheduleHour = data.hour ?? 2;
+			scheduleDayOfWeek = data.dayOfWeek ?? 0;
+		} catch {
+			scheduleError = true;
+		} finally {
+			scheduleLoading = false;
+		}
+	}
+
+	async function saveSchedule() {
+		scheduleSaving = true;
+		try {
+			const body: Record<string, unknown> = { frequency: scheduleFrequency, hour: scheduleHour };
+			if (scheduleFrequency === 'weekly') body.dayOfWeek = scheduleDayOfWeek;
+			const res = await fetch('/api/backup/schedule', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(body)
+			});
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({}));
+				toast.error(data.message ?? 'Failed to save schedule');
+				return;
+			}
+			toast.success('Backup schedule saved');
+		} catch {
+			toast.error('Failed to save schedule');
+		} finally {
+			scheduleSaving = false;
+		}
+	}
+
+	$effect(() => { loadSchedule(); });
+	// ── End Backup Schedule ───────────────────────────────────────────────────────
 
 	async function handleExport() {
 		isDownloading = true;
@@ -173,6 +242,94 @@
 					<p class="text-xs text-muted-foreground/60">Compressed SQL dump of the full database. Size depends on data volume.</p>
 				</div>
 			</div>
+		</div>
+	</section>
+
+	<!-- Backup Schedule Card -->
+	<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
+		<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
+			<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
+				<Calendar class="w-4 h-4 text-primary" /> Backup Schedule
+			</h2>
+		</div>
+		<div class="p-6 md:p-8 space-y-6">
+			<p class="text-sm text-muted-foreground leading-relaxed">
+				Choose when automated backups run. Changes take effect at the next hourly check.
+			</p>
+
+			{#if scheduleError}
+				<p class="text-sm text-destructive">Could not load schedule. Please reload the page.</p>
+			{:else}
+				<!-- Frequency toggle -->
+				<div class="space-y-2">
+					<p class="text-xs font-bold tracking-wider uppercase text-foreground/50">Frequency</p>
+					<div class="flex gap-0">
+						{#each (['daily', 'weekly'] as BackupFrequency[]) as freq}
+							<button
+								type="button"
+								disabled={scheduleLoading}
+								onclick={() => { scheduleFrequency = freq; }}
+								class="h-10 px-6 border-2 border-foreground font-bold uppercase tracking-widest text-xs transition-all
+									{scheduleFrequency === freq
+										? 'bg-foreground text-background'
+										: 'bg-background text-foreground hover:bg-foreground/10'}
+									disabled:opacity-50"
+							>
+								{freq}
+							</button>
+						{/each}
+					</div>
+				</div>
+
+				<!-- Time picker -->
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div class="space-y-2">
+						<label class="text-xs font-bold tracking-wider uppercase text-foreground/50" for="schedule-hour">
+							Time
+						</label>
+						<select
+							id="schedule-hour"
+							disabled={scheduleLoading}
+							bind:value={scheduleHour}
+							class="w-full h-10 px-3 border-2 border-foreground/20 bg-background font-mono text-sm focus:outline-none focus:border-foreground disabled:opacity-50"
+						>
+							{#each HOURS as h}
+								<option value={h.value}>{h.label}</option>
+							{/each}
+						</select>
+					</div>
+
+					{#if scheduleFrequency === 'weekly'}
+						<div class="space-y-2">
+							<label class="text-xs font-bold tracking-wider uppercase text-foreground/50" for="schedule-dow">
+								Day
+							</label>
+							<select
+								id="schedule-dow"
+								disabled={scheduleLoading}
+								bind:value={scheduleDayOfWeek}
+								class="w-full h-10 px-3 border-2 border-foreground/20 bg-background font-mono text-sm focus:outline-none focus:border-foreground disabled:opacity-50"
+							>
+								{#each DAYS as d}
+									<option value={d.value}>{d.label}</option>
+								{/each}
+							</select>
+						</div>
+					{/if}
+				</div>
+
+				<!-- Save button -->
+				<div>
+					<Button
+						onclick={saveSchedule}
+						disabled={scheduleLoading || scheduleSaving}
+						class="h-14 px-12 rounded-none bg-foreground text-background font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all flex items-center gap-3 disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+					>
+						<Calendar class="w-4 h-4" />
+						{scheduleSaving ? 'Saving...' : 'Save Schedule'}
+					</Button>
+				</div>
+			{/if}
 		</div>
 	</section>
 
