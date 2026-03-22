@@ -40,12 +40,12 @@ One new key in the existing `system_settings` table:
 
 **Fields:**
 - `frequency`: `"daily"` or `"weekly"`
-- `hour`: integer 0–23 (hour of day in 24h, local server time)
-- `dayOfWeek`: integer 0–6 (0 = Sunday), required when `frequency` is `"weekly"`, omitted otherwise
+- `hour`: integer 0–23 (hour of day in 24h, server local time)
+- `dayOfWeek`: integer 0–6 (0 = Sunday), required when `frequency` is `"weekly"`, silently stripped by the POST handler and not stored when `frequency` is `"daily"`. The GET handler never returns `dayOfWeek` for a daily schedule.
 
 **Default (key absent):** `{"frequency":"daily","hour":2}` — matches the current hardcoded cron so existing deployments behave identically after upgrade.
 
-Uses the same `insert().onConflictDoUpdate()` upsert pattern as all other `system_settings` writes in the codebase.
+Uses the same `insert().onConflictDoUpdate()` upsert pattern as all other `system_settings` writes in the codebase. The `updatedBy` field must be set to `locals.user.id` on every save to preserve the audit trail.
 
 ---
 
@@ -55,61 +55,78 @@ Uses the same `insert().onConflictDoUpdate()` upsert pattern as all other `syste
 
 - Admin-only (403 if not admin — matches existing `/api/backup` pattern)
 - Reads `backup_schedule` key from `system_settings`
-- Returns parsed JSON with default fallback if key is absent:
+- If key is absent: returns the default `{"frequency":"daily","hour":2}`
+- If stored JSON fails to parse **or** has an invalid shape (e.g. unknown frequency, hour out of 0–23 range): returns the default rather than erroring, to prevent a bad stored value from breaking the UI
+- Returns:
   ```json
   { "frequency": "daily", "hour": 2 }
   ```
-- Returns 500 if the stored value fails JSON parsing (corrupt data guard)
+  or
+  ```json
+  { "frequency": "weekly", "hour": 2, "dayOfWeek": 0 }
+  ```
 
 ### `POST /api/backup/schedule`
 
 - Admin-only (403 if not admin)
-- Accepts JSON body: `{ frequency, hour, dayOfWeek? }`
-- Validation:
+- Accepts JSON body
+- Validation rules:
   - `frequency` must be `"daily"` or `"weekly"`
-  - `hour` must be integer 0–23
-  - `dayOfWeek` must be integer 0–6 when `frequency` is `"weekly"`, ignored otherwise
-- On success: upserts `backup_schedule` key, returns `{ success: true }`
+  - `hour` must be an integer 0–23
+  - `dayOfWeek` must be an integer 0–6 when `frequency` is `"weekly"`; silently stripped (not stored) when `frequency` is `"daily"`
 - On validation failure: returns 400 with `{ message: "..." }`
+- On success: upserts `backup_schedule` key with `updatedBy: locals.user.id`, returns `{ message: "Backup schedule saved" }` (consistent with existing API response shape in the codebase)
 
 ---
 
 ## `backup.sh` Changes
 
-At the top of `scripts/backup.sh`, before running `pg_dump`, add a schedule check:
+`postgres:16-alpine` does not include Python. JSON parsing is done with `jq`, installed via `apk add --no-cache jq` at the top of the `backup.sh` script (the container has internet access and Alpine's package index).
 
-1. Query `system_settings` via `psql` for the `backup_schedule` value
-2. If the key is absent, default to `{"frequency":"daily","hour":2}`
-3. Parse JSON with `python3 -c` (available in `postgres:16-alpine`)
-4. Compare current hour (and day of week for weekly) against the schedule
-5. If the current time does not match, print a skip message and `exit 0`
-6. If it matches, proceed with the backup as normal
+**Insertion point:** The schedule check block is inserted at the very top of `backup.sh`, immediately after the shebang and any `set` flags, before any `mkdir` or `pg_dump` calls.
 
-The check uses the container's local time. The backup container does not need to be restarted when the schedule changes — the next hourly cron tick will read the updated value from Postgres.
+**Logic:**
+
+1. Install `jq` if not present: `apk add --no-cache jq`
+2. Query `system_settings` via `psql -t -c "SELECT value FROM system_settings WHERE key='backup_schedule'"`, capturing output
+3. If the `psql` query fails (database unreachable, connection error): log a warning and **proceed with the backup using default schedule** (daily at hour 2) rather than aborting — the backup is more important than the schedule check
+4. If the key is absent or output is empty: use default `FREQ=daily HOUR=2`
+5. Parse JSON with `jq`: extract `frequency`, `hour`, `dayOfWeek`
+6. Validate extracted values in shell:
+   - If `frequency` is not `daily` or `weekly`: fall back to default
+   - If `hour` is not an integer in 0–23: fall back to default
+   - If `frequency` is `weekly` and `dayOfWeek` is not an integer in 0–6: fall back to default
+7. Compare current time against schedule:
+   - Current hour: `CURRENT_HOUR=$(date +%H | sed 's/^0//')` (strip leading zero for arithmetic)
+   - Current day of week (Sunday=0): `CURRENT_DOW=$(( $(date +%u) % 7 ))` (`date +%u` returns 1=Mon … 7=Sun; `% 7` maps Sunday's 7 → 0)
+   - `daily`: if `CURRENT_HOUR ≠ HOUR` → print skip message and `exit 0`
+   - `weekly`: if `CURRENT_DOW ≠ dayOfWeek` OR `CURRENT_HOUR ≠ HOUR` → print skip message and `exit 0`
+8. If time matches: proceed with backup as normal
+
+**Timing note:** The script reads the schedule once per cron tick (every hour). If the admin changes the schedule close to the configured hour, the change takes effect at the next hourly tick. This is expected and documented in the UI (see UI section).
 
 ---
 
-## `docker-compose.yml` Change
+## `docker-compose.yml` Changes
 
-The backup container entrypoint cron expression changes from:
+Two changes:
 
+1. **Backup container entrypoint cron** changes from `0 2 * * *` (daily at 2am) to `0 * * * *` (every hour). The schedule logic moves entirely into `backup.sh` — the crontab is not dynamic and does not need to change when the user updates the schedule.
+
+2. **Backup container `depends_on`** gains `condition: service_healthy` (matching the `app` service) to ensure Postgres is ready before the first cron tick fires:
+
+```yaml
+  backup:
+    depends_on:
+      db:
+        condition: service_healthy
 ```
-0 2 * * *   (daily at 2am — hardcoded)
-```
-
-to:
-
-```
-0 * * * *   (every hour — schedule logic moves to backup.sh)
-```
-
-The container still runs `crond` with a single cron entry; only the schedule string changes.
 
 ---
 
 ## UI — Backup Schedule Card
 
-Added as a new `<section>` card on `src/routes/dashboard/settings/backup/+page.svelte`, positioned between the "Backup Information" card and the "System Updates" card. Styled consistently with the existing cards.
+Added as a new `<section>` card on `src/routes/dashboard/settings/backup/+page.svelte`, positioned between the existing "Backup Information" card and the "System Updates" card (the page order is: Database Export → Backup Information → **Backup Schedule** → System Updates).
 
 ### Layout
 
@@ -117,12 +134,14 @@ Added as a new `<section>` card on `src/routes/dashboard/settings/backup/+page.s
 ┌─────────────────────────────────────────────────────┐
 │ CLOCK ICON  BACKUP SCHEDULE                         │
 ├─────────────────────────────────────────────────────┤
-│ "Automated backups run on the schedule below..."    │
+│ "Choose when automated backups run..."              │
 │                                                     │
 │  [ DAILY ]  [ WEEKLY ]                              │
 │                                                     │
 │  Time:  [ 2:00 AM ▾ ]                               │
-│  Day:   [ Sunday  ▾ ]   ← only shown for weekly     │
+│  Day:   [ Sunday  ▾ ]   ← only shown for Weekly     │
+│                                                     │
+│  ⚠ Changes take effect at the next hourly check.   │
 │                                                     │
 │  [ SAVE SCHEDULE ]                                  │
 └─────────────────────────────────────────────────────┘
@@ -130,40 +149,39 @@ Added as a new `<section>` card on `src/routes/dashboard/settings/backup/+page.s
 
 ### State
 
-- On mount: calls `GET /api/backup/schedule` and pre-fills the form
-- Loading state: controls disabled while fetching initial schedule
-- Save: calls `POST /api/backup/schedule`, shows success/error toast
-- Saving state: Save button disabled while request is in flight
+- On mount: calls `GET /api/backup/schedule` and pre-fills the form; controls are disabled while fetching
+- Load failure: shows inline error text ("Could not load schedule"), controls remain disabled
+- Save: calls `POST /api/backup/schedule`; Save button is disabled while request is in flight
+- Save success: toast "Backup schedule saved"
+- Save failure: toast error with message from API
 
 ### Controls
 
-- **Daily / Weekly toggle:** Two buttons styled like the pricing-tier buttons used on the order create page (border-2, active state uses `bg-foreground text-background`)
-- **Time dropdown:** 12h format, "12:00 AM" through "11:00 PM" (maps to hour 0–23)
-- **Day of week dropdown:** Sunday through Saturday (maps to 0–6), only rendered when Weekly is selected
-- **Save Schedule button:** Same style as the Export button (tall, bold, offset shadow)
-
-### Error Handling
-
-- Load failure: show inline error text ("Could not load schedule"), controls remain disabled
-- Save failure: toast error with message from API
-- Save success: toast "Backup schedule saved"
+- **Daily / Weekly toggle:** Two adjacent buttons styled like the pricing-tier buttons used on the order create page (`border-2 border-foreground`, active state `bg-foreground text-background`)
+- **Time dropdown:** 12-hour format labels ("12:00 AM", "1:00 AM" … "11:00 PM") mapping to stored 24h integers (0–23). The UI converts between display (12h) and stored value (24h) on both load and save — midnight is 12:00 AM (hour 0), noon is 12:00 PM (hour 12).
+- **Day of week dropdown:** "Sunday" through "Saturday" mapping to integers 0–6; rendered only when Weekly is selected, hidden (not just disabled) when Daily is selected
+- **Save Schedule button:** Tall, bold, offset-shadow style matching the Export button
 
 ---
 
 ## Testing
 
-- Unit tests are not applicable (no pure logic to unit-test; the schedule check in `backup.sh` is integration-level)
-- Manual test checklist:
-  - [ ] Load page as admin → form pre-fills with current schedule
-  - [ ] Change to Weekly, select day + time → save → reload → verify persisted
-  - [ ] Change back to Daily → save → reload → verify persisted
-  - [ ] Load page as non-admin → Backup tab not visible (hidden by nav role filter)
-  - [ ] POST to `/api/backup/schedule` with invalid data → 400 returned
+The POST endpoint validation (hour range, dayOfWeek range, frequency enum, daily stripping dayOfWeek) can be unit-tested with Vitest if desired, but is not required — the validation rules are straightforward.
+
+Manual test checklist:
+- [ ] Load page as admin → form pre-fills with current schedule (default: Daily, 2:00 AM)
+- [ ] Switch to Weekly, pick Wednesday at 6:00 PM → save → reload → verify persisted
+- [ ] Switch back to Daily, pick 8:00 AM → save → reload → verify persisted
+- [ ] Save Daily with no dayOfWeek change → verify dayOfWeek not stored
+- [ ] POST to `/api/backup/schedule` with `hour: 25` → 400 returned
+- [ ] POST with `frequency: "weekly"` and no `dayOfWeek` → 400 returned
+- [ ] Load page as non-admin → Backup tab not visible (hidden by nav role filter)
 
 ---
 
 ## Rollout Notes
 
-- Default value (`daily` at `2:00 AM`) is inserted on first save or read — no migration required
-- `docker-compose.yml` change (hourly cron) must be deployed together with the `backup.sh` change
-- Existing deployments that never visit the schedule UI continue to get the same daily 2am backup (the `backup.sh` default path)
+- No DB migration required — the key is inserted on first save; reads fall back to defaults until then
+- The backup container timezone should match the app timezone. If the deployment uses a non-UTC timezone, add a `TZ` environment variable to the backup container (e.g. `TZ: Africa/Addis_Ababa`) so `date +%H` and `date +%u` return the correct local time.
+- `docker-compose.yml` cron change and `backup.sh` schedule check must be deployed together; deploying only one half leaves the system in an inconsistent state (either hourly backups with no schedule check, or schedule check code that never fires)
+- Existing deployments that never visit the schedule UI continue to receive the same daily 2am backup
