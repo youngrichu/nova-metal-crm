@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Sidebar from "$lib/components/ui/sidebar";
 	import NovaLogo from "$lib/components/ui/NovaLogo.svelte";
+	import mobileLogo from "$lib/assets/nova_logo_mobile.svg";
 	import { cn } from "$lib/utils";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
 	import { Collapsible } from "bits-ui";
@@ -101,7 +102,7 @@
 		<div class="flex items-center gap-0 group-data-[collapsible=icon]:justify-center" style="background: white;">
 			<!-- Icon: only visible when sidebar is collapsed -->
 			<div class="hidden items-center justify-center shrink-0 w-full h-16 group-data-[collapsible=icon]:flex">
-				<NovaLogo class="h-10 w-10" idSuffix="sidebar-icon" />
+				<img src={mobileLogo} alt="Nova Metal" class="h-10 w-10 object-contain" />
 			</div>
 			<!-- Full logo: only visible when sidebar is expanded -->
 			<div class="flex flex-col leading-none px-4 py-3 group-data-[collapsible=icon]:hidden overflow-hidden w-full">
