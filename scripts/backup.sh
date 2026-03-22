@@ -4,7 +4,10 @@ set -o pipefail
 # ── Schedule check ──────────────────────────────────────────────────────────
 # Install jq if not present (postgres:16-alpine ships without it)
 if ! command -v jq >/dev/null 2>&1; then
-  apk add --no-cache jq >/dev/null 2>&1
+  if ! apk add --no-cache jq >/dev/null 2>&1; then
+    echo "WARNING: Could not install jq. Proceeding with default schedule (daily at 02:00)."
+    SCHEDULE_JSON='{"frequency":"daily","hour":2}'
+  fi
 fi
 
 SCHEDULE_JSON=""
@@ -34,7 +37,7 @@ if ! echo "${SCHED_HOUR}" | grep -qE '^[0-9]+$' || [ "${SCHED_HOUR}" -lt 0 ] || 
   SCHED_HOUR=2
 fi
 
-CURRENT_HOUR=$(date +%-H 2>/dev/null || date +%H | sed 's/^0*//; s/^$/0/')
+CURRENT_HOUR=$(date +%H | sed 's/^0*//; s/^$/0/')
 CURRENT_DOW=$(( $(date +%u) % 7 ))  # date +%u: 1=Mon…7=Sun; % 7 → Sun=0
 
 if [ "${FREQ}" = "daily" ]; then
