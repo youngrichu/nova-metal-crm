@@ -89,67 +89,67 @@
 				<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
 					<div class="space-y-2 group">
 						<Label for="markup_retail" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							Retail Markup Multiplier
+							Retail Markup %
 						</Label>
 						<Input
 							id="markup_retail"
 							name="markup_retail"
 							type="number"
-							step="0.01"
-							min="1"
+							step="0.1"
+							min="0"
 							value={data.settings.markup_retail}
 							required
 							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
-						<p class="text-xs text-muted-foreground/60">e.g. 1.15 = 15% markup</p>
+						<p class="text-xs text-muted-foreground/60">e.g. 20 = 20% markup on cost</p>
 					</div>
 					<div class="space-y-2 group">
 						<Label for="markup_wholesale" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							Wholesale Markup Multiplier
+							Wholesale Markup %
 						</Label>
 						<Input
 							id="markup_wholesale"
 							name="markup_wholesale"
 							type="number"
-							step="0.01"
-							min="1"
+							step="0.1"
+							min="0"
 							value={data.settings.markup_wholesale}
 							required
 							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
-						<p class="text-xs text-muted-foreground/60">e.g. 1.05 = 5% markup</p>
+						<p class="text-xs text-muted-foreground/60">e.g. 15 = 15% markup on cost</p>
 					</div>
 					<div class="space-y-2 group">
 						<Label for="markup_vip" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							VIP Markup Multiplier
+							VIP Markup %
 						</Label>
 						<Input
 							id="markup_vip"
 							name="markup_vip"
 							type="number"
-							step="0.01"
-							min="1"
+							step="0.1"
+							min="0"
 							value={data.settings.markup_vip}
 							required
 							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
-						<p class="text-xs text-muted-foreground/60">e.g. 1.05 = 5% markup</p>
+						<p class="text-xs text-muted-foreground/60">e.g. 12 = 12% markup on cost</p>
 					</div>
 					<div class="space-y-2 group">
 						<Label for="markup_preferred" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							Preferred Markup Multiplier
+							Preferred Markup %
 						</Label>
 						<Input
 							id="markup_preferred"
 							name="markup_preferred"
 							type="number"
-							step="0.01"
-							min="1"
+							step="0.1"
+							min="0"
 							value={data.settings.markup_preferred}
 							required
 							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
-						<p class="text-xs text-muted-foreground/60">e.g. 1.08 = 8% markup</p>
+						<p class="text-xs text-muted-foreground/60">e.g. 10 = 10% markup on cost</p>
 					</div>
 				</div>
 			</div>

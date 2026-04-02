@@ -33,6 +33,15 @@ export const load: PageServerLoad = async ({ locals }) => {
         settingsMap[row.key] = row.value;
     }
 
+    // Convert stored multipliers (e.g. 1.20) to percentages (e.g. 20) for display
+    const MARKUP_KEYS = ['markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred'] as const;
+    for (const key of MARKUP_KEYS) {
+        const multiplier = parseFloat(settingsMap[key]);
+        if (!isNaN(multiplier)) {
+            settingsMap[key] = String(parseFloat(((multiplier - 1) * 100).toFixed(4)));
+        }
+    }
+
     return { settings: settingsMap };
 };
 
@@ -63,8 +72,11 @@ export const actions: Actions = {
                     return fail(400, { error: 'VAT rate must be between 0 and 1' });
                 }
                 const MARKUP_KEYS = ['markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred'];
-                if (MARKUP_KEYS.includes(key) && num < 1) {
-                    return fail(400, { error: `${key} must be at least 1.0 (no negative markups)` });
+                if (MARKUP_KEYS.includes(key)) {
+                    // Input is a percentage (e.g. 20 = 20% markup); convert to multiplier (e.g. 1.20)
+                    const multiplier = 1 + num / 100;
+                    updates.push({ key, value: String(parseFloat(multiplier.toFixed(10))) });
+                    continue;
                 }
             }
 

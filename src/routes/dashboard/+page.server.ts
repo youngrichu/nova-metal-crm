@@ -133,7 +133,7 @@ export const load = async ({ locals, url }) => {
 			FROM sales_orders so
 			JOIN sales_order_items soi ON so.id = soi.order_id
 			JOIN products p ON soi.product_id = p.id
-			WHERE so.status NOT IN ('CANCELLED', 'DRAFT')
+			WHERE so.status = 'INVOICED'
 			  AND so.created_at >= ${sql.raw(start)}
 			  AND so.created_at < ${sql.raw(end)}
 		`);
@@ -146,7 +146,7 @@ export const load = async ({ locals, url }) => {
 				TO_CHAR(${sql.raw(trunc)}, ${sql.raw(format)}) as date,
 				SUM(total_amount)::float as revenue
 			FROM sales_orders
-			WHERE status NOT IN ('CANCELLED', 'DRAFT')
+			WHERE status = 'INVOICED'
 			  AND created_at >= ${sql.raw(start)}
 			  AND created_at < ${sql.raw(end)}
 			GROUP BY ${sql.raw(trunc)}
@@ -169,7 +169,7 @@ export const load = async ({ locals, url }) => {
 			JOIN products p ON soi.product_id = p.id
 			JOIN categories c ON p.category_id = c.id
 			JOIN sales_orders so ON soi.order_id = so.id
-			WHERE so.status NOT IN ('CANCELLED', 'DRAFT')
+			WHERE so.status = 'INVOICED'
 			  AND so.created_at >= ${sql.raw(start)}
 			  AND so.created_at < ${sql.raw(end)}
 			GROUP BY c.id, c.name

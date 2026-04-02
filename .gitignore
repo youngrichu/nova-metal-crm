@@ -24,3 +24,13 @@ vite.config.ts.timestamp-*
 
 # Git worktrees
 .worktrees/
+
+# AI Agents and Local Tools
+.agent/
+.agents/
+.claude/
+.superpowers/
+.trae/
+.gemini/
+skills-lock.json
+firebase-debug.log

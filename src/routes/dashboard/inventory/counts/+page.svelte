@@ -32,7 +32,7 @@
 		isSubmitting = true;
 		return async ({ result, update }: any) => {
 			if (result.type === 'redirect') {
-				// SvelteKit will handle redirect automatically
+				goto(result.location);
 				return;
 			}
 			if (result.type === 'failure') {
