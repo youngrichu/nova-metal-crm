@@ -1,0 +1,11 @@
+# GitGuardian configuration
+# https://docs.gitguardian.com/gg-shield-docs/reference/configuration
+
+# Exclude binary asset files that trigger false positives
+paths-ignore:
+  - "static/fonts/**"
+  - "**/*.ttf"
+  - "**/*.woff"
+  - "**/*.woff2"
+  - "**/*.otf"
+  - "**/*.eot"
