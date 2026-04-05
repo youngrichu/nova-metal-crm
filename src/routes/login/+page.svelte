@@ -5,6 +5,7 @@
   import { authClient } from "$lib/auth-client";
   import NovaLogo from "$lib/components/ui/NovaLogo.svelte";
   import { goto } from "$app/navigation";
+  import * as m from "$lib/paraglide/messages";
 
   let email = $state("");
   let password = $state("");
@@ -35,8 +36,8 @@
   <div class="mx-auto w-full max-w-sm space-y-6">
     <div class="space-y-2 text-center">
       <NovaLogo class="mx-auto h-20 w-auto" idSuffix="login" />
-      <h1 class="sr-only">Sign in</h1>
-      <p class="text-muted-foreground">Enter your credentials to access the system</p>
+      <h1 class="sr-only">{m.login_button()}</h1>
+      <p class="text-muted-foreground">{m.login_subtitle()}</p>
     </div>
     
     {#if error}
@@ -47,7 +48,7 @@
 
     <form onsubmit={handleLogin} class="space-y-4">
       <div class="space-y-2">
-        <Label for="email">Email</Label>
+        <Label for="email">{m.login_email()}</Label>
         <Input 
           id="email" 
           type="email" 
@@ -57,7 +58,7 @@
         />
       </div>
       <div class="space-y-2">
-        <Label for="password">Password</Label>
+        <Label for="password">{m.login_password()}</Label>
         <Input 
           id="password" 
           type="password" 
@@ -66,7 +67,7 @@
         />
       </div>
       <Button type="submit" class="w-full" disabled={loading}>
-        {loading ? "Signing in..." : "Sign in"}
+        {loading ? m.login_signing_in() : m.login_button()}
       </Button>
     </form>
   </div>

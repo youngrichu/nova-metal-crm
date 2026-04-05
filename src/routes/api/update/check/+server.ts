@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
-import { PUBLIC_APP_VERSION } from '$env/static/public';
+import { env as publicEnv } from '$env/dynamic/public';
+import { resolvePublicAppVersion } from '$lib/utils/app-version';
 import { compareVersions, parseVersionJson } from '$lib/utils/version';
 import type { RequestHandler } from './$types';
 
@@ -14,7 +15,7 @@ export const GET: RequestHandler = async ({ locals }) => {
     throw error(500, 'VERSION_CHECK_URL not configured');
   }
 
-  const currentVersion = PUBLIC_APP_VERSION || '0.0.0';
+  const currentVersion = resolvePublicAppVersion(publicEnv);
 
   let raw: string;
   try {

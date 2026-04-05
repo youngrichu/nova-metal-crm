@@ -12,6 +12,9 @@
 	import { cn } from "$lib/utils";
 	import { DataCards } from '$lib/components/ui/data-cards';
 	import { PageFAB } from '$lib/components/ui/fab';
+	import * as m from '$lib/paraglide/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
+	import { getFormattingLocale } from '$lib/i18n/format';
 
 	let { data, form } = $props();
 
@@ -25,18 +28,19 @@
 	let prodOpen = $state(false);
 	let selectedWarehouse = $state('');
 	let whOpen = $state(false);
+	const formattingLocale = $derived(getFormattingLocale(getLocale()));
 
 	const txTypes = [
-		{ value: 'STOCK_IN', label: 'STOCK IN (RECEIVE GOODS) ↑' },
-		{ value: 'STOCK_OUT', label: 'STOCK OUT (DISPATCH) ↓' },
-		{ value: 'ADJUSTMENT', label: 'ADJUSTMENT (AUDIT) ±' }
+		{ value: 'STOCK_IN', label: m.inv_type_in() },
+		{ value: 'STOCK_OUT', label: m.inv_type_out() },
+		{ value: 'ADJUSTMENT', label: m.inv_type_adj() }
 	];
 
 	const processedStockLevels = $derived(
 		data.stockLevels.map((row: any) => {
 			const qty = row.stock.quantity;
 			const min = row.product.minStockLevel;
-			const stockStatus = qty <= 0 ? 'Critical' : qty <= min ? 'Low' : 'OK';
+			const stockStatus = qty <= 0 ? m.critical() : qty <= min ? m.low() : m.ok();
 			return {
 				id: row.stock.id,
 				productName: row.product.name,
@@ -49,17 +53,17 @@
 	);
 
 	const stockLevelColumns = [
-		{ key: 'productName',  label: 'Product',   primary: true },
+		{ key: 'productName',  label: m.inv_product_item(),   primary: true },
 		{ key: 'productSku',   label: 'SKU',       secondary: true },
-		{ key: 'stockStatus',  label: 'Status',    badge: true,
+		{ key: 'stockStatus',  label: m.wh_table_status(),    badge: true,
 			badgeClass: (v: unknown) => {
-				if (v === 'OK')  return 'bg-green-100 text-green-700';
-				if (v === 'Low') return 'bg-yellow-100 text-yellow-700';
+				if (v === m.ok())  return 'bg-green-100 text-green-700';
+				if (v === m.low()) return 'bg-yellow-100 text-yellow-700';
 				return 'bg-red-100 text-red-700';
 			}
 		},
-		{ key: 'warehouseName', label: 'Warehouse' },
-		{ key: 'quantity',      label: 'Quantity' },
+		{ key: 'warehouseName', label: m.inv_warehouse() },
+		{ key: 'quantity',      label: m.inv_live_stock() },
 	];
 
 	const processedTransactions = $derived(
@@ -70,27 +74,27 @@
 			warehouseName: row.warehouseName,
 			transactionType: row.tx.transactionType,
 			quantityChange: row.tx.quantityChange > 0 ? `+${row.tx.quantityChange}` : String(row.tx.quantityChange),
-			createdAt: new Date(row.tx.createdAt).toLocaleDateString(),
+			createdAt: new Date(row.tx.createdAt).toLocaleDateString(formattingLocale),
 		}))
 	);
 
 	const transactionColumns = [
-		{ key: 'productName',     label: 'Product',   primary: true },
-		{ key: 'warehouseName',   label: 'Warehouse', secondary: true },
-		{ key: 'transactionType', label: 'Type',      badge: true },
-		{ key: 'quantityChange',  label: 'Change' },
-		{ key: 'createdAt',       label: 'Date' },
+		{ key: 'productName',     label: m.inv_product(),   primary: true },
+		{ key: 'warehouseName',   label: m.inv_warehouse(), secondary: true },
+		{ key: 'transactionType', label: m.inv_type(),      badge: true },
+		{ key: 'quantityChange',  label: m.inv_qty_delta() },
+		{ key: 'createdAt',       label: m.inv_date() },
 	];
 
 	function getProductLabel(id: string) {
 		const prod = data.products.find((p: any) => p.id === id);
-		if (!prod) return "— Select a valid SKU —";
+		if (!prod) return m.inventory_select_valid_sku();
 		return `${prod.sku} — ${prod.name}`;
 	}
 
 	function getWarehouseLabel(id: string) {
 		const wh = data.warehouses.find((w: any) => w.id === id);
-		if (!wh) return "— Select Location —";
+		if (!wh) return m.inventory_select_location();
 		return wh.name;
 	}
 
@@ -130,7 +134,7 @@
 				selectedProduct = match.id;
 				barcodeError = '';
 			} else {
-				barcodeError = `No product found for barcode: ${code.slice(0, 40)}${code.length > 40 ? '...' : ''}`;
+				barcodeError = `${m.inv_no_product_barcode()} ${code.slice(0, 40)}${code.length > 40 ? '...' : ''}`;
 			}
 			barcodeInput = '';
 		}
@@ -144,10 +148,10 @@
 		<div class="space-y-2 relative">
 			<div class="absolute -left-6 top-2 w-2 h-12 bg-primary transform -skew-x-12 hidden md:block"></div>
 			<h1 class="text-5xl md:text-7xl font-black tracking-tighter uppercase leading-[0.85]">
-				Stock<br/><span class="text-muted-foreground/40 italic">Ledger</span>
+				{m.inv_title_line1()}<br/><span class="text-muted-foreground/40 italic">{m.inv_title_line2()}</span>
 			</h1>
 			<p class="text-sm font-medium tracking-widest uppercase text-primary/80 pt-2 ml-1">
-				Track physical inventory flows across warehouses.
+				{m.inv_title_desc()}
 			</p>
 		</div>
 
@@ -156,7 +160,7 @@
 				<Sheet.Trigger>
 					{#snippet child({ props })}
 						<Button {...props} class="hidden md:flex h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] relative">
-							<ArrowDownUp class="w-3.5 h-3.5 mr-2" /> Log Move
+							<ArrowDownUp class="w-3.5 h-3.5 mr-2" /> {m.inv_log_move()}
 						</Button>
 					{/snippet}
 				</Sheet.Trigger>
@@ -164,10 +168,10 @@
 					<div class="bg-muted px-4 sm:px-10 py-8 sm:py-12 border-b border-border relative overflow-hidden">
 						<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 						<Sheet.Header class="relative z-10">
-							<span class="inline-block px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">Activity Protocol</span>
-							<Sheet.Title class="text-2xl sm:text-4xl font-black tracking-tight uppercase">Record Flow</Sheet.Title>
+							<span class="inline-block px-3 py-1 bg-primary text-primary-foreground text-[10px] font-bold tracking-widest uppercase mb-4 w-fit">{m.inv_activity_proto()}</span>
+							<Sheet.Title class="text-2xl sm:text-4xl font-black tracking-tight uppercase">{m.inv_record_flow()}</Sheet.Title>
 							<Sheet.Description class="text-base font-medium opacity-70 mt-2">
-								Register an incoming shipment, an outgoing dispatch, or an audit adjustment.
+								{m.inv_record_flow_desc()}
 							</Sheet.Description>
 						</Sheet.Header>
 					</div>
@@ -183,13 +187,13 @@
 							{#if data.barcodeEnabled}
 							<!-- Barcode Scanner Input -->
 							<div class="space-y-2">
-								<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">Scan Barcode</Label>
+								<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">{m.inv_scan_barcode()}</Label>
 								<div class="relative">
 									<Input
 										bind:ref={barcodeInputEl}
 										bind:value={barcodeInput}
 										onkeydown={handleBarcodeScan}
-										placeholder="Focus here and scan barcode..."
+										placeholder={m.inv_scan_placeholder()}
 										class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none font-mono transition-all"
 									/>
 									{#if barcodeError}
@@ -201,10 +205,10 @@
 
 							<!-- Flow Properties -->
 							<div class="space-y-6">
-								<h3 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-2">Flow Properties</h3>
+								<h3 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-2">{m.inv_flow_prop()}</h3>
 
 								<div class="space-y-2">
-									<Label for="type" class="text-xs font-bold tracking-wider uppercase text-foreground/70 mb-2 block">Transaction Type *</Label>
+									<Label for="type" class="text-xs font-bold tracking-wider uppercase text-foreground/70 mb-2 block">{m.inv_tx_type()}</Label>
 									<input type="hidden" name="type" value={selectedType} />
 									<Popover.Root bind:open={typeOpen}>
 										<Popover.Trigger
@@ -245,7 +249,7 @@
 
 								<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 									<div class="space-y-2">
-										<Label for="warehouseId" class="text-xs font-bold tracking-wider uppercase text-foreground/70 mb-2 block">Target Warehouse *</Label>
+										<Label for="warehouseId" class="text-xs font-bold tracking-wider uppercase text-foreground/70 mb-2 block">{m.inv_target_wh()}</Label>
 										<input type="hidden" name="warehouseId" value={selectedWarehouse} />
 										<Popover.Root bind:open={whOpen}>
 											<Popover.Trigger
@@ -261,9 +265,9 @@
 											</Popover.Trigger>
 											<Popover.Content class="w-[min(300px,calc(100vw-2rem))] p-0 rounded-none border-2 border-foreground/10 shadow-[4px_4px_0px_0px_theme(colors.foreground/10%)] bg-card" align="start">
 												<Command.Root>
-													<Command.Input placeholder="Search locations..." class="h-12 border-none font-medium" />
+													<Command.Input placeholder={m.inventory_search_locations()} class="h-12 border-none font-medium" />
 													<Command.List>
-														<Command.Empty>No location found.</Command.Empty>
+														<Command.Empty>{m.inventory_location_empty()}</Command.Empty>
 														<Command.Group>
 															{#each data.warehouses as wh}
 																<Command.Item
@@ -286,7 +290,7 @@
 									</div>
 
 									<div class="space-y-2">
-										<Label for="productId" class="text-xs font-bold tracking-wider uppercase text-foreground/70 mb-2 block">Specific Product *</Label>
+										<Label for="productId" class="text-xs font-bold tracking-wider uppercase text-foreground/70 mb-2 block">{m.inv_specific_prod()}</Label>
 										<input type="hidden" name="productId" value={selectedProduct} />
 										<Popover.Root bind:open={prodOpen}>
 											<Popover.Trigger
@@ -302,9 +306,9 @@
 											</Popover.Trigger>
 											<Popover.Content class="w-[min(300px,calc(100vw-2rem))] p-0 rounded-none border-2 border-foreground/10 shadow-[4px_4px_0px_0px_theme(colors.foreground/10%)] bg-card" align="start">
 												<Command.Root>
-													<Command.Input placeholder="Search SKU..." class="h-12 border-none font-medium" />
+													<Command.Input placeholder={m.inventory_search_sku()} class="h-12 border-none font-medium" />
 													<Command.List>
-														<Command.Empty>No product found.</Command.Empty>
+														<Command.Empty>{m.inventory_product_empty()}</Command.Empty>
 														<Command.Group>
 															{#each data.products as prod}
 																<Command.Item
@@ -329,26 +333,26 @@
 
 								<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 									<div class="space-y-2 group">
-										<Label for="quantity" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Quantity *</Label>
+										<Label for="quantity" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">{m.inv_qty()}</Label>
 										<Input id="quantity" name="quantity" type="number" min="1" placeholder="e.g. 150" required class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-lg transition-all" />
 									</div>
 									<div class="space-y-2 group">
-										<Label for="referenceDoc" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Ref Document</Label>
-										<Input id="referenceDoc" name="referenceDoc" placeholder="Bill of landing, invoice #" class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
+										<Label for="referenceDoc" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">{m.inv_ref_doc()}</Label>
+										<Input id="referenceDoc" name="referenceDoc" placeholder={m.inv_ref_placeholder()} class="h-12 font-mono bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 									</div>
 								</div>
 
 								<div class="space-y-2 group">
-									<Label for="notes" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Internal Remarks</Label>
-									<Input id="notes" name="notes" placeholder="Condition details, auditor tags..." class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
+									<Label for="notes" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">{m.inv_internal_remarks()}</Label>
+									<Input id="notes" name="notes" placeholder={m.inv_remarks_placeholder()} class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none transition-all" />
 								</div>
 
 								{#if selectedType === 'STOCK_IN'}
 								<div class="space-y-4 border-t border-border/50 pt-6">
 									<div class="flex items-center justify-between">
 										<div>
-											<p class="text-xs font-bold tracking-wider uppercase text-foreground/70">Price Change?</p>
-											<p class="text-[11px] text-muted-foreground/60 mt-0.5">Apply a new purchase cost to all units of this product</p>
+											<p class="text-xs font-bold tracking-wider uppercase text-foreground/70">{m.inv_price_change()}</p>
+											<p class="text-[11px] text-muted-foreground/60 mt-0.5">{m.inv_price_change_desc()}</p>
 										</div>
 										<button
 											type="button"
@@ -363,7 +367,7 @@
 
 									{#if priceChangeEnabled}
 									<div class="space-y-2 group animate-in fade-in slide-in-from-top-1 duration-150">
-										<Label for="unitCost" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">Purchase Cost (ETB) *</Label>
+										<Label for="unitCost" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">{m.inv_purchase_cost()}</Label>
 										<Input
 											id="unitCost"
 											name="unitCost"
@@ -383,7 +387,7 @@
 
 						<div class="pt-6 sm:pt-10 mt-6 sm:mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
 							<Button type="submit" class="w-full h-12 sm:h-16 rounded-none text-sm sm:text-base font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
-								{isSubmitting ? 'Validating...' : `Commit ${selectedType === 'STOCK_OUT' ? 'Dispatch' : selectedType === 'STOCK_IN' ? 'Receipt' : 'Adjustment'}`}
+								{isSubmitting ? m.validating() : (selectedType === 'STOCK_OUT' ? m.inv_commit_dispatch() : selectedType === 'STOCK_IN' ? m.inv_commit_receipt() : m.inv_commit_adj())}
 							</Button>
 						</div>
 					</form>
@@ -396,22 +400,22 @@
 		<!-- Stock Levels Table -->
 		<section>
 			<h2 class="text-lg font-black tracking-widest uppercase mb-4 flex items-center gap-2">
-				<PackageSearch class="w-5 h-5 text-primary" /> Live Levels
+				<PackageSearch class="w-5 h-5 text-primary" /> {m.inv_live_levels()}
 			</h2>
 			<!-- Stock Levels mobile -->
 			<div class="md:hidden">
-				<DataCards columns={stockLevelColumns} data={processedStockLevels} emptyMessage="No stock levels recorded." />
+				<DataCards columns={stockLevelColumns} data={processedStockLevels} emptyMessage={m.inv_no_stock_mobile()} />
 			</div>
 			<div class="hidden md:block">
 				<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)] relative">
 					<Table.Root class="w-full text-left border-collapse">
 						<Table.Header>
 							<Table.Row class="bg-muted/50 hover:bg-muted/50 border-b-2 border-foreground/10">
-								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 w-[180px]">Automated SKU</Table.Head>
-								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">Product Item</Table.Head>
-								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden md:table-cell">Warehouse Depot</Table.Head>
-								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right">Live Stock</Table.Head>
-								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right">Unit Alert</Table.Head>
+								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 w-[180px]">{m.inv_auto_sku()}</Table.Head>
+								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">{m.inv_product_item()}</Table.Head>
+								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden md:table-cell">{m.inv_wh_depot()}</Table.Head>
+								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right">{m.inv_live_stock()}</Table.Head>
+								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right">{m.inv_unit_alert()}</Table.Head>
 							</Table.Row>
 						</Table.Header>
 						<Table.Body>
@@ -440,7 +444,7 @@
 									<Table.Cell colspan={5} class="h-48 text-center align-middle">
 										<div class="flex flex-col items-center justify-center text-muted-foreground/40 gap-4">
 											<PackageSearch class="w-10 h-10 opacity-20" />
-											<p class="text-sm font-bold tracking-widest uppercase">Database Void — No inventory records found.</p>
+											<p class="text-sm font-bold tracking-widest uppercase">{m.inv_db_void()}</p>
 										</div>
 									</Table.Cell>
 								</Table.Row>
@@ -454,23 +458,23 @@
 		<!-- Transaction Audit Log -->
 		<section>
 			<h2 class="text-lg font-black tracking-widest uppercase mb-4 flex items-center gap-2">
-				<Activity class="w-5 h-5 text-primary" /> Audit Trail
+				<Activity class="w-5 h-5 text-primary" /> {m.inv_audit_trail()}
 			</h2>
 			<!-- Transactions mobile -->
 			<div class="md:hidden">
-				<DataCards columns={transactionColumns} data={processedTransactions} emptyMessage="No transactions recorded." />
+				<DataCards columns={transactionColumns} data={processedTransactions} emptyMessage={m.inv_no_tx_mobile()} />
 			</div>
 			<div class="hidden md:block">
 				<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)] relative">
 					<Table.Root class="w-full text-left border-collapse">
 						<Table.Header>
 							<Table.Row class="bg-muted/50 hover:bg-muted/50 border-b-2 border-foreground/10">
-								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 w-[120px]">Type</Table.Head>
-								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">Product</Table.Head>
-								<Table.Head class="hidden md:table-cell h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">Warehouse</Table.Head>
-								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right w-[80px]">Qty Δ</Table.Head>
-								<Table.Head class="hidden lg:table-cell h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">Reference</Table.Head>
-								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right w-[160px]">Date</Table.Head>
+								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 w-[120px]">{m.inv_type()}</Table.Head>
+								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">{m.inv_product()}</Table.Head>
+								<Table.Head class="hidden md:table-cell h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">{m.inv_warehouse()}</Table.Head>
+								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right w-[80px]">{m.inv_qty_delta()}</Table.Head>
+								<Table.Head class="hidden lg:table-cell h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">{m.inv_reference()}</Table.Head>
+								<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right w-[160px]">{m.inv_date()}</Table.Head>
 							</Table.Row>
 						</Table.Header>
 						<Table.Body>
@@ -481,8 +485,8 @@
 											{tx.tx.transactionType === 'STOCK_IN' ? 'bg-emerald-500/10 text-emerald-700' :
 											tx.tx.transactionType === 'STOCK_OUT' ? 'bg-rose-500/10 text-rose-700' :
 											'bg-amber-500/10 text-amber-700'}">
-											{tx.tx.transactionType === 'STOCK_IN' ? '↑ IN' :
-											tx.tx.transactionType === 'STOCK_OUT' ? '↓ OUT' : '± ADJ'}
+											{tx.tx.transactionType === 'STOCK_IN' ? m.in_short() :
+											tx.tx.transactionType === 'STOCK_OUT' ? m.out_short() : m.adj_short()}
 										</span>
 									</Table.Cell>
 									<Table.Cell class="px-6 py-4 align-middle">
@@ -501,15 +505,15 @@
 										{tx.tx.referenceDoc || '—'}
 									</Table.Cell>
 									<Table.Cell class="px-6 py-4 text-right text-[11px] font-mono font-medium text-foreground/60 align-middle">
-										{new Date(tx.tx.createdAt).toLocaleDateString('en-ET', { month: 'short', day: '2-digit', year: 'numeric' })}<br/>
-										<span class="opacity-50">{new Date(tx.tx.createdAt).toLocaleTimeString('en-ET', { hour: '2-digit', minute: '2-digit' })}</span>
+										{new Date(tx.tx.createdAt).toLocaleDateString(formattingLocale, { month: 'short', day: '2-digit', year: 'numeric' })}<br/>
+										<span class="opacity-50">{new Date(tx.tx.createdAt).toLocaleTimeString(formattingLocale, { hour: '2-digit', minute: '2-digit' })}</span>
 									</Table.Cell>
 								</Table.Row>
 							{:else}
 								<Table.Row>
 									<Table.Cell colspan={6} class="h-32 text-center align-middle">
 										<div class="flex flex-col items-center justify-center text-muted-foreground/40 gap-4">
-											<p class="text-xs font-bold tracking-widest uppercase">No transactions recorded yet.</p>
+											<p class="text-xs font-bold tracking-widest uppercase">{m.inv_no_tx()}</p>
 										</div>
 									</Table.Cell>
 								</Table.Row>
@@ -522,4 +526,4 @@
 	</div>
 </div>
 
-<PageFAB label="Log stock move" onclick={() => isTransactOpen = true} />
+<PageFAB label={m.inv_log_move()} onclick={() => isTransactOpen = true} />

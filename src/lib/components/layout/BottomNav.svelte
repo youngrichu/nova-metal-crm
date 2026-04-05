@@ -3,21 +3,22 @@
   import { afterNavigate } from '$app/navigation';
   import * as Sheet from '$lib/components/ui/sheet';
   import { LayoutDashboard, ShoppingCart, Box, Package, Users, Tags, Warehouse, ClipboardList, Calculator, Settings, MoreHorizontal } from 'lucide-svelte';
+  import * as m from '$lib/paraglide/messages';
 
   const allTabs = [
-    { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['admin', 'sales', 'warehouse'], exact: true },
-    { key: 'orders',    label: 'Orders',    icon: ShoppingCart,    href: '/dashboard/sales/orders', roles: ['admin', 'sales'], exact: false },
-    { key: 'catalog',   label: 'Products',   icon: Box,             href: '/dashboard/catalog/products', roles: ['admin', 'warehouse'], exact: false, activePrefix: '/dashboard/catalog' },
+    { key: 'dashboard', label: m.nav_dashboard, icon: LayoutDashboard, href: '/dashboard', roles: ['admin', 'sales', 'warehouse'], exact: true },
+    { key: 'orders',    label: m.orders_title_line2, icon: ShoppingCart,    href: '/dashboard/sales/orders', roles: ['admin', 'sales'], exact: false },
+    { key: 'catalog',   label: m.nav_products,   icon: Box,             href: '/dashboard/catalog/products', roles: ['admin', 'warehouse'], exact: false, activePrefix: '/dashboard/catalog' },
   ];
 
   const allMoreItems = [
-    { label: 'Inventory',      icon: Package,      href: '/dashboard/inventory',           roles: ['admin', 'warehouse'] },
-    { label: 'Warehouses',     icon: Warehouse,    href: '/dashboard/inventory/warehouses', roles: ['admin', 'warehouse'] },
-    { label: 'Stock Takes',    icon: ClipboardList,href: '/dashboard/inventory/counts',     roles: ['admin', 'warehouse'] },
-    { label: 'Reconciliation', icon: Calculator,   href: '/dashboard/sales/reconciliation', roles: ['admin', 'sales'] },
-    { label: 'Customers',      icon: Users,        href: '/dashboard/customers',            roles: ['admin', 'sales'] },
-    { label: 'Categories',     icon: Tags,         href: '/dashboard/catalog/categories',   roles: ['admin', 'warehouse'] },
-    { label: 'Settings',       icon: Settings,     href: '/dashboard/settings',             roles: ['admin', 'sales', 'warehouse'] },
+    { label: m.nav_inventory,      icon: Package,      href: '/dashboard/inventory',           roles: ['admin', 'warehouse'] },
+    { label: m.nav_warehouses,     icon: Warehouse,    href: '/dashboard/inventory/warehouses', roles: ['admin', 'warehouse'] },
+    { label: m.nav_stock_takes,    icon: ClipboardList,href: '/dashboard/inventory/counts',     roles: ['admin', 'warehouse'] },
+    { label: m.nav_reconciliation, icon: Calculator,   href: '/dashboard/sales/reconciliation', roles: ['admin', 'sales'] },
+    { label: m.nav_customers,      icon: Users,        href: '/dashboard/customers',            roles: ['admin', 'sales'] },
+    { label: m.nav_categories,     icon: Tags,         href: '/dashboard/catalog/categories',   roles: ['admin', 'warehouse'] },
+    { label: m.nav_settings,       icon: Settings,     href: '/dashboard/settings',             roles: ['admin', 'sales', 'warehouse'] },
   ];
 
   let moreOpen = $state(false);
@@ -71,7 +72,7 @@
         aria-current={isActive(tab) ? 'page' : undefined}
       >
         <tab.icon class="h-5 w-5" />
-        <span>{tab.label}</span>
+        <span>{tab.label()}</span>
       </a>
     {/each}
 
@@ -80,11 +81,11 @@
       <Sheet.Trigger class="flex-1 min-w-[44px] flex flex-col items-center justify-center gap-0.5 h-full text-[10px] font-medium transition-colors
                {activeMoreHref ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}">
         <MoreHorizontal class="h-5 w-5" />
-        <span>More</span>
+        <span>{m.nav_more()}</span>
       </Sheet.Trigger>
       <Sheet.Content side="bottom" class="rounded-t-2xl pb-safe">
         <div class="w-8 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-4" aria-hidden="true"></div>
-        <p class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-3 px-1">More</p>
+        <p class="text-[10px] font-bold tracking-widest uppercase text-muted-foreground mb-3 px-1">{m.nav_more()}</p>
         <div class="flex flex-col gap-1">
           {#each visibleMoreItems as item}
             <a
@@ -93,7 +94,7 @@
                      {activeMoreHref === item.href ? 'bg-accent text-accent-foreground' : 'text-foreground hover:bg-accent/50'}"
             >
               <item.icon class="h-4 w-4 shrink-0" />
-              {item.label}
+              {item.label()}
             </a>
           {/each}
         </div>

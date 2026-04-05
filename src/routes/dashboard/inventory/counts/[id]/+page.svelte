@@ -7,6 +7,9 @@
 	import { ClipboardList, Scan, Package, CheckCircle2, AlertTriangle } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
 	import { tick } from 'svelte';
+	import * as m from '$lib/paraglide/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
+	import { getFormattingLocale } from '$lib/i18n/format';
 
 	let { data, form } = $props();
 
@@ -19,6 +22,7 @@
 	let barcodeError = $state('');
 	let barcodeInputEl = $state<HTMLInputElement | null>(null);
 	let highlightedProductId = $state<string | null>(null);
+	const formattingLocale = $derived(getFormattingLocale(getLocale()));
 
 	$effect(() => {
 		// Focus barcode input on load (only when barcode feature is enabled)
@@ -42,7 +46,7 @@
 				qtyInput?.focus();
 				qtyInput?.select();
 			} else {
-				barcodeError = `No product found for barcode: ${code.slice(0, 40)}${code.length > 40 ? '...' : ''}`;
+				barcodeError = `${m.inv_no_product_barcode()} ${code.slice(0, 40)}${code.length > 40 ? '...' : ''}`;
 				highlightedProductId = null;
 			}
 			barcodeInput = '';
@@ -58,9 +62,9 @@
 					10
 				);
 				savedItems[itemId] = isNaN(qty) ? 0 : qty;
-				toast.success('Item saved');
+				toast.success(m.counts_item_saved());
 			} else if (result.type === 'failure') {
-				toast.error(result.data?.error ?? 'Failed to save item');
+				toast.error(result.data?.error ?? m.counts_item_save_failed());
 			}
 			savingItemId = null;
 			await update({ reset: false });
@@ -88,12 +92,12 @@
 	<header class="flex flex-col md:flex-row justify-between items-start md:items-end border-b-2 border-foreground pb-6 gap-6 relative">
 		<div class="absolute -left-6 top-2 w-2 h-16 bg-primary transform -skew-x-12 hidden md:block"></div>
 		<div>
-			<span class="inline-block px-2 py-0.5 bg-foreground text-background text-[10px] font-black tracking-widest uppercase">Stock-Take</span>
+			<span class="inline-block px-2 py-0.5 bg-foreground text-background text-[10px] font-black tracking-widest uppercase">{m.counts_entry_badge()}</span>
 			<h1 class="text-5xl md:text-7xl font-black tracking-tighter uppercase leading-[0.8]">
-				Count<br /><span class="text-muted-foreground/40 italic">Entry</span>
+				{m.counts_entry_title_line1()}<br /><span class="text-muted-foreground/40 italic">{m.counts_entry_title_line2()}</span>
 			</h1>
 			<p class="text-sm font-medium tracking-widest uppercase text-primary/80 pt-2 ml-1">
-				{data.warehouse.name} &mdash; {new Date(data.count.startedAt).toLocaleDateString('en-ET', { dateStyle: 'medium' })}
+				{data.warehouse.name} &mdash; {new Date(data.count.startedAt).toLocaleDateString(formattingLocale, { dateStyle: 'medium' })}
 			</p>
 		</div>
 		<div class="flex items-center gap-4 w-full md:w-auto">
@@ -102,13 +106,13 @@
 				<div class="text-3xl font-black font-mono">
 					{enteredItems}<span class="text-muted-foreground/30">/{totalItems}</span>
 				</div>
-				<div class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mt-0.5">Items Counted</div>
+				<div class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mt-0.5">{m.counts_items_counted()}</div>
 			</div>
 			<a
 				href="/dashboard/inventory/counts/{data.count.id}/reconcile"
 				class="inline-flex h-12 items-center px-8 text-xs font-bold uppercase tracking-widest bg-foreground text-background hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px]"
 			>
-				Reconcile &rarr;
+				{m.counts_reconcile()} &rarr;
 			</a>
 		</div>
 	</header>
@@ -116,7 +120,7 @@
 	<!-- Breadcrumb back link -->
 	<div>
 		<a href="/dashboard/inventory/counts" class="text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors">
-			&larr; All Count Sessions
+			&larr; {m.counts_all_sessions()}
 		</a>
 	</div>
 
@@ -125,15 +129,15 @@
 		<div class="border-2 border-foreground/10 bg-card p-6 shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
 			<div class="flex items-center gap-3 mb-4">
 				<Scan class="w-5 h-5 text-primary" />
-				<h2 class="text-sm font-black tracking-widest uppercase">Barcode Scanner</h2>
+				<h2 class="text-sm font-black tracking-widest uppercase">{m.counts_barcode_scanner()}</h2>
 			</div>
 			<div class="space-y-2 max-w-md">
-				<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">Scan to jump to product row</Label>
+				<Label class="text-xs font-bold tracking-wider uppercase text-foreground/70">{m.counts_scan_jump()}</Label>
 				<Input
 					bind:ref={barcodeInputEl}
 					bind:value={barcodeInput}
 					onkeydown={handleBarcodeScan}
-					placeholder="Focus here and scan barcode..."
+					placeholder={m.inv_scan_placeholder()}
 					class="h-12 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 font-mono transition-all"
 				/>
 				{#if barcodeError}
@@ -149,7 +153,7 @@
 	<section>
 		{#if data.count.status === 'CLOSED'}
 			<div class="mb-4 p-4 bg-emerald-500/10 border-l-4 border-emerald-500 text-emerald-700 text-sm font-medium">
-				This count session is closed. No further edits allowed.
+				{m.counts_closed()}
 			</div>
 		{/if}
 		<div class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
@@ -157,12 +161,12 @@
 				<Table.Header>
 					<Table.Row class="bg-muted/50 hover:bg-muted/50 border-b-2 border-foreground/10">
 						<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 w-[120px]">SKU</Table.Head>
-						<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">Product</Table.Head>
-						<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-center w-[110px]">Expected</Table.Head>
-						<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-center w-[160px]">Physical Qty</Table.Head>
-						<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-center w-[90px]">Status</Table.Head>
+						<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">{m.inv_product()}</Table.Head>
+						<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-center w-[110px]">{m.counts_expected()}</Table.Head>
+						<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-center w-[160px]">{m.counts_physical_qty()}</Table.Head>
+						<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-center w-[90px]">{m.counts_status()}</Table.Head>
 						{#if data.count.status === 'IN_PROGRESS'}
-							<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right w-[80px]">Save</Table.Head>
+							<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right w-[80px]">{m.counts_save()}</Table.Head>
 						{/if}
 					</Table.Row>
 				</Table.Header>
@@ -210,10 +214,10 @@
 							<Table.Cell class="px-6 py-3 text-center align-middle">
 								{#if isEntered(row)}
 									<span class="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-emerald-700">
-										<CheckCircle2 class="w-3.5 h-3.5" /> Done
+										<CheckCircle2 class="w-3.5 h-3.5" /> {m.counts_done()}
 									</span>
 								{:else}
-									<span class="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">Pending</span>
+									<span class="text-[9px] font-black uppercase tracking-widest text-muted-foreground/40">{m.counts_pending()}</span>
 								{/if}
 							</Table.Cell>
 							{#if data.count.status === 'IN_PROGRESS'}
@@ -224,7 +228,7 @@
 										disabled={savingItemId === row.item.id}
 										class="h-8 px-3 rounded-none text-[10px] font-black uppercase tracking-widest bg-foreground text-background hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50"
 									>
-										{savingItemId === row.item.id ? '...' : 'Save'}
+										{savingItemId === row.item.id ? '...' : m.counts_save()}
 									</Button>
 								</Table.Cell>
 							{/if}
@@ -234,8 +238,8 @@
 							<Table.Cell colspan={6} class="h-48 text-center align-middle">
 								<div class="flex flex-col items-center justify-center text-muted-foreground/40 gap-4">
 									<Package class="w-10 h-10 opacity-20" />
-									<p class="text-sm font-bold tracking-widest uppercase">No items in this count session.</p>
-									<p class="text-xs">The selected warehouse may have no inventory records.</p>
+									<p class="text-sm font-bold tracking-widest uppercase">{m.counts_no_items()}</p>
+									<p class="text-xs">{m.counts_no_items_hint()}</p>
 								</div>
 							</Table.Cell>
 						</Table.Row>

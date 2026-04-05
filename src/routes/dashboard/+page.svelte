@@ -10,20 +10,22 @@
   import DataPoints from '$lib/components/ui/chart/DataPoints.svelte';
   import { scaleTime } from 'd3-scale';
   import { timeFormat } from 'd3-time-format';
+  import { getLocale } from '$lib/paraglide/runtime';
+  import { getFormattingLocale } from '$lib/i18n/format';
 
   let { data } = $props();
 
   let activePeriod  = $state<'day' | 'week' | 'month'>(data.period);
   let selectedRange = $state<string>(data.range);
 
-  const RANGE_LABELS: Record<string, string> = {
-    'last-7-days':      'Last 7 Days',
-    'last-30-days':     'Last 30 Days',
-    'this-month':       'This Month',
-    'last-month':       'Last Month',
-    'last-quarter':     'Last Quarter',
-    'current-quarter':  'Current Quarter',
-    'this-year':        'This Year',
+  const RANGE_LABELS: Record<string, () => string> = {
+    'last-7-days':      m.range_last_7_days,
+    'last-30-days':     m.range_last_30_days,
+    'this-month':       m.range_this_month,
+    'last-month':       m.range_last_month,
+    'last-quarter':     m.range_last_quarter,
+    'current-quarter':  m.range_current_quarter,
+    'this-year':        m.range_this_year,
   };
 
   function applyFilter(range: string, period: string) {
@@ -47,8 +49,9 @@
   });
 
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening';
-  const todayLabel = new Date().toLocaleDateString('en-ET', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const greeting = $derived(hour < 12 ? m.greeting_morning() : hour < 18 ? m.greeting_afternoon() : m.greeting_evening());
+  const formattingLocale = $derived(getFormattingLocale(getLocale()));
+  const todayLabel = $derived(new Date().toLocaleDateString(formattingLocale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
 
   // Use name if real, otherwise extract from email
   const displayName = $derived(
@@ -87,7 +90,7 @@
       <div class="absolute -left-6 top-2 w-2 h-16 bg-primary transform -skew-x-12 hidden md:block"></div>
       
       <div class="flex items-center gap-3 mb-2">
-        <span class="inline-block px-2 py-0.5 bg-foreground text-background text-[10px] font-black tracking-widest uppercase">System Online</span>
+        <span class="inline-block px-2 py-0.5 bg-foreground text-background text-[10px] font-black tracking-widest uppercase">{m.dashboard_system_online()}</span>
         <span class="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{todayLabel}</span>
       </div>
 
@@ -105,33 +108,33 @@
           onclick={() => setPeriod('day')}
           class="flex-1 px-4 py-2 text-xs font-bold tracking-widest uppercase transition-all
             {activePeriod === 'day' ? 'bg-foreground text-background shadow-inner scale-[0.98]' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
-        >Day</button>
+        >{m.period_day()}</button>
         <button
           onclick={() => setPeriod('week')}
           class="flex-1 px-4 py-2 text-xs font-bold tracking-widest uppercase transition-all
             {activePeriod === 'week' ? 'bg-foreground text-background shadow-inner scale-[0.98]' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
-        >Week</button>
+        >{m.period_week()}</button>
         <button
           onclick={() => setPeriod('month')}
           class="flex-1 px-4 py-2 text-xs font-bold tracking-widest uppercase transition-all
             {activePeriod === 'month' ? 'bg-foreground text-background shadow-inner scale-[0.98]' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'}"
-        >Month</button>
+        >{m.period_month()}</button>
       </div>
 
       <!-- Select Dropdown -->
       <Select.Root type="single" value={selectedRange} onValueChange={setRange}>
         <Select.Trigger class="w-full sm:w-[200px] h-12 rounded-none border-2 border-foreground/20 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)] font-bold text-xs tracking-widest uppercase">
           <CalendarDays class="mr-3 h-4 w-4 opacity-50" />
-          <span>{RANGE_LABELS[selectedRange] ?? 'Select range...'}</span>
+          <span>{RANGE_LABELS[selectedRange]?.() ?? m.dashboard_select_range()}</span>
         </Select.Trigger>
         <Select.Content align="end" class="rounded-none border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)]">
-          <Select.Item value="last-7-days"      class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Last 7 Days</Select.Item>
-          <Select.Item value="last-30-days"     class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Last 30 Days</Select.Item>
-          <Select.Item value="this-month"       class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">This Month</Select.Item>
-          <Select.Item value="last-month"       class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Last Month</Select.Item>
-          <Select.Item value="last-quarter"     class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Last Quarter</Select.Item>
-          <Select.Item value="current-quarter"  class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">Current Quarter</Select.Item>
-          <Select.Item value="this-year"        class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">This Year</Select.Item>
+          <Select.Item value="last-7-days"      class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">{m.range_last_7_days()}</Select.Item>
+          <Select.Item value="last-30-days"     class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">{m.range_last_30_days()}</Select.Item>
+          <Select.Item value="this-month"       class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">{m.range_this_month()}</Select.Item>
+          <Select.Item value="last-month"       class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">{m.range_last_month()}</Select.Item>
+          <Select.Item value="last-quarter"     class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">{m.range_last_quarter()}</Select.Item>
+          <Select.Item value="current-quarter"  class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">{m.range_current_quarter()}</Select.Item>
+          <Select.Item value="this-year"        class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">{m.range_this_year()}</Select.Item>
         </Select.Content>
       </Select.Root>
     </div>
@@ -146,20 +149,20 @@
       <div class="absolute -right-12 -top-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors duration-700"></div>
 
       <h3 class="font-black text-sm tracking-widest uppercase mb-4 sm:mb-8 text-foreground flex items-center gap-3">
-        <Activity class="w-4 h-4 text-primary" /> Inventory Overview
+        <Activity class="w-4 h-4 text-primary" /> {m.dashboard_inventory_overview()}
       </h3>
 
       <div class="space-y-3 sm:space-y-6 flex-1 relative z-10">
         <div class="flex justify-between items-center border-b border-foreground/5 pb-3 sm:pb-4 group/item">
           <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-2">
-            <Package class="w-4 h-4 opacity-50" /> Total Products
+            <Package class="w-4 h-4 opacity-50" /> {m.dashboard_total_products()}
           </span>
           <span class="font-mono font-black text-base sm:text-xl text-foreground">{data.productCount}</span>
         </div>
 
         <div class="flex justify-between items-center border-b border-foreground/5 pb-3 sm:pb-4 group/item">
           <span class="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover/item:text-foreground transition-colors flex items-center gap-2">
-            <Warehouse class="w-4 h-4 opacity-50" /> Storage Depots
+            <Warehouse class="w-4 h-4 opacity-50" /> {m.dashboard_storage_depots()}
           </span>
           <span class="font-mono font-black text-base sm:text-xl text-foreground">{data.warehouseCount}</span>
         </div>
@@ -190,7 +193,7 @@
           </div>
         </div>
         <div>
-          <span class="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Total Profit</span>
+          <span class="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{m.dashboard_total_profit()}</span>
           <div class="flex items-center justify-between">
             <span class="font-mono font-black text-xl sm:text-3xl text-emerald-500">{formatCurrency(data.totalProfit ?? 0)}</span>
           </div>
@@ -201,7 +204,7 @@
       <!-- Margins by Category -->
       {#if data.marginsByCategory && data.marginsByCategory.length > 0}
         <div class="mt-6 pt-6 border-t-2 border-foreground/5">
-          <span class="text-[10px] font-black tracking-widest text-muted-foreground uppercase block mb-3">Margin by Category</span>
+          <span class="text-[10px] font-black tracking-widest text-muted-foreground uppercase block mb-3">{m.dashboard_margin_by_category()}</span>
           <div class="space-y-2">
             {#each data.marginsByCategory as cat}
               {@const isLow = cat.marginPercent < 10}
@@ -224,19 +227,19 @@
       <div class="flex justify-between items-start gap-3 mb-2 border-b border-foreground/5 pb-3">
         <div class="min-w-0">
           <h3 class="font-black text-sm tracking-widest uppercase text-foreground mb-1 flex items-center gap-2">
-            <TrendingUp class="w-4 h-4 text-primary shrink-0" /> Revenue Trajectory
+            <TrendingUp class="w-4 h-4 text-primary shrink-0" /> {m.dashboard_revenue_trajectory()}
           </h3>
-          <p class="text-xs font-medium text-muted-foreground/60 tracking-wider leading-relaxed">{data.period === 'day' ? 'Daily' : data.period === 'week' ? 'Weekly' : 'Monthly'} · {RANGE_LABELS[data.range]}</p>
+          <p class="text-xs font-medium text-muted-foreground/60 tracking-wider leading-relaxed">{data.period === 'day' ? m.period_day() : data.period === 'week' ? m.period_week() : m.period_month()} · {RANGE_LABELS[data.range]?.() ?? data.range}</p>
         </div>
         <Button variant="outline" size="sm" href="/dashboard/sales/orders" class="shrink-0 h-8 rounded-none border-2 border-foreground/20 text-[10px] font-bold tracking-widest uppercase shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
-          View Orders
+          {m.dashboard_view_orders()}
         </Button>
       </div>
 
       {#if trendData.length === 0}
         <div class="flex-1 flex items-center justify-center flex-col gap-4 bg-muted/20 border-2 border-dashed border-border/50 m-4">
           <TrendingUp class="w-12 h-12 text-muted-foreground/20" />
-          <p class="text-xs font-bold tracking-widest uppercase text-muted-foreground/50">No Revenue Data Yet</p>
+          <p class="text-xs font-bold tracking-widest uppercase text-muted-foreground/50">{m.dashboard_no_revenue()}</p>
         </div>
       {:else}
         <div class="flex-1 min-h-[280px]">
@@ -271,7 +274,7 @@
               {#snippet children({ data: pt }: { data: any })}
                 <div class="bg-background border-2 border-foreground/10 px-3 py-2 shadow-[4px_4px_0px_0px_theme(colors.foreground/10%)] text-xs font-mono">
                   <p class="font-black text-[10px] tracking-widest uppercase text-muted-foreground mb-1">
-                    {pt.date instanceof Date ? pt.date.toLocaleDateString('en-ET', { month: 'short', day: 'numeric' }) : pt.date}
+                    {pt.date instanceof Date ? pt.date.toLocaleDateString(formattingLocale, { month: 'short', day: 'numeric' }) : pt.date}
                   </p>
                   <p class="font-bold text-foreground">{formatCurrency(pt.revenue)}</p>
                 </div>
@@ -290,7 +293,7 @@
       <div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
         <h3 class="font-black text-sm tracking-widest uppercase flex items-center gap-3 text-foreground">
           <Activity class="w-4 h-4 text-primary"/> 
-          System Telemetry
+          {m.dashboard_system_telemetry()}
         </h3>
       </div>
       
@@ -301,8 +304,8 @@
                <Settings class="w-4 h-4 text-muted-foreground" />
             </div>
             <div>
-              <p class="text-sm font-bold tracking-tight text-foreground uppercase">Baseline Initialized</p>
-              <p class="text-[10px] font-medium tracking-widest uppercase text-muted-foreground mt-1">Awaiting operational flow</p>
+              <p class="text-sm font-bold tracking-tight text-foreground uppercase">{m.dashboard_baseline_initialized()}</p>
+              <p class="text-[10px] font-medium tracking-widest uppercase text-muted-foreground mt-1">{m.dashboard_awaiting_flow()}</p>
             </div>
           </div>
         {:else}
@@ -327,8 +330,8 @@
                         const d = new Date(tx.createdAt);
                         const isToday = d.toDateString() === new Date().toDateString();
                         return isToday
-                          ? d.toLocaleTimeString('en-ET', { hour: '2-digit', minute: '2-digit' })
-                          : d.toLocaleDateString('en-ET', { month: 'short', day: 'numeric' }) + ', ' + d.toLocaleTimeString('en-ET', { hour: '2-digit', minute: '2-digit' });
+                          ? d.toLocaleTimeString(formattingLocale, { hour: '2-digit', minute: '2-digit' })
+                          : d.toLocaleDateString(formattingLocale, { month: 'short', day: 'numeric' }) + ', ' + d.toLocaleTimeString(formattingLocale, { hour: '2-digit', minute: '2-digit' });
                       })()}
                     </span>
                   </div>
@@ -355,23 +358,23 @@
       <div class="p-6 border-b-2 border-foreground/10 bg-rose-500/5">
         <h3 class="font-black text-sm tracking-widest uppercase flex items-center gap-3 text-foreground">
           <AlertTriangle class="w-4 h-4 text-rose-500"/> 
-          Critical Deficits
+          {m.dashboard_critical_deficits()}
         </h3>
       </div>
       
       {#if data.lowStockItems.length === 0}
         <div class="flex-1 flex items-center justify-center flex-col text-sm text-muted-foreground/50 py-10 gap-4">
           <Package class="w-10 h-10 opacity-20" />
-          <span class="text-xs font-bold tracking-widest uppercase">Grid Operational</span>
+          <span class="text-xs font-bold tracking-widest uppercase">{m.dashboard_grid_operational()}</span>
         </div>
       {:else}
         <div class="flex-1 overflow-y-auto">
           <Table.Root class="w-full">
             <Table.Header class="bg-muted/30 sticky top-0 z-10 backdrop-blur-md">
               <Table.Row class="border-b-2 border-foreground/10 hover:bg-transparent">
-                <Table.Head class="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground w-[100px]">Index</Table.Head>
-                <Table.Head class="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground">Asset</Table.Head>
-                <Table.Head class="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground text-right">Yield</Table.Head>
+                <Table.Head class="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground w-[100px]">{m.dashboard_col_index()}</Table.Head>
+                <Table.Head class="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground">{m.dashboard_col_asset()}</Table.Head>
+                <Table.Head class="h-10 px-6 text-[9px] font-black uppercase tracking-widest text-muted-foreground text-right">{m.dashboard_col_yield()}</Table.Head>
               </Table.Row>
             </Table.Header>
             <Table.Body>

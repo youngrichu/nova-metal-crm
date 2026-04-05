@@ -51,7 +51,7 @@
 			roles: ["admin", "warehouse"],
 			children: [
 				{ title: m.nav_warehouses, icon: Warehouse, href: "/dashboard/inventory/warehouses" },
-				{ title: () => "Stock Takes", icon: ClipboardList, href: "/dashboard/inventory/counts" },
+				{ title: m.nav_stock_takes, icon: ClipboardList, href: "/dashboard/inventory/counts" },
 			],
 		},
 		{
@@ -61,7 +61,7 @@
 			roles: ["admin", "sales"],
 		},
 		{
-			title: () => "Reconciliation",
+			title: m.nav_reconciliation,
 			icon: Calculator,
 			href: "/dashboard/sales/reconciliation",
 			roles: ["admin", "sales"],

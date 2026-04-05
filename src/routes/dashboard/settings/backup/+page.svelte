@@ -2,6 +2,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Database, Download, Shield, HardDrive, Clock, RefreshCw, Zap, Calendar } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
+	import * as m from '$lib/paraglide/messages';
 
 	let isDownloading = $state(false);
 
@@ -21,7 +22,7 @@
 			const res = await fetch('/api/update/check');
 			if (!res.ok) {
 				const body = await res.json().catch(() => ({}));
-				toast.error(body.message ?? 'Could not reach update server. Check your internet connection.');
+				toast.error(body.message ?? m.backup_update_check_failed());
 				updateStatus = 'idle';
 				return;
 			}
@@ -32,14 +33,14 @@
 				typeof data.changelog !== 'string' ||
 				typeof data.hasUpdate !== 'boolean'
 			) {
-				toast.error('Invalid response from update server.');
+				toast.error(m.backup_invalid_update_response());
 				updateStatus = 'idle';
 				return;
 			}
 			updateInfo = { currentVersion: data.currentVersion, latestVersion: data.latestVersion, changelog: data.changelog };
 			updateStatus = data.hasUpdate ? 'update-available' : 'up-to-date';
 		} catch {
-			toast.error('Could not reach update server. Check your internet connection.');
+			toast.error(m.backup_update_check_failed());
 			updateStatus = 'idle';
 		}
 	}
@@ -50,15 +51,15 @@
 			const res = await fetch('/api/update/trigger', { method: 'POST' });
 			if (!res.ok) {
 				const body = await res.json().catch(() => ({}));
-				toast.error(body.message ?? 'Failed to trigger update');
+				toast.error(body.message ?? m.backup_trigger_failed());
 				updateStatus = 'update-available';
 				return;
 			}
-			toast.success('Update triggered — the app will restart in ~30 seconds.');
+			toast.success(m.backup_triggered());
 			// Reset after 60s in case the app doesn't restart (e.g. already up to date)
 			updateTimeoutId = setTimeout(() => { updateStatus = 'update-available'; }, 60000);
 		} catch {
-			toast.error('Could not reach Watchtower. Is it running?');
+			toast.error(m.backup_watchtower_failed());
 			updateStatus = 'update-available';
 		}
 	}
@@ -74,19 +75,17 @@
 	let scheduleDayOfWeek = $state(0);
 
 	const HOURS = Array.from({ length: 24 }, (_, i) => {
-		const period = i < 12 ? 'AM' : 'PM';
-		const display = i === 0 ? 12 : i > 12 ? i - 12 : i;
-		return { value: i, label: `${display}:00 ${period}` };
+		return { value: i, label: `${String(i).padStart(2, '0')}:00` };
 	});
 
 	const DAYS = [
-		{ value: 0, label: 'Sunday' },
-		{ value: 1, label: 'Monday' },
-		{ value: 2, label: 'Tuesday' },
-		{ value: 3, label: 'Wednesday' },
-		{ value: 4, label: 'Thursday' },
-		{ value: 5, label: 'Friday' },
-		{ value: 6, label: 'Saturday' }
+		{ value: 0, label: m.backup_day_sunday() },
+		{ value: 1, label: m.backup_day_monday() },
+		{ value: 2, label: m.backup_day_tuesday() },
+		{ value: 3, label: m.backup_day_wednesday() },
+		{ value: 4, label: m.backup_day_thursday() },
+		{ value: 5, label: m.backup_day_friday() },
+		{ value: 6, label: m.backup_day_saturday() }
 	];
 
 	async function loadSchedule() {
@@ -118,12 +117,12 @@
 			});
 			if (!res.ok) {
 				const data = await res.json().catch(() => ({}));
-				toast.error(data.message ?? 'Failed to save schedule');
+				toast.error(data.message ?? m.backup_schedule_save_failed());
 				return;
 			}
-			toast.success('Backup schedule saved');
+			toast.success(m.backup_schedule_saved());
 		} catch {
-			toast.error('Failed to save schedule');
+			toast.error(m.backup_schedule_save_failed());
 		} finally {
 			scheduleSaving = false;
 		}
@@ -149,9 +148,9 @@
 			a.download = `nova_backup_${new Date().toISOString().split('T')[0]}.sql.gz`;
 			a.click();
 			URL.revokeObjectURL(url);
-			toast.success('Backup exported successfully');
+			toast.success(m.backup_export_success());
 		} catch (e) {
-			toast.error('Export failed: network error');
+			toast.error(m.backup_export_network_error());
 		} finally {
 			isDownloading = false;
 		}
@@ -163,10 +162,10 @@
 		<div class="absolute -left-6 top-2 w-2 h-16 bg-primary transform -skew-x-12 hidden md:block"></div>
 		<div class="space-y-4 relative w-full">
 			<div class="flex items-center gap-3 mb-2">
-				<span class="inline-block px-2 py-0.5 bg-foreground text-background text-[10px] font-black tracking-widest uppercase">Admin</span>
+				<span class="inline-block px-2 py-0.5 bg-foreground text-background text-[10px] font-black tracking-widest uppercase">{m.backup_badge()}</span>
 			</div>
 			<h1 class="text-5xl md:text-7xl font-black tracking-tighter uppercase leading-[0.8]">
-				Backup<br /><span class="text-muted-foreground/40 italic">& Export</span>
+				{m.backup_title_line1()}<br /><span class="text-muted-foreground/40 italic">{m.backup_title_line2()}</span>
 			</h1>
 		</div>
 	</header>
@@ -175,18 +174,18 @@
 	<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
 		<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
 			<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
-				<Database class="w-4 h-4 text-primary" /> Database Export
+				<Database class="w-4 h-4 text-primary" /> {m.backup_export_section()}
 			</h2>
 		</div>
 		<div class="p-6 md:p-8 space-y-6">
 			<p class="text-sm text-muted-foreground leading-relaxed">
-				Export a full snapshot of all data as a compressed SQL file.
+				{m.backup_export_desc()}
 			</p>
 
 			<div class="flex items-start gap-3 p-4 bg-amber-500/5 border-l-4 border-amber-500/40">
 				<Shield class="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
 				<p class="text-xs font-medium text-foreground/70">
-					This feature is restricted to administrators.
+					{m.backup_admin_only()}
 				</p>
 			</div>
 
@@ -197,7 +196,7 @@
 					class="h-14 px-12 rounded-none bg-foreground text-background font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all flex items-center gap-3"
 				>
 					<Download class="w-4 h-4" />
-					{isDownloading ? 'Exporting...' : 'Export Full Data Package'}
+					{isDownloading ? m.backup_exporting() : m.backup_export_btn()}
 				</Button>
 			</div>
 		</div>
@@ -207,39 +206,39 @@
 	<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
 		<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
 			<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
-				<HardDrive class="w-4 h-4 text-primary" /> Backup Information
+				<HardDrive class="w-4 h-4 text-primary" /> {m.backup_info_section()}
 			</h2>
 		</div>
 		<div class="p-6 md:p-8 space-y-6">
 			<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 				<div class="space-y-2">
 					<div class="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-foreground/50">
-						<HardDrive class="w-3.5 h-3.5" /> Backup Script
+						<HardDrive class="w-3.5 h-3.5" /> {m.backup_script()}
 					</div>
 					<div class="font-mono text-sm bg-muted/40 border border-foreground/10 px-3 py-2">
 						scripts/backup.sh
 					</div>
-					<p class="text-xs text-muted-foreground/60">Shell script for automated backups via cron or Docker</p>
+					<p class="text-xs text-muted-foreground/60">{m.backup_script_hint()}</p>
 				</div>
 
 				<div class="space-y-2">
 					<div class="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-foreground/50">
-						<Clock class="w-3.5 h-3.5" /> Scheduled Backups
+						<Clock class="w-3.5 h-3.5" /> {m.backup_scheduled()}
 					</div>
 					<div class="font-mono text-sm bg-muted/40 border border-foreground/10 px-3 py-2">
-						Daily (configurable)
+						{m.backup_scheduled_value()}
 					</div>
-					<p class="text-xs text-muted-foreground/60">Configure via cron or container orchestration. Backups older than 30 days are pruned automatically.</p>
+					<p class="text-xs text-muted-foreground/60">{m.backup_scheduled_hint()}</p>
 				</div>
 
 				<div class="space-y-2">
 					<div class="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-foreground/50">
-						<Database class="w-3.5 h-3.5" /> Estimated Size
+						<Database class="w-3.5 h-3.5" /> {m.backup_size()}
 					</div>
 					<div class="font-mono text-sm bg-muted/40 border border-foreground/10 px-3 py-2">
-						Varies (gzip compressed)
+						{m.backup_size_value()}
 					</div>
-					<p class="text-xs text-muted-foreground/60">Compressed SQL dump of the full database. Size depends on data volume.</p>
+					<p class="text-xs text-muted-foreground/60">{m.backup_size_hint()}</p>
 				</div>
 			</div>
 		</div>
@@ -249,20 +248,20 @@
 	<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
 		<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
 			<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
-				<Calendar class="w-4 h-4 text-primary" /> Backup Schedule
+				<Calendar class="w-4 h-4 text-primary" /> {m.backup_schedule_section()}
 			</h2>
 		</div>
 		<div class="p-6 md:p-8 space-y-6">
 			<p class="text-sm text-muted-foreground leading-relaxed">
-				Choose when automated backups run. Changes take effect at the next hourly check.
+				{m.backup_schedule_desc()}
 			</p>
 
 			{#if scheduleError}
-				<p class="text-sm text-destructive">Could not load schedule. Please reload the page.</p>
+				<p class="text-sm text-destructive">{m.backup_schedule_load_failed()}</p>
 			{:else}
 				<!-- Frequency toggle -->
 				<div class="space-y-2">
-					<p class="text-xs font-bold tracking-wider uppercase text-foreground/50">Frequency</p>
+					<p class="text-xs font-bold tracking-wider uppercase text-foreground/50">{m.backup_frequency()}</p>
 					<div class="flex gap-0">
 						{#each (['daily', 'weekly'] as BackupFrequency[]) as freq}
 							<button
@@ -275,7 +274,7 @@
 										: 'bg-background text-foreground hover:bg-foreground/10'}
 									disabled:opacity-50"
 							>
-								{freq}
+								{freq === 'daily' ? m.backup_frequency_daily() : m.backup_frequency_weekly()}
 							</button>
 						{/each}
 					</div>
@@ -285,7 +284,7 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div class="space-y-2">
 						<label class="text-xs font-bold tracking-wider uppercase text-foreground/50" for="schedule-hour">
-							Time
+							{m.backup_time()}
 						</label>
 						<select
 							id="schedule-hour"
@@ -302,7 +301,7 @@
 					{#if scheduleFrequency === 'weekly'}
 						<div class="space-y-2">
 							<label class="text-xs font-bold tracking-wider uppercase text-foreground/50" for="schedule-dow">
-								Day
+								{m.backup_day()}
 							</label>
 							<select
 								id="schedule-dow"
@@ -326,7 +325,7 @@
 						class="h-14 px-12 rounded-none bg-foreground text-background font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all flex items-center gap-3 disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
 					>
 						<Calendar class="w-4 h-4" />
-						{scheduleSaving ? 'Saving...' : 'Save Schedule'}
+						{scheduleSaving ? m.saving() : m.backup_save_schedule()}
 					</Button>
 				</div>
 			{/if}
@@ -337,27 +336,27 @@
 	<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
 		<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
 			<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
-				<Zap class="w-4 h-4 text-primary" /> System Updates
+				<Zap class="w-4 h-4 text-primary" /> {m.backup_updates_section()}
 			</h2>
 		</div>
 		<div class="p-6 md:p-8 space-y-6">
 			<p class="text-sm text-muted-foreground leading-relaxed">
-				Connect to the internet and check for available application updates. When an update is ready, clicking <strong>Update Now</strong> will pull the latest version and restart the app automatically.
+				{m.backup_updates_desc()}
 			</p>
 
 			<!-- Version status display -->
 			<div class="flex flex-wrap items-center gap-3">
 				{#if updateInfo}
 					<div class="flex items-center gap-2 font-mono text-sm bg-muted/40 border border-foreground/10 px-3 py-2">
-						Current: <span class="font-bold">v{updateInfo.currentVersion}</span>
+						{m.backup_current()} <span class="font-bold">v{updateInfo.currentVersion}</span>
 					</div>
 					{#if updateStatus === 'up-to-date'}
 						<span class="inline-block px-2 py-0.5 bg-green-500 text-white text-[10px] font-black tracking-widest uppercase">
-							Up to date
+							{m.backup_up_to_date()}
 						</span>
 					{:else if updateStatus === 'update-available' || updateStatus === 'updating'}
 						<span class="inline-block px-2 py-0.5 bg-amber-500 text-white text-[10px] font-black tracking-widest uppercase">
-							v{updateInfo.latestVersion} available
+							{m.backup_available({ version: updateInfo.latestVersion })}
 						</span>
 					{/if}
 				{/if}
@@ -366,7 +365,7 @@
 			<!-- Changelog -->
 			{#if updateStatus === 'update-available' || updateStatus === 'updating'}
 				<div class="bg-muted/40 border-l-4 border-primary/40 p-4 space-y-1">
-					<p class="text-xs font-bold tracking-widest uppercase text-foreground/50">What's new in v{updateInfo?.latestVersion}</p>
+					<p class="text-xs font-bold tracking-widest uppercase text-foreground/50">{m.backup_whats_new({ version: updateInfo?.latestVersion ?? '' })}</p>
 					<p class="text-sm text-foreground/80">{updateInfo?.changelog}</p>
 				</div>
 			{/if}
@@ -380,7 +379,7 @@
 					class="h-14 px-12 rounded-none border-2 border-foreground font-bold uppercase tracking-widest hover:bg-foreground hover:text-background transition-all flex items-center gap-3 disabled:opacity-50"
 				>
 					<RefreshCw class="w-4 h-4 {updateStatus === 'checking' ? 'animate-spin' : ''}" />
-					{updateStatus === 'checking' ? 'Checking...' : 'Check for Updates'}
+					{updateStatus === 'checking' ? m.backup_checking() : m.backup_check_updates()}
 				</Button>
 
 				{#if updateStatus === 'update-available' || updateStatus === 'updating'}
@@ -390,7 +389,7 @@
 						class="h-14 px-12 rounded-none bg-foreground text-background font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all flex items-center gap-3 disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
 					>
 						<Zap class="w-4 h-4" />
-						{updateStatus === 'updating' ? 'Updating...' : 'Update Now'}
+						{updateStatus === 'updating' ? m.backup_updating() : m.backup_update_now()}
 					</Button>
 				{/if}
 			</div>
@@ -398,7 +397,7 @@
 			<!-- Post-update note -->
 			{#if updateStatus === 'updating'}
 				<p class="text-xs text-muted-foreground/60">
-					The app is restarting. Your browser will lose connection briefly — reload the page in ~30 seconds.
+					{m.backup_restart_note()}
 				</p>
 			{/if}
 		</div>

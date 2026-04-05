@@ -8,11 +8,14 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb';
 	import { page } from '$app/state';
+	import { getBreadcrumbLabel } from '$lib/i18n/navigation';
 
-	// Helper to nicely format breadcrumb parts
-	function formatSegment(segment: string) {
-		return segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
-	}
+	const breadcrumbLabels = $derived({
+		dashboard: m.nav_dashboard(),
+		inventory: m.nav_inventory(),
+		counts: m.nav_stock_takes(),
+		reconcile: m.nav_reconciliation()
+	});
 
 	let pathSegments = $derived(
 		page.url.pathname.split('/').filter((s) => Boolean(s) && s !== 'dashboard' && s !== 'catalog')
@@ -27,15 +30,15 @@
 		<Breadcrumb.Root class="hidden md:flex">
 			<Breadcrumb.List>
 				<Breadcrumb.Item>
-					<Breadcrumb.Link href="/dashboard" class="text-muted-foreground hover:text-foreground transition-colors">Dashboard</Breadcrumb.Link>
+					<Breadcrumb.Link href="/dashboard" class="text-muted-foreground hover:text-foreground transition-colors">{m.nav_dashboard()}</Breadcrumb.Link>
 				</Breadcrumb.Item>
 				{#each pathSegments as segment, i}
 					<Breadcrumb.Separator />
 					<Breadcrumb.Item>
 						{#if i === pathSegments.length - 1}
-							<Breadcrumb.Page class="font-bold text-foreground">{formatSegment(segment)}</Breadcrumb.Page>
+							<Breadcrumb.Page class="font-bold text-foreground">{getBreadcrumbLabel(segment, breadcrumbLabels)}</Breadcrumb.Page>
 						{:else}
-							<Breadcrumb.Link href={`/dashboard/${pathSegments.slice(0, i + 1).join('/')}`} class="text-muted-foreground hover:text-foreground transition-colors font-medium">{formatSegment(segment)}</Breadcrumb.Link>
+							<Breadcrumb.Link href={`/dashboard/${pathSegments.slice(0, i + 1).join('/')}`} class="text-muted-foreground hover:text-foreground transition-colors font-medium">{getBreadcrumbLabel(segment, breadcrumbLabels)}</Breadcrumb.Link>
 						{/if}
 					</Breadcrumb.Item>
 				{/each}
@@ -59,7 +62,7 @@
 			{#snippet child({ props })}
 				<Button {...props} variant="outline" size="icon" class="h-8 w-8 rounded-full">
 					<Languages class="h-4 w-4" />
-					<span class="sr-only">Toggle language</span>
+					<span class="sr-only">{m.app_toggle_language()}</span>
 				</Button>
 			{/snippet}
 		</DropdownMenu.Trigger>

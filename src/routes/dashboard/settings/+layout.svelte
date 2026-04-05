@@ -1,14 +1,15 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { User, Settings, Users, HardDrive } from 'lucide-svelte';
+	import * as m from '$lib/paraglide/messages';
 
 	let { children } = $props();
 
 	const settingsNav = [
-		{ title: 'Profile', href: '/dashboard/settings/profile', icon: User, roles: ['admin', 'sales', 'warehouse'] },
-		{ title: 'System', href: '/dashboard/settings/system', icon: Settings, roles: ['admin'] },
-		{ title: 'Users', href: '/dashboard/settings/users', icon: Users, roles: ['admin'] },
-		{ title: 'Backup', href: '/dashboard/settings/backup', icon: HardDrive, roles: ['admin'] }
+		{ title: m.settings_nav_profile(), href: '/dashboard/settings/profile', icon: User, roles: ['admin', 'sales', 'warehouse'] },
+		{ title: m.settings_nav_system(), href: '/dashboard/settings/system', icon: Settings, roles: ['admin'] },
+		{ title: m.settings_nav_users(), href: '/dashboard/settings/users', icon: Users, roles: ['admin'] },
+		{ title: m.settings_nav_backup(), href: '/dashboard/settings/backup', icon: HardDrive, roles: ['admin'] }
 	];
 
 	const visibleNav = $derived(

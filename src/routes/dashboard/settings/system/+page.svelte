@@ -5,6 +5,7 @@
 	import { enhance } from '$app/forms';
 	import { Settings, DollarSign, Globe, Save, Scan, Printer } from 'lucide-svelte';
 	import { toast } from 'svelte-sonner';
+	import * as m from '$lib/paraglide/messages';
 
 	let { data, form } = $props();
 
@@ -29,7 +30,7 @@
 		isSubmitting = true;
 		return async ({ result, update }: any) => {
 			if (result.type === 'success' && result.data?.success) {
-				toast.success('System settings saved');
+				toast.success(m.system_saved());
 			} else if (result.data?.error) {
 				toast.error(result.data.error);
 			}
@@ -44,10 +45,10 @@
 		<div class="absolute -left-6 top-2 w-2 h-16 bg-primary transform -skew-x-12 hidden md:block"></div>
 		<div class="space-y-4 relative w-full">
 			<div class="flex items-center gap-3 mb-2">
-				<span class="inline-block px-2 py-0.5 bg-foreground text-background text-[10px] font-black tracking-widest uppercase">Settings</span>
+				<span class="inline-block px-2 py-0.5 bg-foreground text-background text-[10px] font-black tracking-widest uppercase">{m.system_badge()}</span>
 			</div>
 			<h1 class="text-5xl md:text-7xl font-black tracking-tighter uppercase leading-[0.8]">
-				System<br /><span class="text-muted-foreground/40 italic">Config</span>
+				{m.system_title_line1()}<br /><span class="text-muted-foreground/40 italic">{m.system_title_line2()}</span>
 			</h1>
 		</div>
 	</header>
@@ -63,14 +64,14 @@
 		<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
 			<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
 				<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
-					<DollarSign class="w-4 h-4 text-primary" /> Pricing Configuration
+					<DollarSign class="w-4 h-4 text-primary" /> {m.system_pricing_section()}
 				</h2>
 			</div>
 			<div class="p-6 md:p-8 space-y-6">
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					<div class="space-y-2 group">
 						<Label for="vat_rate" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							VAT Rate (decimal — e.g. 0.15 = 15%)
+							{m.system_vat_rate()}
 						</Label>
 						<Input
 							id="vat_rate"
@@ -89,7 +90,7 @@
 				<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
 					<div class="space-y-2 group">
 						<Label for="markup_retail" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							Retail Markup %
+							{m.system_markup_retail()}
 						</Label>
 						<Input
 							id="markup_retail"
@@ -101,11 +102,11 @@
 							required
 							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
-						<p class="text-xs text-muted-foreground/60">e.g. 20 = 20% markup on cost</p>
+						<p class="text-xs text-muted-foreground/60">{m.system_markup_hint_retail()}</p>
 					</div>
 					<div class="space-y-2 group">
 						<Label for="markup_wholesale" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							Wholesale Markup %
+							{m.system_markup_wholesale()}
 						</Label>
 						<Input
 							id="markup_wholesale"
@@ -117,11 +118,11 @@
 							required
 							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
-						<p class="text-xs text-muted-foreground/60">e.g. 15 = 15% markup on cost</p>
+						<p class="text-xs text-muted-foreground/60">{m.system_markup_hint_wholesale()}</p>
 					</div>
 					<div class="space-y-2 group">
 						<Label for="markup_vip" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							VIP Markup %
+							{m.system_markup_vip()}
 						</Label>
 						<Input
 							id="markup_vip"
@@ -133,11 +134,11 @@
 							required
 							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
-						<p class="text-xs text-muted-foreground/60">e.g. 12 = 12% markup on cost</p>
+						<p class="text-xs text-muted-foreground/60">{m.system_markup_hint_vip()}</p>
 					</div>
 					<div class="space-y-2 group">
 						<Label for="markup_preferred" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							Preferred Markup %
+							{m.system_markup_preferred()}
 						</Label>
 						<Input
 							id="markup_preferred"
@@ -149,7 +150,7 @@
 							required
 							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
-						<p class="text-xs text-muted-foreground/60">e.g. 10 = 10% markup on cost</p>
+						<p class="text-xs text-muted-foreground/60">{m.system_markup_hint_preferred()}</p>
 					</div>
 				</div>
 			</div>
@@ -159,14 +160,14 @@
 		<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
 			<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
 				<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
-					<Globe class="w-4 h-4 text-primary" /> Currency Formatting
+					<Globe class="w-4 h-4 text-primary" /> {m.system_currency_section()}
 				</h2>
 			</div>
 			<div class="p-6 md:p-8 space-y-6">
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					<div class="space-y-2 group">
 						<Label for="currency_code" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							Currency Code (ISO 4217)
+							{m.system_currency_code()}
 						</Label>
 						<Input
 							id="currency_code"
@@ -178,11 +179,11 @@
 							placeholder="ETB"
 							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono uppercase"
 						/>
-						<p class="text-xs text-muted-foreground/60">e.g. ETB, USD, EUR</p>
+						<p class="text-xs text-muted-foreground/60">{m.system_currency_code_hint()}</p>
 					</div>
 					<div class="space-y-2 group">
 						<Label for="currency_locale" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							Locale (BCP 47 tag)
+							{m.system_currency_locale()}
 						</Label>
 						<Input
 							id="currency_locale"
@@ -193,7 +194,7 @@
 							placeholder="en-ET"
 							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
-						<p class="text-xs text-muted-foreground/60">e.g. en-ET, en-US, am-ET</p>
+						<p class="text-xs text-muted-foreground/60">{m.system_currency_locale_hint()}</p>
 					</div>
 				</div>
 			</div>
@@ -203,7 +204,7 @@
 		<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
 			<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
 				<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
-					<Scan class="w-4 h-4 text-primary" /> Barcode Features
+					<Scan class="w-4 h-4 text-primary" /> {m.system_barcode_section()}
 				</h2>
 			</div>
 			<div class="p-6 md:p-8">
@@ -224,8 +225,8 @@
 					</div>
 					<input type="hidden" name="barcode_enabled" value="false" />
 					<div>
-						<p class="text-sm font-bold tracking-wide">Enable Barcode Features</p>
-						<p class="text-xs text-muted-foreground/60 mt-0.5">Shows barcode fields on products and enables the barcode scanner during stock-takes.</p>
+						<p class="text-sm font-bold tracking-wide">{m.system_barcode_enable()}</p>
+						<p class="text-xs text-muted-foreground/60 mt-0.5">{m.system_barcode_hint()}</p>
 					</div>
 				</label>
 			</div>
@@ -235,14 +236,14 @@
 		<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
 			<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
 				<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
-					<Printer class="w-4 h-4 text-primary" /> Thermal Printer
+					<Printer class="w-4 h-4 text-primary" /> {m.system_printer_section()}
 				</h2>
 			</div>
 			<div class="p-6 md:p-8 space-y-6">
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					<div class="space-y-2 group">
 						<Label for="company_name" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							Company Name
+							{m.system_company_name()}
 						</Label>
 						<Input
 							id="company_name"
@@ -253,11 +254,11 @@
 							placeholder="NOVA METAL PLC"
 							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all"
 						/>
-						<p class="text-xs text-muted-foreground/60">Printed in the receipt header</p>
+						<p class="text-xs text-muted-foreground/60">{m.system_company_name_hint()}</p>
 					</div>
 					<div class="space-y-2 group">
 						<Label for="company_address" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							Company Address
+							{m.system_company_address()}
 						</Label>
 						<Input
 							id="company_address"
@@ -268,13 +269,13 @@
 							placeholder="Addis Ababa, Ethiopia"
 							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all"
 						/>
-						<p class="text-xs text-muted-foreground/60">Printed below company name</p>
+						<p class="text-xs text-muted-foreground/60">{m.system_company_address_hint()}</p>
 					</div>
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 					<div class="space-y-2 group">
 						<Label for="printer_type" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							Connection Type
+							{m.system_connection_type()}
 						</Label>
 						<select
 							id="printer_type"
@@ -282,15 +283,15 @@
 							bind:value={printerType}
 							class="w-full h-14 bg-muted/30 border-2 border-transparent focus:bg-transparent focus:border-primary focus:outline-none rounded-none text-base px-4 transition-all font-mono"
 						>
-							<option value="network">Network (TCP/IP)</option>
-							<option value="usb">USB</option>
+							<option value="network">{m.system_connection_network()}</option>
+							<option value="usb">{m.system_connection_usb()}</option>
 						</select>
-						<p class="text-xs text-muted-foreground/60">{printerType === 'usb' ? 'Connects via USB — no IP needed' : 'Connects over LAN via TCP port 9100'}</p>
+						<p class="text-xs text-muted-foreground/60">{printerType === 'usb' ? m.system_connection_hint_usb() : m.system_connection_hint_network()}</p>
 					</div>
 					{#if printerType === 'network'}
 					<div class="space-y-2 group">
 						<Label for="printer_address" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							Printer IP Address
+							{m.system_printer_ip()}
 						</Label>
 						<Input
 							id="printer_address"
@@ -300,7 +301,7 @@
 							placeholder="192.168.1.100"
 							class="h-10 sm:h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-sm sm:text-lg px-4 transition-all font-mono"
 						/>
-						<p class="text-xs text-muted-foreground/60">Default port 9100 — use ip:port to override</p>
+						<p class="text-xs text-muted-foreground/60">{m.system_printer_ip_hint()}</p>
 					</div>
 					{:else}
 					<!-- Hidden fallback preserves the user-typed value when USB is selected -->
@@ -309,7 +310,7 @@
 					{/if}
 					<div class="space-y-2 group">
 						<Label for="paper_width" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
-							Paper Width
+							{m.system_paper_width()}
 						</Label>
 						<select
 							id="paper_width"
@@ -332,7 +333,7 @@
 				class="h-14 px-12 rounded-none bg-foreground text-background font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all flex items-center gap-3"
 			>
 				<Save class="w-4 h-4" />
-				{isSubmitting ? 'Saving...' : 'Save Settings'}
+				{isSubmitting ? m.saving() : m.system_save()}
 			</Button>
 		</div>
 	</form>

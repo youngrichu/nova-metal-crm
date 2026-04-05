@@ -36,20 +36,20 @@
 	);
 
 	const cardColumns = [
-		{ key: 'orderNumber',  label: 'Order',    primary: true },
-		{ key: 'customerName', label: 'Customer', secondary: true },
-		{ key: 'status',       label: 'Status',   badge: true,
+		{ key: 'orderNumber',  label: m.orders_col_order(),    primary: true },
+		{ key: 'customerName', label: m.orders_col_customer(), secondary: true },
+		{ key: 'status',       label: m.orders_col_status(),   badge: true,
 			badgeClass: (v: unknown) => getStatusColor(String(v)) },
-		{ key: 'total',        label: 'Total' },
-		{ key: 'createdAt',    label: 'Date' },
+		{ key: 'total',        label: m.orders_col_total() },
+		{ key: 'createdAt',    label: m.orders_col_date() },
 	];
 
 	const cardActions: ActionsInput = (row) => {
 		const actions: Action[] = [
-			{ label: 'View Details', onClick: (r: any) => goto(`/dashboard/sales/orders/${r.id}`) },
+			{ label: m.orders_view_details(), onClick: (r: any) => goto(`/dashboard/sales/orders/${r.id}`) },
 		];
 		if (row.status === 'CONFIRMED' || row.status === 'INVOICED') {
-			actions.push({ label: 'Record Payment', onClick: (r: any) => goto(`/dashboard/sales/orders/${r.id}/payments`) });
+			actions.push({ label: m.orders_record_payment(), onClick: (r: any) => goto(`/dashboard/sales/orders/${r.id}/payments`) });
 		}
 		return actions;
 	};
@@ -61,10 +61,10 @@
 		<div class="space-y-2 relative">
 			<div class="absolute -left-6 top-2 w-2 h-12 bg-primary transform -skew-x-12 hidden md:block"></div>
 			<h1 class="text-5xl md:text-7xl font-black tracking-tighter uppercase leading-[0.85]">
-				Sales <br/><span class="text-muted-foreground/40 italic">Orders</span>
+				{m.orders_title_line1()} <br/><span class="text-muted-foreground/40 italic">{m.orders_title_line2()}</span>
 			</h1>
 			<p class="text-sm font-medium tracking-widest uppercase text-primary/80 pt-2 ml-1">
-				{data.orders.length} Records
+				{data.orders.length} {m.orders_records()}
 			</p>
 		</div>
 		
@@ -74,20 +74,20 @@
 				<Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-foreground transition-colors" />
 				<Input 
 					name="q" 
-					placeholder="Search orders..."
+					placeholder={m.orders_search()}
 					class="w-full md:w-[280px] h-12 pl-10 rounded-none border-x-0 border-t-0 border-b-2 border-foreground/20 bg-transparent shadow-none text-base focus-visible:ring-0 focus-visible:border-foreground transition-all duration-300 placeholder:text-muted-foreground/50"
 				/>
 			</form>
 
 			<Button onclick={() => goto('/dashboard/sales/orders/create')} class="h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] relative hidden md:flex">
-				<Plus class="w-4 h-4 mr-2" /> New Order
+				<Plus class="w-4 h-4 mr-2" /> {m.orders_new_btn()}
 			</Button>
 		</div>
 	</header>
 
 	<!-- Mobile card view -->
 	<div class="md:hidden">
-		<DataCards columns={cardColumns} data={processedOrders} actions={cardActions} emptyMessage="No orders found." />
+		<DataCards columns={cardColumns} data={processedOrders} actions={cardActions} emptyMessage={m.orders_empty()} />
 	</div>
 
 	<!-- Desktop table view -->
@@ -97,11 +97,11 @@
 		<Table.Root class="w-full text-left border-collapse">
 			<Table.Header>
 				<Table.Row class="bg-muted/50 hover:bg-muted/50 border-b-2 border-foreground/10">
-					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">Order / Quote</Table.Head>
-					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">Customer</Table.Head>
-					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden md:table-cell">Date</Table.Head>
-					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right">Total Amount</Table.Head>
-					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-center">Status</Table.Head>
+					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">{m.orders_col_order()}</Table.Head>
+					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60">{m.orders_col_customer()}</Table.Head>
+					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 hidden md:table-cell">{m.orders_col_date()}</Table.Head>
+					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-right">{m.orders_col_total()}</Table.Head>
+					<Table.Head class="h-14 px-6 text-[10px] font-bold uppercase tracking-widest text-foreground/60 text-center">{m.orders_col_status()}</Table.Head>
 					<Table.Head class="w-[80px]"></Table.Head>
 				</Table.Row>
 			</Table.Header>
@@ -118,7 +118,7 @@
 								{#if order.customer}
 									<span class="font-bold text-foreground/90">{order.customer.name}</span>
 								{:else}
-									<span class="font-bold text-muted-foreground italic">Walk-In{order.walkInPhone ? ` · ${order.walkInPhone}` : ''}</span>
+									<span class="font-bold text-muted-foreground italic">{m.orders_walk_in()}{order.walkInPhone ? ` · ${order.walkInPhone}` : ''}</span>
 								{/if}
 								{#if order.customer?.companyName}
 									<span class="text-xs font-medium text-muted-foreground uppercase mt-1">{order.customer.companyName}</span>
@@ -142,17 +142,17 @@
 								<DropdownMenu.Trigger>
 									{#snippet child({ props })}
 										<Button {...props} variant="outline" size="sm" class="h-8 text-[10px] font-bold uppercase tracking-widest px-3 flex items-center justify-between min-w-[95px] rounded-none border-2 border-foreground/10 hover:border-foreground/30 transition-colors shadow-[2px_2px_0px_0px_theme(colors.foreground_/_5%)]">
-											Actions <ChevronDown class="h-3.5 w-3.5 ml-2 opacity-50" />
+											{m.actions()} <ChevronDown class="h-3.5 w-3.5 ml-2 opacity-50" />
 										</Button>
 									{/snippet}
 								</DropdownMenu.Trigger>
 								<DropdownMenu.Content align="end" class="w-48 rounded-none border-2 border-foreground/10 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)] p-2">
 									<DropdownMenu.Item onSelect={() => goto(`/dashboard/sales/orders/${order.id}`)} class="text-xs font-bold uppercase tracking-wider cursor-pointer h-10 px-3 hover:bg-muted focus:bg-muted mb-1">
-										<FileText class="mr-3 h-4 w-4" /> View Details
+										<FileText class="mr-3 h-4 w-4" /> {m.orders_view_details()}
 									</DropdownMenu.Item>
 									{#if order.status === 'CONFIRMED' || order.status === 'INVOICED'}
 										<DropdownMenu.Item onSelect={() => goto(`/dashboard/sales/orders/${order.id}/payments`)} class="text-xs font-bold uppercase tracking-wider cursor-pointer h-10 px-3 hover:bg-muted focus:bg-muted">
-											<Banknote class="mr-3 h-4 w-4" /> Record Payment
+											<Banknote class="mr-3 h-4 w-4" /> {m.orders_record_payment()}
 										</DropdownMenu.Item>
 									{/if}
 								</DropdownMenu.Content>
@@ -164,7 +164,7 @@
 						<Table.Cell colspan={6} class="h-64 text-center align-middle">
 							<div class="flex flex-col items-center justify-center text-muted-foreground/40 gap-4">
 								<ShoppingCart class="w-12 h-12 opacity-20" />
-								<p class="text-lg font-light tracking-widest uppercase">No orders found</p>
+								<p class="text-lg font-light tracking-widest uppercase">{m.orders_empty()}</p>
 							</div>
 						</Table.Cell>
 					</Table.Row>
@@ -175,4 +175,4 @@
 	</div>
 </div>
 
-<PageFAB label="Create order" onclick={() => goto('/dashboard/sales/orders/create')} />
+<PageFAB label={m.orders_create_fab()} onclick={() => goto('/dashboard/sales/orders/create')} />
