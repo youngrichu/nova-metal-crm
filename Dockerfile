@@ -10,8 +10,8 @@ COPY package.json pnpm-lock.yaml .npmrc ./
 RUN pnpm install
 
 COPY . .
-ENV BETTER_AUTH_SECRET=placeholder_secret_for_build_only
-ENV BETTER_AUTH_URL=http://localhost:3000
+ENV BETTER_AUTH_SECRET="placeholder_secret_for_build_only" \
+    BETTER_AUTH_URL="http://localhost:3000"
 RUN pnpm run build
 RUN pnpm prune --prod
 
