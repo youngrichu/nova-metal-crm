@@ -261,14 +261,14 @@ function Test-DockerInWsl {
 function Install-DockerEngine {
     Write-Step "Installing Docker Engine + Git in WSL2..."
 
-    # Enable systemd so docker.service works properly on WSL2 boot
+    # Step 1: Write wsl.conf to enable systemd on next boot (systemd is NOT running yet)
     Invoke-WslScript @'
 if ! grep -q "systemd=true" /etc/wsl.conf 2>/dev/null; then
   printf '[boot]\nsystemd=true\n\n[user]\ndefault=root\n' > /etc/wsl.conf
 fi
 '@
 
-    # Install git + Docker Engine via official apt repo
+    # Step 2: Install Docker packages (systemd not needed for apt install)
     Invoke-WslScript @'
 set -e
 export DEBIAN_FRONTEND=noninteractive
@@ -288,12 +288,16 @@ apt-get update -qq
 apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 '@
 
-    Invoke-Wsl "systemctl enable docker"
-
+    # Step 3: Restart WSL2 so systemd starts as PID 1
     Write-Step "Restarting WSL2 to activate systemd..."
     wsl --terminate $Distro 2>&1 | Out-Null
-    Start-Sleep -Seconds 4
+    Start-Sleep -Seconds 6
 
+    # Step 4: Now systemd IS running - enable and start docker service
+    Write-Step "Enabling Docker service..."
+    Invoke-Wsl "systemctl enable docker && systemctl start docker"
+
+    # Step 5: Wait for Docker Engine to be responsive
     Write-Step "Waiting for Docker Engine..."
     $deadline = (Get-Date).AddSeconds(90)
     while ((Get-Date) -lt $deadline) {
