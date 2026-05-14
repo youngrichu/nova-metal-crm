@@ -3,7 +3,7 @@ FROM node:22-alpine AS builder
 
 RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
-RUN apk add --no-cache python3 make g++ linux-headers
+RUN apk add --no-cache python3 make g++ linux-headers eudev-dev
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml .npmrc ./
