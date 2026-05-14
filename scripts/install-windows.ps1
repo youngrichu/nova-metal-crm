@@ -650,6 +650,12 @@ function Main {
     # Phase 10: Health check
     Wait-AppReady
 
+    # Phase 11: Database Setup
+    Write-Step "Finalizing database schema..."
+    # Using npx drizzle-kit push to sync the schema without needing manual migrations files
+    Invoke-Wsl "cd $LinuxInstallDir && docker compose exec app npx drizzle-kit push"
+    Write-Ok "Database schema is up to date"
+
     Clear-State
 
     Write-Host ""
