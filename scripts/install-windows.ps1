@@ -166,16 +166,8 @@ function Test-DistroInstalled {
     return ((wsl --list --quiet 2>&1) -match [regex]::Escape($Name))
 }
 
-function Install-Distro {
+function Set-WslRootUser {
     param([string]$Name)
-    Write-Step "Installing $Name (headless)..."
-
-    wsl --install -d $Name --no-launch 2>&1 | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        wsl --install -d $Name 2>&1 | Out-Null   # older WSL2 fallback
-    }
-
-    # Set default user to root via registry - prevents the "Enter new UNIX username" prompt
     $lxssPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss"
     $key = Get-ChildItem $lxssPath -ErrorAction SilentlyContinue |
         Where-Object {
@@ -185,14 +177,69 @@ function Install-Distro {
 
     if ($key) {
         Set-ItemProperty -Path $key.PSPath -Name DefaultUid -Value 0 -Type DWord
-        Write-Ok "$Name configured (root user, no login prompt)"
+        Write-Ok "Root user configured (no login prompt)"
     } else {
-        Write-Warn "Registry key not found - you may see a username prompt on first WSL2 launch"
+        Write-Warn "Could not set root user via registry - continuing anyway"
+    }
+}
+
+function Wait-DistroReady {
+    param([string]$Name)
+    Write-Step "Waiting for $Name to be ready..."
+    $deadline = (Get-Date).AddSeconds(60)
+    while ((Get-Date) -lt $deadline) {
+        $out = wsl -d $Name -u root -- echo ready 2>&1
+        if ($out -match "ready") { Write-Ok "$Name is ready"; return }
+        Start-Sleep -Seconds 3
+    }
+    throw "$Name did not become ready within 60 s. Try re-running the installer."
+}
+
+function Install-Distro {
+    param([string]$Name)
+    Write-Step "Installing $Name (silent, no setup window)..."
+
+    $installed = $false
+
+    # Method 1: winget - fully silent, no interactive terminal window
+    if (Get-Command winget -ErrorAction SilentlyContinue) {
+        $wingetId = switch ($Name) {
+            "Ubuntu-24.04" { "Canonical.Ubuntu.2404" }
+            "Ubuntu-22.04" { "Canonical.Ubuntu.2204" }
+            default        { "Canonical.Ubuntu.2404" }
+        }
+        Write-Note "Installing via winget..."
+        winget install -e --id $wingetId --accept-source-agreements --accept-package-agreements --silent 2>&1 | Out-Null
+        # 0 = success, -1978335189 = already installed (both are fine)
+        if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq -1978335189) {
+            $installed = $true
+            Write-Ok "$Name installed via winget"
+        }
     }
 
+    # Method 2: wsl --install --no-launch (newer WSL2, no interactive window)
+    if (-not $installed) {
+        Write-Note "Trying wsl --install --no-launch..."
+        wsl --install -d $Name --no-launch 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            $installed = $true
+            Write-Ok "$Name installed"
+        }
+    }
+
+    # Method 3: last resort - open in a separate process and wait for it to finish
+    if (-not $installed) {
+        Write-Note "Opening Ubuntu setup window - complete it then close it to continue..."
+        Start-Process "wsl.exe" -ArgumentList "--install -d $Name" -Wait
+        $installed = $true
+    }
+
+    # Configure root user before first launch so no username prompt appears
+    Set-WslRootUser -Name $Name
     wsl --terminate $Name 2>&1 | Out-Null
     Start-Sleep -Seconds 2
-    Write-Ok "$Name installed"
+
+    Wait-DistroReady -Name $Name
 }
 
 # ---------------------------------------------------------------------------
