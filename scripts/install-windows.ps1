@@ -27,6 +27,7 @@ $WslTaskName           = "NovaPOS-Startup"
 $ResumeTaskName        = "NovaPOS-InstallResume"
 $StateDir              = "$env:ProgramData\NovaPOS"
 $StateFile             = "$StateDir\install-state.json"
+$LogFile               = "$env:ProgramData\NovaPOS\install.log"
 $VersionCheckUrl       = "https://gist.githubusercontent.com/youngrichu/bb9bc3f021cffa5b80603b2a0c21a9e0/raw/version.json"
 
 # ---------------------------------------------------------------------------
@@ -41,10 +42,16 @@ function Show-Banner {
     Write-Host "  +-------------------------------------------+" -ForegroundColor Cyan
     Write-Host ""
 }
-function Write-Step { param([string]$M) Write-Host "  >>  $M" -ForegroundColor Yellow }
-function Write-Ok   { param([string]$M) Write-Host "  OK  $M" -ForegroundColor Green }
-function Write-Warn { param([string]$M) Write-Host "  !!  $M" -ForegroundColor DarkYellow }
-function Write-Note { param([string]$M) Write-Host "      $M" -ForegroundColor DarkGray }
+function Write-Log {
+    param([string]$M)
+    $line = "[$(Get-Date -Format 'HH:mm:ss')] $M"
+    New-Item -ItemType Directory -Force -Path $StateDir | Out-Null
+    Add-Content -Path $LogFile -Value $line -Encoding UTF8
+}
+function Write-Step { param([string]$M) Write-Host "  >>  $M" -ForegroundColor Yellow;      Write-Log "STEP  $M" }
+function Write-Ok   { param([string]$M) Write-Host "  OK  $M" -ForegroundColor Green;       Write-Log "OK    $M" }
+function Write-Warn { param([string]$M) Write-Host "  !!  $M" -ForegroundColor DarkYellow;  Write-Log "WARN  $M" }
+function Write-Note { param([string]$M) Write-Host "      $M" -ForegroundColor DarkGray;    Write-Log "NOTE  $M" }
 
 # ---------------------------------------------------------------------------
 # Admin self-elevation
@@ -89,19 +96,19 @@ function Invoke-WslScript {
     param([string]$Script, [switch]$PassThru)
 
     $tmp = [System.IO.Path]::GetTempFileName()
-    # Force LF endings so bash doesn't see \r as part of commands
     [System.IO.File]::WriteAllText(
         $tmp,
         ($Script -replace "`r`n", "`n"),
-        [System.Text.UTF8Encoding]::new($false)   # no BOM
+        [System.Text.UTF8Encoding]::new($false)
     )
     $wslTmp = ConvertTo-WslPath $tmp
 
     try {
-        if ($PassThru) {
-            return (wsl -d $Distro -u root -- bash $wslTmp 2>&1)
-        } else {
-            wsl -d $Distro -u root -- bash $wslTmp 2>&1 | ForEach-Object { Write-Note $_ }
+        $out = wsl -d $Distro -u root -- bash $wslTmp 2>&1
+        $out | ForEach-Object { Write-Log "WSL > $_" }
+        if ($PassThru) { return $out }
+        if (-not $PassThru) {
+            $out | ForEach-Object { Write-Note $_ }
             if ($LASTEXITCODE -ne 0) { throw "WSL2 script failed (exit $LASTEXITCODE)" }
         }
     } finally {
@@ -109,13 +116,13 @@ function Invoke-WslScript {
     }
 }
 
-# Run a short one-liner in WSL2
 function Invoke-Wsl {
     param([string]$Command, [switch]$PassThru)
-    if ($PassThru) {
-        return (wsl -d $Distro -u root -- bash -c $Command 2>&1)
-    }
-    wsl -d $Distro -u root -- bash -c $Command 2>&1 | ForEach-Object { Write-Note $_ }
+    Write-Log "RUN   $Command"
+    $out = wsl -d $Distro -u root -- bash -c $Command 2>&1
+    $out | ForEach-Object { Write-Log "WSL > $_" }
+    if ($PassThru) { return $out }
+    $out | ForEach-Object { Write-Note $_ }
     if ($LASTEXITCODE -ne 0) { throw "WSL2 command failed (exit $LASTEXITCODE): $Command" }
 }
 
@@ -163,7 +170,14 @@ function Enable-Wsl2 {
 # ---------------------------------------------------------------------------
 function Test-DistroInstalled {
     param([string]$Name)
-    return ((wsl --list --quiet 2>&1) -match [regex]::Escape($Name))
+    # wsl --list outputs UTF-16 which PowerShell misreads - check registry instead
+    $lxssPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss"
+    $found = Get-ChildItem $lxssPath -ErrorAction SilentlyContinue |
+        Where-Object {
+            $dn = (Get-ItemProperty $_.PSPath -ErrorAction SilentlyContinue).DistributionName
+            $dn -like "*$($Name -replace '-','')*" -or $dn -eq $Name
+        } | Select-Object -First 1
+    return ($null -ne $found)
 }
 
 function Set-WslRootUser {
@@ -608,4 +622,18 @@ function Main {
     Read-Host "  Press Enter to close"
 }
 
-Main
+try {
+    Main
+} catch {
+    Write-Log "CRASH $($_.Exception.Message)"
+    Write-Log "TRACE $($_.ScriptStackTrace)"
+    Write-Host ""
+    Write-Host "  XX  Installation failed:" -ForegroundColor Red
+    Write-Host "      $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "  Log saved to: $LogFile" -ForegroundColor Yellow
+    Write-Host "  Share that file to get help." -ForegroundColor DarkGray
+    Write-Host ""
+    Read-Host "  Press Enter to close"
+    exit 1
+}
