@@ -8,6 +8,9 @@ import type { RequestHandler } from "./$types";
 // Dynamic require to avoid Vite bundling native USB/network modules.
 // Each driver is loaded independently so a missing sub-module doesn't
 // silently leave escpos.USB / escpos.Network undefined.
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
 let escpos: any;
 
 try { escpos = require('escpos'); } catch (e) { console.warn('escpos not available:', e); }

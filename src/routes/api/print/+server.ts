@@ -1,6 +1,9 @@
 import { json } from '@sveltejs/kit';
 
 // Use dynamic require/import for node-only modules to avoid Vite client bundling issues
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
 let escpos: any;
 let escposUsb: any;
 let escposNetwork: any;
