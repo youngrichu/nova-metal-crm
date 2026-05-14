@@ -185,14 +185,18 @@ function Set-WslRootUser {
 
 function Wait-DistroReady {
     param([string]$Name)
-    Write-Step "Waiting for $Name to be ready..."
-    $deadline = (Get-Date).AddSeconds(60)
+    Write-Step "Waiting for $Name to initialise (this can take a minute)..."
+
+    # Give WSL2 time to register and run first-boot setup before we start polling
+    Start-Sleep -Seconds 10
+
+    $deadline = (Get-Date).AddSeconds(180)
     while ((Get-Date) -lt $deadline) {
         $out = wsl -d $Name -u root -- echo ready 2>&1
         if ($out -match "ready") { Write-Ok "$Name is ready"; return }
-        Start-Sleep -Seconds 3
+        Start-Sleep -Seconds 5
     }
-    throw "$Name did not become ready within 60 s. Try re-running the installer."
+    throw "$Name did not become ready within 3 minutes. Try re-running the installer."
 }
 
 function Install-Distro {
@@ -237,7 +241,11 @@ function Install-Distro {
     # Configure root user before first launch so no username prompt appears
     Set-WslRootUser -Name $Name
     wsl --terminate $Name 2>&1 | Out-Null
-    Start-Sleep -Seconds 2
+    Start-Sleep -Seconds 3
+
+    # Trigger first launch in background so WSL2 runs first-boot init
+    Write-Note "Starting WSL2 first-boot initialisation..."
+    Start-Process "wsl.exe" -ArgumentList "-d $Name -u root -- echo init" -WindowStyle Hidden
 
     Wait-DistroReady -Name $Name
 }
