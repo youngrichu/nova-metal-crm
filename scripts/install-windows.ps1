@@ -150,6 +150,43 @@ function ConvertTo-WslPath {
 }
 
 # ---------------------------------------------------------------------------
+# Reliability & UX Helpers
+# ---------------------------------------------------------------------------
+function Optimize-WslNetworking {
+    Write-Step "Optimizing system for network stability..."
+    $wslConfigPath = "$env:USERPROFILE\.wslconfig"
+    # Mirrored mode is the most robust networking for WSL2 on Windows 11
+    $configContent = "[wsl2]`nnetworkingMode=mirrored`ndnsTunneling=true`nfirewall=true"
+    
+    if (!(Test-Path $wslConfigPath) -or !(Select-String -Path $wslConfigPath -Pattern "networkingMode=mirrored")) {
+        $configContent | Out-File -FilePath $wslConfigPath -Encoding utf8
+        Write-Ok "WSL2 Mirrored networking enabled. Restarting WSL..."
+        # We don't shutdown here if we are in the middle of a resume, 
+        # but for fresh install it's safe.
+        wsl --shutdown
+        Start-Sleep -Seconds 5
+    } else {
+        Write-Ok "Network optimization already active."
+    }
+}
+
+function Create-DesktopShortcut {
+    param([int]$Port)
+    Write-Step "Creating Desktop shortcut..."
+    try {
+        $WshShell = New-Object -ComObject WScript.Shell
+        $Shortcut = $WshShell.CreateShortcut("$env:USERPROFILE\Desktop\Nova POS.lnk")
+        $Shortcut.TargetPath = "http://localhost:$Port"
+        $Shortcut.Description = "Open Nova POS"
+        $Shortcut.IconLocation = "shell32.dll, 14" # Globe icon
+        $Shortcut.Save()
+        Write-Ok "Desktop shortcut created."
+    } catch {
+        Write-Warn "Could not create desktop shortcut: $($_.Exception.Message)"
+    }
+}
+
+# ---------------------------------------------------------------------------
 # WSL2 platform
 # ---------------------------------------------------------------------------
 function Test-Wsl2Available {
@@ -604,7 +641,11 @@ function Main {
     # Phase 8: Firewall
     Set-FirewallRule
 
-    # Phase 9: Health check
+    # Phase 9: Reliability Optimizations
+    Optimize-WslNetworking
+    Create-DesktopShortcut -Port $AppPort
+
+    # Phase 10: Health check
     Wait-AppReady
 
     Clear-State
