@@ -104,13 +104,13 @@ function Invoke-WslScript {
     $wslTmp = ConvertTo-WslPath $tmp
 
     try {
-        $out = wsl -d $Distro -u root -- bash $wslTmp 2>&1
+        # Cast every item to string - prevents ErrorRecord objects from stderr
+        # triggering $ErrorActionPreference = Stop via 2>&1
+        $out = wsl -d $Distro -u root -- bash $wslTmp 2>&1 | ForEach-Object { "$_" }
         $out | ForEach-Object { Write-Log "WSL > $_" }
         if ($PassThru) { return $out }
-        if (-not $PassThru) {
-            $out | ForEach-Object { Write-Note $_ }
-            if ($LASTEXITCODE -ne 0) { throw "WSL2 script failed (exit $LASTEXITCODE)" }
-        }
+        $out | ForEach-Object { Write-Note $_ }
+        if ($LASTEXITCODE -ne 0) { throw "WSL2 script failed (exit $LASTEXITCODE)" }
     } finally {
         Remove-Item $tmp -ErrorAction SilentlyContinue
     }
@@ -119,7 +119,8 @@ function Invoke-WslScript {
 function Invoke-Wsl {
     param([string]$Command, [switch]$PassThru)
     Write-Log "RUN   $Command"
-    $out = wsl -d $Distro -u root -- bash -c $Command 2>&1
+    # Cast to string - prevents stderr ErrorRecord objects from throwing under Stop preference
+    $out = wsl -d $Distro -u root -- bash -c $Command 2>&1 | ForEach-Object { "$_" }
     $out | ForEach-Object { Write-Log "WSL > $_" }
     if ($PassThru) { return $out }
     $out | ForEach-Object { Write-Note $_ }
@@ -311,9 +312,9 @@ apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugi
     wsl --terminate $Distro 2>&1 | Out-Null
     Start-Sleep -Seconds 6
 
-    # Step 4: Now systemd IS running - enable and start docker service
-    Write-Step "Enabling Docker service..."
-    Invoke-Wsl "systemctl enable docker && systemctl start docker"
+    # Step 4: Now systemd IS running - start docker (apt already enabled it)
+    Write-Step "Starting Docker service..."
+    Invoke-Wsl "systemctl start docker"
 
     # Step 5: Wait for Docker Engine to be responsive
     Write-Step "Waiting for Docker Engine..."
