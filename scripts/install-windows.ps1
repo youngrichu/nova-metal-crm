@@ -268,8 +268,12 @@ function Install-Distro {
 # Docker Engine inside WSL2
 # ---------------------------------------------------------------------------
 function Test-DockerInWsl {
-    wsl -d $Distro -u root -- bash -c "docker info" 2>&1 | Out-Null
-    return ($LASTEXITCODE -eq 0)
+    try {
+        $null = wsl -d $Distro -u root -- bash -c "docker info" 2>&1
+        return ($LASTEXITCODE -eq 0)
+    } catch {
+        return $false
+    }
 }
 
 function Install-DockerEngine {
