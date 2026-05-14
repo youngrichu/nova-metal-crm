@@ -586,7 +586,7 @@ function Main {
         Write-Host ""
     }
 
-    # Phase 1: WSL2 platform
+    # Phase 1: WSL2 platform & Reliability
     if (-not (Test-Wsl2Available)) {
         Write-Step "Enabling WSL2..."
         Enable-Wsl2
@@ -610,6 +610,9 @@ function Main {
         exit 0
     }
     Write-Ok "WSL2 is available"
+    
+    # Ensure networking is stable before we start any services
+    Optimize-WslNetworking
 
     # Phase 2: Ubuntu
     if (-not (Test-DistroInstalled -Name $Distro)) {
@@ -641,8 +644,7 @@ function Main {
     # Phase 8: Firewall
     Set-FirewallRule
 
-    # Phase 9: Reliability Optimizations
-    Optimize-WslNetworking
+    # Phase 9: UX
     Create-DesktopShortcut -Port $AppPort
 
     # Phase 10: Health check
