@@ -92,21 +92,6 @@ function Clear-State { Remove-Item $StateFile -ErrorAction SilentlyContinue }
 # Run a multi-line bash script reliably inside WSL2.
 # Writes the script to a temp file (LF endings) and executes it - avoids all
 # CRLF / bash -c quoting issues that plague inline heredocs.
-function Invoke-WslRaw {
-    # Runs a wsl command and captures all output as plain strings.
-    # Temporarily sets ErrorActionPreference=Continue so that stderr lines
-    # captured via 2>&1 do not become throwing ErrorRecord objects.
-    param([string[]]$WslArgs)
-    $saved = $ErrorActionPreference
-    $ErrorActionPreference = "Continue"
-    try {
-        $out = wsl @WslArgs 2>&1 | ForEach-Object { "$_" }
-    } finally {
-        $ErrorActionPreference = $saved
-    }
-    return $out
-}
-
 function Invoke-WslScript {
     param([string]$Script, [switch]$PassThru)
 
@@ -119,7 +104,9 @@ function Invoke-WslScript {
     $wslTmp = ConvertTo-WslPath $tmp
 
     try {
-        $out = Invoke-WslRaw @("-d", $Distro, "-u", "root", "--", "bash", $wslTmp)
+        # Redirect stderr to stdout inside bash so PowerShell never receives
+        # ErrorRecord objects from native command stderr output
+        $out = wsl -d $Distro -u root -- bash -c "bash '$wslTmp' 2>&1"
         $out | ForEach-Object { Write-Log "WSL > $_" }
         if ($PassThru) { return $out }
         $out | ForEach-Object { Write-Note $_ }
@@ -132,7 +119,9 @@ function Invoke-WslScript {
 function Invoke-Wsl {
     param([string]$Command, [switch]$PassThru)
     Write-Log "RUN   $Command"
-    $out = Invoke-WslRaw @("-d", $Distro, "-u", "root", "--", "bash", "-c", $Command)
+    # Wrap in a bash group and redirect stderr to stdout inside bash.
+    # This means PowerShell only receives clean stdout - no ErrorRecord objects.
+    $out = wsl -d $Distro -u root -- bash -c "{ $Command; } 2>&1"
     $out | ForEach-Object { Write-Log "WSL > $_" }
     if ($PassThru) { return $out }
     $out | ForEach-Object { Write-Note $_ }
