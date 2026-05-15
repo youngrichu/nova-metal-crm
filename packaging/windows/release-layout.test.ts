@@ -21,6 +21,7 @@ function makeReleaseRoot(paths: string[]): string {
 describe('validateReleaseLayout', () => {
 	it('accepts a complete release directory', () => {
 		const root = makeReleaseRoot([
+			'install.bat',
 			'app/build/',
 			'app/package.json',
 			'app/node_modules/',
