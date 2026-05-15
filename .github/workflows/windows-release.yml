@@ -161,11 +161,13 @@ jobs:
       - name: Add Windows scripts
         shell: pwsh
         run: |
-          $scriptsRoot = Join-Path $PWD "release/packaging/windows"
+          $releaseRoot = Join-Path $PWD "release"
+          $scriptsRoot = Join-Path $releaseRoot "packaging/windows"
           New-Item -ItemType Directory -Force -Path $scriptsRoot | Out-Null
           Copy-Item -Force "packaging/windows/install.ps1" $scriptsRoot
           Copy-Item -Force "packaging/windows/update.ps1" $scriptsRoot
           Copy-Item -Force "packaging/windows/uninstall.ps1" $scriptsRoot
+          Copy-Item -Force "install.bat" $releaseRoot
 
       - name: Validate release layout
         run: pnpm tsx packaging/windows/validate-release-layout.ts release

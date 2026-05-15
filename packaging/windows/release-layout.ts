@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 export const REQUIRED_RELEASE_PATHS = [
+	'install.bat',
 	'app/build',
 	'app/package.json',
 	'app/node_modules',
