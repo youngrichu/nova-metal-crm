@@ -61,7 +61,7 @@
 		{/if}
 
 		<!-- Pricing Configuration -->
-		<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
+		<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_--theme(--color-foreground/5%)]">
 			<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
 				<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
 					<DollarSign class="w-4 h-4 text-primary" /> {m.system_pricing_section()}
@@ -157,7 +157,7 @@
 		</section>
 
 		<!-- Currency Formatting -->
-		<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
+		<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_--theme(--color-foreground/5%)]">
 			<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
 				<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
 					<Globe class="w-4 h-4 text-primary" /> {m.system_currency_section()}
@@ -201,7 +201,7 @@
 		</section>
 
 		<!-- Barcode Features -->
-		<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
+		<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_--theme(--color-foreground/5%)]">
 			<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
 				<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
 					<Scan class="w-4 h-4 text-primary" /> {m.system_barcode_section()}
@@ -233,7 +233,7 @@
 		</section>
 
 		<!-- Printer Configuration -->
-		<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_theme(colors.foreground/5%)]">
+		<section class="border-2 border-foreground/10 bg-card shadow-[8px_8px_0px_0px_--theme(--color-foreground/5%)]">
 			<div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
 				<h2 class="text-sm font-black tracking-widest uppercase flex items-center gap-2">
 					<Printer class="w-4 h-4 text-primary" /> {m.system_printer_section()}
@@ -330,7 +330,7 @@
 			<Button
 				type="submit"
 				disabled={isSubmitting}
-				class="h-14 px-12 rounded-none bg-foreground text-background font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all flex items-center gap-3"
+				class="h-14 px-12 rounded-none bg-foreground text-background font-bold uppercase tracking-widest hover:bg-primary shadow-[4px_4px_0px_0px_var(--color-primary)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all flex items-center gap-3"
 			>
 				<Save class="w-4 h-4" />
 				{isSubmitting ? m.saving() : m.system_save()}

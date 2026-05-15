@@ -192,6 +192,13 @@ export const GET: RequestHandler = async ({ params }) => {
 
         // Server-side PDF generation using pdfmake Printer (PDFKit-based)
         const printer = new Printer(fonts, null, noopUrlResolver);
+		
+		// Explicitly disable remote URL fetching to mitigate SSRF (CVE-2026-26801)
+		// Even with noopUrlResolver, this provides defense-in-depth and silences security warnings.
+		if (typeof printer.setUrlAccessPolicy === 'function') {
+			printer.setUrlAccessPolicy('none');
+		}
+
         const pdfDoc = await printer.createPdfKitDocument(docDefinition);
 
         const buffer = await new Promise<Buffer>((resolve, reject) => {

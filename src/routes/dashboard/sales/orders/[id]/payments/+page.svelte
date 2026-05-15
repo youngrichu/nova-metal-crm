@@ -75,7 +75,7 @@
                     <p class="text-sm font-medium tracking-widest uppercase text-green-600/70">No further payments required.</p>
                 </div>
             {:else}
-                <form method="POST" action="?/record" use:enhance={handleSubmit} class="bg-card border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] p-6 space-y-6 relative">
+                <form method="POST" action="?/record" use:enhance={handleSubmit} class="bg-card border-2 border-border shadow-[4px_4px_0px_0px_var(--color-border)] p-6 space-y-6 relative">
                     {#if form?.error}
                         <div class="bg-red-500/10 border-l-4 border-red-600 p-4 text-red-600 font-medium text-sm">
                             {form.error}
@@ -122,7 +122,7 @@
                     </div>
 
                     <div class="pt-6">
-                        <Button type="submit" disabled={isSubmitting || paymentAmount <= 0} class="w-full h-16 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-sm hover:bg-primary shadow-[6px_6px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                        <Button type="submit" disabled={isSubmitting || paymentAmount <= 0} class="w-full h-16 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-sm hover:bg-primary shadow-[6px_6px_0px_0px_var(--color-primary)] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                             {#if isSubmitting}
                                 <span class="animate-pulse">Recording...</span>
                             {:else}
@@ -136,7 +136,7 @@
 
         <!-- Financial Summary -->
         <div class="space-y-6">
-            <section class="bg-slate-900 border-2 border-slate-900 text-slate-100 shadow-[4px_4px_0px_0px_theme(colors.slate.800)] p-6 md:p-8">
+            <section class="bg-slate-900 border-2 border-slate-900 text-slate-100 shadow-[4px_4px_0px_0px_var(--color-slate-800)] p-6 md:p-8">
                 <h2 class="text-sm font-bold tracking-widest uppercase text-slate-400 border-b border-slate-700 pb-4 mb-6 flex items-center gap-2">
                     <Banknote class="w-4 h-4" /> Order Financials
                 </h2>
@@ -158,7 +158,7 @@
 
             <!-- Payment History -->
             {#if data.payments.length > 0}
-                <section class="bg-card border-2 border-border shadow-[4px_4px_0px_0px_theme(colors.border)] p-6">
+                <section class="bg-card border-2 border-border shadow-[4px_4px_0px_0px_var(--color-border)] p-6">
                     <h2 class="text-sm font-bold tracking-widest uppercase text-muted-foreground border-b border-border/50 pb-4 mb-4">Payment History</h2>
                     <div class="space-y-3">
                         {#each data.payments as payment}

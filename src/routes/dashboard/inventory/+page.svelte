@@ -159,12 +159,12 @@
 			<Sheet.Root bind:open={isTransactOpen}>
 				<Sheet.Trigger>
 					{#snippet child({ props })}
-						<Button {...props} class="hidden md:flex h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_theme(colors.primary.DEFAULT)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] relative">
+						<Button {...props} class="hidden md:flex h-12 px-8 rounded-none bg-foreground text-background font-bold uppercase tracking-widest text-xs hover:bg-primary hover:text-primary-foreground transition-colors shadow-[4px_4px_0px_0px_var(--color-primary)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] relative">
 							<ArrowDownUp class="w-3.5 h-3.5 mr-2" /> {m.inv_log_move()}
 						</Button>
 					{/snippet}
 				</Sheet.Trigger>
-				<Sheet.Content class="sm:max-w-[700px] overflow-y-auto flex flex-col h-full border-l-[8px] border-primary shadow-2xl p-0">
+				<Sheet.Content class="sm:max-w-[700px] overflow-y-auto flex flex-col h-full border-l-8 border-primary shadow-2xl p-0">
 					<div class="bg-muted px-4 sm:px-10 py-8 sm:py-12 border-b border-border relative overflow-hidden">
 						<div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
 						<Sheet.Header class="relative z-10">
@@ -222,7 +222,7 @@
 											<span class="truncate">{txTypes.find(t => t.value === selectedType)?.label}</span>
 											<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
 										</Popover.Trigger>
-										<Popover.Content class="w-full p-0 rounded-none border-2 border-foreground/10 shadow-[4px_4px_0px_0px_theme(colors.foreground/10%)] bg-card">
+										<Popover.Content class="w-full p-0 rounded-none border-2 border-foreground/10 shadow-[4px_4px_0px_0px_--theme(--color-foreground/10%)] bg-card">
 											<Command.Root>
 												<Command.List>
 													<Command.Group>
@@ -263,7 +263,7 @@
 												<span class="truncate">{getWarehouseLabel(selectedWarehouse)}</span>
 												<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
 											</Popover.Trigger>
-											<Popover.Content class="w-[min(300px,calc(100vw-2rem))] p-0 rounded-none border-2 border-foreground/10 shadow-[4px_4px_0px_0px_theme(colors.foreground/10%)] bg-card" align="start">
+											<Popover.Content class="w-[min(300px,calc(100vw-2rem))] p-0 rounded-none border-2 border-foreground/10 shadow-[4px_4px_0px_0px_--theme(--color-foreground/10%)] bg-card" align="start">
 												<Command.Root>
 													<Command.Input placeholder={m.inventory_search_locations()} class="h-12 border-none font-medium" />
 													<Command.List>
@@ -304,7 +304,7 @@
 												<span class="truncate">{getProductLabel(selectedProduct)}</span>
 												<ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
 											</Popover.Trigger>
-											<Popover.Content class="w-[min(300px,calc(100vw-2rem))] p-0 rounded-none border-2 border-foreground/10 shadow-[4px_4px_0px_0px_theme(colors.foreground/10%)] bg-card" align="start">
+											<Popover.Content class="w-[min(300px,calc(100vw-2rem))] p-0 rounded-none border-2 border-foreground/10 shadow-[4px_4px_0px_0px_--theme(--color-foreground/10%)] bg-card" align="start">
 												<Command.Root>
 													<Command.Input placeholder={m.inventory_search_sku()} class="h-12 border-none font-medium" />
 													<Command.List>
@@ -387,7 +387,7 @@
 						</div>
 
 						<div class="pt-6 sm:pt-10 mt-6 sm:mt-10 sticky bottom-0 bg-background/90 backdrop-blur-xl">
-							<Button type="submit" class="w-full h-12 sm:h-16 rounded-none text-sm sm:text-base font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_theme(colors.muted.DEFAULT)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
+							<Button type="submit" class="w-full h-12 sm:h-16 rounded-none text-sm sm:text-base font-bold tracking-widest uppercase transition-all bg-foreground text-background hover:bg-primary shadow-[8px_8px_0px_0px_var(--color-muted)] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px]" disabled={isSubmitting}>
 								{isSubmitting ? m.validating() : (selectedType === 'STOCK_OUT' ? m.inv_commit_dispatch() : selectedType === 'STOCK_IN' ? m.inv_commit_receipt() : m.inv_commit_adj())}
 							</Button>
 						</div>
@@ -408,7 +408,7 @@
 				<DataCards columns={stockLevelColumns} data={processedStockLevels} emptyMessage={m.inv_no_stock_mobile()} />
 			</div>
 			<div class="hidden md:block">
-				<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)] relative">
+				<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground\\_/_10%)] relative">
 					<Table.Root class="w-full text-left border-collapse">
 						<Table.Header>
 							<Table.Row class="bg-muted/50 hover:bg-muted/50 border-b-2 border-foreground/10">
@@ -466,7 +466,7 @@
 				<DataCards columns={transactionColumns} data={processedTransactions} emptyMessage={m.inv_no_tx_mobile()} />
 			</div>
 			<div class="hidden md:block">
-				<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)] relative">
+				<div class="bg-card border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground\\_/_10%)] relative">
 					<Table.Root class="w-full text-left border-collapse">
 						<Table.Header>
 							<Table.Row class="bg-muted/50 hover:bg-muted/50 border-b-2 border-foreground/10">

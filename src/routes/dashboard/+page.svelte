@@ -15,8 +15,16 @@
 
   let { data } = $props();
 
-  let activePeriod  = $state<'day' | 'week' | 'month'>(data.period as 'day' | 'week' | 'month');
-  let selectedRange = $state<string>(data.range);
+  let activePeriod  = $state<'day' | 'week' | 'month'>('day');
+  let selectedRange = $state<string>('');
+
+  // Initialize once from data
+  $effect.pre(() => {
+    if (selectedRange === '') {
+      activePeriod = data.period as 'day' | 'week' | 'month';
+      selectedRange = data.range;
+    }
+  });
 
   const RANGE_LABELS: Record<string, () => string> = {
     'last-7-days':      m.range_last_7_days,
@@ -103,7 +111,7 @@
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-6 md:mt-0 w-full md:w-auto">
 
       <!-- Brutalist Toggle -->
-      <div class="flex border-2 border-foreground/20 p-1 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)]">
+      <div class="flex border-2 border-foreground/20 p-1 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground\\_/_10%)]">
         <button
           onclick={() => setPeriod('day')}
           class="flex-1 px-4 py-2 text-xs font-bold tracking-widest uppercase transition-all
@@ -123,11 +131,11 @@
 
       <!-- Select Dropdown -->
       <Select.Root type="single" value={selectedRange} onValueChange={setRange}>
-        <Select.Trigger class="w-full sm:w-[200px] h-12 rounded-none border-2 border-foreground/20 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground_/_10%)] font-bold text-xs tracking-widest uppercase">
+        <Select.Trigger class="w-full sm:w-[200px] h-12 rounded-none border-2 border-foreground/20 bg-background shadow-[4px_4px_0px_0px_theme(colors.foreground\\_/_10%)] font-bold text-xs tracking-widest uppercase">
           <CalendarDays class="mr-3 h-4 w-4 opacity-50" />
           <span>{RANGE_LABELS[selectedRange]?.() ?? m.dashboard_select_range()}</span>
         </Select.Trigger>
-        <Select.Content align="end" class="rounded-none border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_10%)]">
+        <Select.Content align="end" class="rounded-none border-2 border-foreground/10 shadow-[8px_8px_0px_0px_theme(colors.foreground\\_/_10%)]">
           <Select.Item value="last-7-days"      class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">{m.range_last_7_days()}</Select.Item>
           <Select.Item value="last-30-days"     class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">{m.range_last_30_days()}</Select.Item>
           <Select.Item value="this-month"       class="text-xs font-bold uppercase tracking-wider py-3 rounded-none">{m.range_this_month()}</Select.Item>
@@ -143,7 +151,7 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     
     <!-- Metrics Side Panel -->
-    <div class="col-span-1 order-2 lg:order-none border-2 border-foreground/10 bg-card p-4 sm:p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col relative overflow-hidden group">
+    <div class="col-span-1 order-2 lg:order-0 border-2 border-foreground/10 bg-card p-4 sm:p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground\\_/_5%)] flex flex-col relative overflow-hidden group">
 
       <!-- Decorative brutalist accent -->
       <div class="absolute -right-12 -top-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors duration-700"></div>
@@ -222,7 +230,7 @@
     </div>
     
     <!-- Sales Trend Chart -->
-    <div class="col-span-1 lg:col-span-2 order-1 lg:order-none border-2 border-foreground/10 bg-card p-4 sm:p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] flex flex-col min-h-[400px]">
+    <div class="col-span-1 lg:col-span-2 order-1 lg:order-0 border-2 border-foreground/10 bg-card p-4 sm:p-8 shadow-[8px_8px_0px_0px_theme(colors.foreground\\_/_5%)] flex flex-col min-h-[400px]">
 
       <div class="flex justify-between items-start gap-3 mb-2 border-b border-foreground/5 pb-3">
         <div class="min-w-0">
@@ -231,7 +239,7 @@
           </h3>
           <p class="text-xs font-medium text-muted-foreground/60 tracking-wider leading-relaxed">{data.period === 'day' ? m.period_day() : data.period === 'week' ? m.period_week() : m.period_month()} · {RANGE_LABELS[data.range]?.() ?? data.range}</p>
         </div>
-        <Button variant="outline" size="sm" href="/dashboard/sales/orders" class="shrink-0 h-8 rounded-none border-2 border-foreground/20 text-[10px] font-bold tracking-widest uppercase shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
+        <Button variant="outline" size="sm" href="/dashboard/sales/orders" class="shrink-0 h-8 rounded-none border-2 border-foreground/20 text-[10px] font-bold tracking-widest uppercase shadow-[2px_2px_0px_0px_theme(colors.foreground\\_/_10%)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
           {m.dashboard_view_orders()}
         </Button>
       </div>
@@ -272,7 +280,7 @@
             </Svg>
             <Tooltip.Root>
               {#snippet children({ data: pt }: { data: any })}
-                <div class="bg-background border-2 border-foreground/10 px-3 py-2 shadow-[4px_4px_0px_0px_theme(colors.foreground/10%)] text-xs font-mono">
+                <div class="bg-background border-2 border-foreground/10 px-3 py-2 shadow-[4px_4px_0px_0px_--theme(--color-foreground/10%)] text-xs font-mono">
                   <p class="font-black text-[10px] tracking-widest uppercase text-muted-foreground mb-1">
                     {pt.date instanceof Date ? pt.date.toLocaleDateString(formattingLocale, { month: 'short', day: 'numeric' }) : pt.date}
                   </p>
@@ -289,7 +297,7 @@
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
     
     <!-- Activity Board -->
-    <div class="border-2 border-foreground/10 bg-card p-0 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] min-h-[400px] flex flex-col">
+    <div class="border-2 border-foreground/10 bg-card p-0 shadow-[8px_8px_0px_0px_theme(colors.foreground\\_/_5%)] min-h-[400px] flex flex-col">
       <div class="p-6 border-b-2 border-foreground/10 bg-muted/30">
         <h3 class="font-black text-sm tracking-widest uppercase flex items-center gap-3 text-foreground">
           <Activity class="w-4 h-4 text-primary"/> 
@@ -300,7 +308,7 @@
       <div class="flex-1 overflow-y-auto p-4 sm:p-6">
         {#if data.recentTransactions.length === 0}
           <div class="flex items-start gap-5 p-4 border-2 border-dashed border-border/50 bg-muted/10">
-            <div class="p-3 bg-muted border-2 border-foreground/10 shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)]">
+            <div class="p-3 bg-muted border-2 border-foreground/10 shadow-[2px_2px_0px_0px_theme(colors.foreground\\_/_10%)]">
                <Settings class="w-4 h-4 text-muted-foreground" />
             </div>
             <div>
@@ -314,7 +322,7 @@
               <div class="flex items-start gap-5 group">
                 
                 <!-- Brutalist Icon Badge -->
-                <div class="p-2 border-2 bg-background shrink-0 mt-1 transition-transform group-hover:scale-110 shadow-[2px_2px_0px_0px_theme(colors.foreground_/_10%)]
+                <div class="p-2 border-2 bg-background shrink-0 mt-1 transition-transform group-hover:scale-110 shadow-[2px_2px_0px_0px_theme(colors.foreground\\_/_10%)]
                   {tx.transactionType === 'STOCK_IN' ? 'border-emerald-500 text-emerald-600' : 
                    tx.transactionType === 'STOCK_OUT' ? 'border-rose-500 text-rose-600' : 'border-amber-500 text-amber-600'}">
                   <div class="w-4 h-4 font-black text-[10px] flex items-center justify-center leading-none">
@@ -354,7 +362,7 @@
     </div>
 
     <!-- Low Stock Items List -->
-    <div class="border-2 border-foreground/10 bg-card p-0 shadow-[8px_8px_0px_0px_theme(colors.foreground_/_5%)] min-h-[400px] flex flex-col">
+    <div class="border-2 border-foreground/10 bg-card p-0 shadow-[8px_8px_0px_0px_theme(colors.foreground\\_/_5%)] min-h-[400px] flex flex-col">
       <div class="p-6 border-b-2 border-foreground/10 bg-rose-500/5">
         <h3 class="font-black text-sm tracking-widest uppercase flex items-center gap-3 text-foreground">
           <AlertTriangle class="w-4 h-4 text-rose-500"/> 
