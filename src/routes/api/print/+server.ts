@@ -1,4 +1,5 @@
 import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
 // Use dynamic require/import for node-only modules to avoid Vite client bundling issues
 import { createRequire } from "module";
@@ -18,7 +19,7 @@ try {
 	console.warn("ESC/POS drivers not fully available in this environment, printing might fail in Vercel.");
 }
 
-export const POST = async ({ request, locals }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
 	const user = locals.user;
 	if (!user) return json({ error: 'Unauthorized' }, { status: 401 });
 

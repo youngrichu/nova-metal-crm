@@ -27,7 +27,7 @@ async function main() {
         const user = await auth.api.signUpEmail({
             body: {
                 email: "admin@novametal.com",
-                password: "adminPassword",
+                password: process.env.ADMIN_PASSWORD || "defaultAdminPassword",
                 name: "System Admin"
             }
         });
