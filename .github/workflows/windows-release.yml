@@ -110,7 +110,7 @@ jobs:
       - name: Install production Node modules in payload
         shell: pwsh
         working-directory: release/app
-        run: pnpm install --prod --frozen-lockfile
+        run: pnpm install --prod
 
       - name: Download Node runtime
         shell: pwsh
