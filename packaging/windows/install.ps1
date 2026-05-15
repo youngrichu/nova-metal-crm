@@ -222,9 +222,23 @@ function Initialize-Database {
     }
 
     Write-Step "Registering PostgreSQL service"
-    & $pgCtl unregister -N $DbServiceName 2>$null | Out-Null
-    & $pgCtl register -N $DbServiceName -D $DbDir -S auto | ForEach-Object { Write-Log "pg_ctl register: $_" }
-    Start-Service $DbServiceName
+    & $pgCtl unregister -N $DbServiceName 2>&1 | Out-Null
+    Write-Log "Registering PostgreSQL service with pg_ctl..."
+    $regOutput = & $pgCtl register -N $DbServiceName -D $DbDir -S auto 2>&1
+    $regOutput | ForEach-Object { Write-Log "pg_ctl register: $_" }
+    $regExitCode = $LASTEXITCODE
+    if ($regExitCode -ne 0) {
+        Write-Log "pg_ctl register failed (exit $regExitCode). Trying sc.exe..."
+        $scBin = "$env:SystemRoot\System32\sc.exe"
+        $pgBin = Join-Path $RuntimeDir "postgres\bin"
+        $pgCtlPath = Join-Path $pgBin "pg_ctl.exe"
+        $scOutput = & $scBin create $DbServiceName binPath="$pgCtlPath runservice -N $DbServiceName -D $DbDir" start=auto 2>&1
+        $scOutput | ForEach-Object { Write-Log "sc.exe create: $_" }
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to register PostgreSQL service (pg_ctl exit $regExitCode, sc.exe exit $LASTEXITCODE)."
+        }
+    }
+    Start-Service $DbServiceName -ErrorAction Stop
     Wait-DatabaseReady -Port $configuredDbPort
 
     Write-Step "Ensuring Nova database exists"
