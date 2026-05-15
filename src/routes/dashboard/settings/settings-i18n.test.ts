@@ -3,23 +3,23 @@ import { readFileSync } from 'node:fs';
 
 const cases = [
 	{
-		path: '/Users/richu/programming/nova/src/routes/dashboard/settings/+page.svelte',
+		path: 'src/routes/dashboard/settings/+page.svelte',
 		literals: ['Redirecting to settings...']
 	},
 	{
-		path: '/Users/richu/programming/nova/src/routes/dashboard/settings/profile/+page.svelte',
+		path: 'src/routes/dashboard/settings/profile/+page.svelte',
 		literals: ['Settings', 'Account Details', 'Display Name', 'Change Password', 'Save Name']
 	},
 	{
-		path: '/Users/richu/programming/nova/src/routes/dashboard/settings/system/+page.svelte',
+		path: 'src/routes/dashboard/settings/system/+page.svelte',
 		literals: ['System Config', 'Pricing Configuration', 'Currency Formatting', 'Barcode Features', 'Save Settings']
 	},
 	{
-		path: '/Users/richu/programming/nova/src/routes/dashboard/settings/users/+page.svelte',
+		path: 'src/routes/dashboard/settings/users/+page.svelte',
 		literals: ['Settings / Admin', 'User Management', 'Create New User', 'Add User', 'No users found']
 	},
 	{
-		path: '/Users/richu/programming/nova/src/routes/dashboard/settings/backup/+page.svelte',
+		path: 'src/routes/dashboard/settings/backup/+page.svelte',
 		literals: ['Database Export', 'Backup Schedule', 'System Updates', 'Check for Updates', 'Export Full Data Package']
 	}
 ];

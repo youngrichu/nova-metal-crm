@@ -3,19 +3,19 @@ import { readFileSync } from 'node:fs';
 
 const cases = [
 	{
-		path: '/Users/richu/programming/nova/src/lib/components/layout/AppHeader.svelte',
+		path: 'src/lib/components/layout/AppHeader.svelte',
 		literals: ['Dashboard']
 	},
 	{
-		path: '/Users/richu/programming/nova/src/routes/dashboard/inventory/+page.svelte',
+		path: 'src/routes/dashboard/inventory/+page.svelte',
 		literals: ['Search locations...', 'Search SKU...', '— Select a valid SKU —']
 	},
 	{
-		path: '/Users/richu/programming/nova/src/routes/dashboard/inventory/counts/[id]/+page.svelte',
+		path: 'src/routes/dashboard/inventory/counts/[id]/+page.svelte',
 		literals: ['This count session is closed. No further edits allowed.', 'All Count Sessions', 'Barcode Scanner']
 	},
 	{
-		path: '/Users/richu/programming/nova/src/routes/dashboard/inventory/counts/[id]/reconcile/+page.svelte',
+		path: 'src/routes/dashboard/inventory/counts/[id]/reconcile/+page.svelte',
 		literals: ['Count closed and inventory updated.', 'Close Count & Apply Adjustments', 'Confirm close?']
 	}
 ];
