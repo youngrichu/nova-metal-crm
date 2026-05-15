@@ -15,7 +15,7 @@
 
   let { data } = $props();
 
-  let activePeriod  = $state<'day' | 'week' | 'month'>(data.period);
+  let activePeriod  = $state<'day' | 'week' | 'month'>(data.period as 'day' | 'week' | 'month');
   let selectedRange = $state<string>(data.range);
 
   const RANGE_LABELS: Record<string, () => string> = {

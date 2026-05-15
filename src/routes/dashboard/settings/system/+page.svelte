@@ -10,11 +10,11 @@
 	let { data, form } = $props();
 
 	let isSubmitting = $state(false);
-	let printerType = $state(data.settings.printer_type ?? 'network');
-	let paperWidth = $state(data.settings.paper_width ?? '80');
-	let printerAddress = $state(data.settings.printer_address ?? '192.168.1.100');
-	let companyName = $state(data.settings.company_name ?? 'NOVA METAL PLC');
-	let companyAddress = $state(data.settings.company_address ?? 'Addis Ababa, Ethiopia');
+	let printerType = $state('network');
+	let paperWidth = $state('80');
+	let printerAddress = $state('192.168.1.100');
+	let companyName = $state('NOVA METAL PLC');
+	let companyAddress = $state('Addis Ababa, Ethiopia');
 
 	// Re-sync only when the specific printer keys change on the server (e.g. after a failed save)
 	$effect(() => {

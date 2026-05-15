@@ -358,6 +358,7 @@
 											type="button"
 											role="switch"
 											aria-checked={priceChangeEnabled}
+											aria-label={m.inv_price_change()}
 											onclick={() => { priceChangeEnabled = !priceChangeEnabled; }}
 											class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 {priceChangeEnabled ? 'bg-primary' : 'bg-muted'}"
 										>

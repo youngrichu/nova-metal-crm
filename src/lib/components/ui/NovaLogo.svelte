@@ -1,6 +1,6 @@
 <script lang="ts">
 	let { class: className = "", idSuffix }: { class?: string; idSuffix: string } = $props();
-	const uid = idSuffix;
+	const uid = $derived(idSuffix);
 </script>
 
 <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 1536 672" class={className} role="img" aria-label="Nova Metal">

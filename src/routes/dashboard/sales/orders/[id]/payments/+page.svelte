@@ -11,12 +11,18 @@
 	let { data, form } = $props();
 
     let isSubmitting = $state(false);
+    let paymentAmount = $state(0);
 	
 	let totalAmount = $derived(Number(data.order.totalAmount));
     let totalPaid = $derived(data.payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0));
     let balanceDue = $derived(totalAmount - totalPaid);
-
-    let paymentAmount = $state(Number(data.order.totalAmount) - data.payments.reduce((sum: number, p: any) => sum + Number(p.amount), 0));
+    
+    // Initialize once from data
+    $effect.pre(() => {
+        if (paymentAmount === 0) {
+            paymentAmount = balanceDue;
+        }
+    });
 
     // Keep payment amount within bounds
     $effect(() => {
