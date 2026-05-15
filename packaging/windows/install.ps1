@@ -197,6 +197,20 @@ function Get-ConfiguredDbPort {
     return $DbPort
 }
 
+function Install-VcRedist {
+    Write-Step "Checking Visual C++ Redistributable"
+    $vcPath = "HKLM:\SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64"
+    if (Test-Path $vcPath) {
+        Write-Ok "Visual C++ Redistributable already installed"
+        return
+    }
+    Write-Step "Installing Visual C++ Redistributable (required by PostgreSQL)"
+    $vcInstaller = Join-Path $UpdateDir "vc_redist.x64.exe"
+    Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile $vcInstaller -UseBasicParsing
+    Start-Process -FilePath $vcInstaller -ArgumentList "/install", "/quiet", "/norestart" -Wait
+    Write-Ok "Visual C++ Redistributable installed"
+}
+
 function Initialize-Database {
     $pgBin = Join-Path $RuntimeDir "postgres\bin"
     $initdb = Join-Path $pgBin "initdb.exe"
@@ -369,6 +383,7 @@ try {
     $stage = Expand-ReleasePackage -PackagePath $package
     Copy-ReleaseFiles -StageDir $stage
     Write-EnvironmentFile
+    Install-VcRedist
     Initialize-Database
     Run-Migrations
     Register-AppService
