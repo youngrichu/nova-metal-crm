@@ -99,7 +99,7 @@ jobs:
 
           Copy-Item -Recurse -Force "build" (Join-Path $appRoot "build")
           Copy-Item -Force "package.json" (Join-Path $appRoot "package.json")
-          Copy-Item -Force "package-lock.json" (Join-Path $appRoot "package-lock.json")
+          Copy-Item -Force "pnpm-lock.yaml" (Join-Path $appRoot "pnpm-lock.yaml")
 
           New-Item -ItemType Directory -Force -Path (Join-Path $appRoot "scripts") | Out-Null
           Copy-Item -Force "packaging/windows/runtime/migrate.mjs" (Join-Path $appRoot "scripts/migrate.mjs")
@@ -110,7 +110,7 @@ jobs:
       - name: Install production Node modules in payload
         shell: pwsh
         working-directory: release/app
-        run: npm ci --omit=dev
+        run: pnpm install --prod --frozen-lockfile
 
       - name: Download Node runtime
         shell: pwsh
