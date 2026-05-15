@@ -110,7 +110,9 @@ jobs:
       - name: Install production Node modules in payload
         shell: pwsh
         working-directory: release/app
-        run: pnpm install --prod
+        run: |
+          # Use npm for simpler prod install without workspace complications
+          npm install --omit=dev
 
       - name: Download Node runtime
         shell: pwsh
