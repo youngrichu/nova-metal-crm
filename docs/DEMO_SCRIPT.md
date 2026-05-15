@@ -3,7 +3,7 @@
 > **Purpose:** Step-by-step walkthrough to verify every major workflow before go-live.
 > **Audience:** Developer, QA tester, or business owner performing acceptance testing.
 > **Estimated time:** 60–90 minutes for a full run.
-> **Prerequisite:** The application is running and the database has been migrated (`npm run db:migrate` or Docker Compose up).
+> **Prerequisite:** The application is running and the database has been migrated.
 
 ---
 

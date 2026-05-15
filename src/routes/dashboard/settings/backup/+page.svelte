@@ -59,7 +59,7 @@
 			// Reset after 60s in case the app doesn't restart (e.g. already up to date)
 			updateTimeoutId = setTimeout(() => { updateStatus = 'update-available'; }, 60000);
 		} catch {
-			toast.error(m.backup_watchtower_failed());
+			toast.error(m.backup_updater_failed());
 			updateStatus = 'update-available';
 		}
 	}
@@ -216,7 +216,7 @@
 						<HardDrive class="w-3.5 h-3.5" /> {m.backup_script()}
 					</div>
 					<div class="font-mono text-sm bg-muted/40 border border-foreground/10 px-3 py-2">
-						scripts/backup.sh
+						C:\ProgramData\NovaPOS\backups
 					</div>
 					<p class="text-xs text-muted-foreground/60">{m.backup_script_hint()}</p>
 				</div>

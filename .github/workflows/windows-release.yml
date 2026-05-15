@@ -1,0 +1,210 @@
+name: Windows Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version without leading v, for example 1.2.3
+        required: true
+      changelog:
+        description: Customer-facing changelog
+        required: true
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: "22.17.0"
+  WINSW_URL: ${{ vars.WINSW_URL || 'https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW-x64.exe' }}
+  POSTGRES_WINDOWS_ZIP_URL: ${{ vars.POSTGRES_WINDOWS_ZIP_URL || 'https://get.enterprisedb.com/postgresql/postgresql-16.14-1-windows-x64-binaries.zip' }}
+
+jobs:
+  build-windows-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve release metadata
+        id: meta
+        shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_CHANGELOG: ${{ inputs.changelog }}
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $version = $env:INPUT_VERSION
+            $changelog = $env:INPUT_CHANGELOG.Trim()
+          } else {
+            $version = "${{ github.ref_name }}".TrimStart("v")
+            $changelog = "Release $version"
+          }
+
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Version must use X.Y.Z format. Got: $version"
+          }
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "artifact=nova-pos-$version.zip" >> $env:GITHUB_OUTPUT
+          "changelog<<EOF" >> $env:GITHUB_OUTPUT
+          $changelog >> $env:GITHUB_OUTPUT
+          "EOF" >> $env:GITHUB_OUTPUT
+
+      - name: Validate runtime inputs
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:POSTGRES_WINDOWS_ZIP_URL)) {
+            throw "Set repository variable POSTGRES_WINDOWS_ZIP_URL to a PostgreSQL Windows ZIP that contains bin/initdb.exe, bin/pg_ctl.exe, and bin/pg_dump.exe."
+          }
+          if ([string]::IsNullOrWhiteSpace($env:WINSW_URL)) {
+            throw "Set repository variable WINSW_URL or keep the default WinSW URL."
+          }
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm check
+
+      - name: Test
+        run: pnpm test:unit
+
+      - name: Build production app
+        shell: pwsh
+        env:
+          BETTER_AUTH_SECRET: build_only_secret_please_replace
+          BETTER_AUTH_URL: http://127.0.0.1:3000
+        run: pnpm build
+
+      - name: Assemble app payload
+        shell: pwsh
+        run: |
+          $releaseRoot = Join-Path $PWD "release"
+          $appRoot = Join-Path $releaseRoot "app"
+          New-Item -ItemType Directory -Force -Path $appRoot | Out-Null
+
+          Copy-Item -Recurse -Force "build" (Join-Path $appRoot "build")
+          Copy-Item -Force "package.json" (Join-Path $appRoot "package.json")
+          Copy-Item -Force "package-lock.json" (Join-Path $appRoot "package-lock.json")
+
+          New-Item -ItemType Directory -Force -Path (Join-Path $appRoot "scripts") | Out-Null
+          Copy-Item -Force "packaging/windows/runtime/migrate.mjs" (Join-Path $appRoot "scripts/migrate.mjs")
+
+          New-Item -ItemType Directory -Force -Path (Join-Path $appRoot "src/lib/server/db") | Out-Null
+          Copy-Item -Recurse -Force "src/lib/server/db/migrations" (Join-Path $appRoot "src/lib/server/db/migrations")
+
+      - name: Install production Node modules in payload
+        shell: pwsh
+        working-directory: release/app
+        run: npm ci --omit=dev
+
+      - name: Download Node runtime
+        shell: pwsh
+        run: |
+          $runtimeRoot = Join-Path $PWD "release/runtime"
+          $downloadDir = Join-Path $PWD "release-downloads"
+          New-Item -ItemType Directory -Force -Path $runtimeRoot, $downloadDir | Out-Null
+
+          $nodeZip = Join-Path $downloadDir "node.zip"
+          $nodeUrl = "https://nodejs.org/dist/v$env:NODE_VERSION/node-v$env:NODE_VERSION-win-x64.zip"
+          Invoke-WebRequest -Uri $nodeUrl -OutFile $nodeZip
+          Expand-Archive -Path $nodeZip -DestinationPath $downloadDir -Force
+          $nodeExtracted = Get-ChildItem $downloadDir -Directory | Where-Object { $_.Name -like "node-v*-win-x64" } | Select-Object -First 1
+          if (!$nodeExtracted) { throw "Could not find extracted Node runtime." }
+          Copy-Item -Recurse -Force $nodeExtracted.FullName (Join-Path $runtimeRoot "node")
+
+      - name: Download PostgreSQL runtime
+        shell: pwsh
+        run: |
+          $runtimeRoot = Join-Path $PWD "release/runtime"
+          $downloadDir = Join-Path $PWD "release-downloads/postgres"
+          New-Item -ItemType Directory -Force -Path $runtimeRoot, $downloadDir | Out-Null
+
+          $postgresZip = Join-Path $downloadDir "postgres.zip"
+          Invoke-WebRequest -Uri $env:POSTGRES_WINDOWS_ZIP_URL -OutFile $postgresZip
+          Expand-Archive -Path $postgresZip -DestinationPath $downloadDir -Force
+
+          $initdb = Get-ChildItem $downloadDir -Recurse -Filter "initdb.exe" | Select-Object -First 1
+          $pgCtl = Get-ChildItem $downloadDir -Recurse -Filter "pg_ctl.exe" | Select-Object -First 1
+          $pgDump = Get-ChildItem $downloadDir -Recurse -Filter "pg_dump.exe" | Select-Object -First 1
+          $psql = Get-ChildItem $downloadDir -Recurse -Filter "psql.exe" | Select-Object -First 1
+          if (!$initdb -or !$pgCtl -or !$pgDump -or !$psql) {
+            throw "PostgreSQL ZIP must contain initdb.exe, pg_ctl.exe, pg_dump.exe, and psql.exe."
+          }
+
+          $postgresRoot = $initdb.Directory.Parent.FullName
+          Copy-Item -Recurse -Force $postgresRoot (Join-Path $runtimeRoot "postgres")
+
+      - name: Download WinSW
+        shell: pwsh
+        run: |
+          $serviceRoot = Join-Path $PWD "release/service"
+          New-Item -ItemType Directory -Force -Path $serviceRoot | Out-Null
+          Invoke-WebRequest -Uri $env:WINSW_URL -OutFile (Join-Path $serviceRoot "winsw.exe")
+
+      - name: Add Windows scripts
+        shell: pwsh
+        run: |
+          $scriptsRoot = Join-Path $PWD "release/packaging/windows"
+          New-Item -ItemType Directory -Force -Path $scriptsRoot | Out-Null
+          Copy-Item -Force "packaging/windows/install.ps1" $scriptsRoot
+          Copy-Item -Force "packaging/windows/update.ps1" $scriptsRoot
+          Copy-Item -Force "packaging/windows/uninstall.ps1" $scriptsRoot
+
+      - name: Validate release layout
+        run: pnpm tsx packaging/windows/validate-release-layout.ts release
+
+      - name: Create release ZIP
+        id: package
+        shell: pwsh
+        run: |
+          $artifact = "${{ steps.meta.outputs.artifact }}"
+          $artifactPath = Join-Path $PWD $artifact
+          if (Test-Path $artifactPath) { Remove-Item $artifactPath -Force }
+          Compress-Archive -Path "release/*" -DestinationPath $artifactPath -Force
+          $sha = (Get-FileHash -Algorithm SHA256 -Path $artifactPath).Hash.ToLowerInvariant()
+          "sha256=$sha" >> $env:GITHUB_OUTPUT
+          "artifact_path=$artifactPath" >> $env:GITHUB_OUTPUT
+
+      - name: Write release manifest
+        shell: pwsh
+        env:
+          NOVA_RELEASE_VERSION: ${{ steps.meta.outputs.version }}
+          NOVA_RELEASE_PACKAGE_URL: https://github.com/${{ github.repository }}/releases/download/v${{ steps.meta.outputs.version }}/${{ steps.meta.outputs.artifact }}
+          NOVA_RELEASE_SHA256: ${{ steps.package.outputs.sha256 }}
+          NOVA_RELEASE_CHANGELOG: ${{ steps.meta.outputs.changelog }}
+          NOVA_RELEASE_MANIFEST_PATH: latest.json
+        run: pnpm tsx packaging/windows/write-release-manifest.ts
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-pos-windows-release
+          path: |
+            ${{ steps.meta.outputs.artifact }}
+            latest.json
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.meta.outputs.version }}
+          name: Nova POS v${{ steps.meta.outputs.version }}
+          body: ${{ steps.meta.outputs.changelog }}
+          files: |
+            ${{ steps.meta.outputs.artifact }}
+            latest.json

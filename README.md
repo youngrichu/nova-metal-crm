@@ -1,33 +1,70 @@
 # Nova POS
 
-A production-ready point-of-sale and business management dashboard built with SvelteKit, PostgreSQL, and Docker.
+Production-ready point-of-sale and business management dashboard built with SvelteKit and PostgreSQL.
 
-## Windows Installation
+## Production Deployment
 
-For end-user machines, a one-button installer is provided. It sets up everything automatically — no technical knowledge required.
+Nova's customer deployment target is a local Windows production install. End-user machines should not use Docker, WSL, Git, pnpm, or source builds.
 
-**Requirements:** Windows 10 (2004+) or Windows 11, internet connection, ~2 GB disk space.
+The intended customer flow is:
 
-### Steps
+1. Install Nova with a PowerShell installer.
+2. Run Nova locally as Windows services.
+3. Open Nova from a Desktop or Start Menu shortcut at `http://127.0.0.1:3000`.
+4. Use Nova offline for daily work.
+5. Connect to the internet only when checking for updates.
 
-1. Download `scripts/install-windows.bat` and `scripts/install-windows.ps1` to the same folder
-2. Double-click `install-windows.bat`
-3. Follow the on-screen prompts
+### Runtime layout
 
-The installer will:
-- Install WSL2 + Docker Engine (lightweight, no Docker Desktop required)
-- Clone and build Nova POS
-- Generate a secure `.env` with random secrets
-- Register a startup task so the server runs automatically after every reboot
-- Open the app in your browser at `http://localhost:3000`
+| Purpose | Location |
+|---|---|
+| Application files | `C:\Program Files\Nova POS` |
+| Data, config, logs, backups, updates | `C:\ProgramData\NovaPOS` |
+| App service | `NovaPOS` |
+| Database service | `NovaPostgres` |
+| Database port | `127.0.0.1:55432` |
+| Local URL | `http://127.0.0.1:3000` |
 
-> A one-time reboot may be required to activate WSL2. The installer resumes automatically after login.
+### Windows packaging scripts
 
-### Uninstalling
+The Windows packaging scripts live in `packaging/windows`:
 
-Double-click `scripts/uninstall-windows.bat`. Add `-KeepData` to preserve the database.
+```powershell
+PowerShell -NoProfile -ExecutionPolicy Bypass -File .\packaging\windows\install.ps1 -ReleasePackagePath .\nova-pos-1.2.3.zip
+PowerShell -NoProfile -ExecutionPolicy Bypass -File .\packaging\windows\update.ps1 -ManifestUrl https://example.com/nova/latest.json
+PowerShell -NoProfile -ExecutionPolicy Bypass -File .\packaging\windows\uninstall.ps1
+```
 
----
+Data is preserved by default during uninstall. Use `-RemoveData` only when intentionally deleting the local database, backups, config, and logs.
+
+See `packaging/windows/README.md` for the release ZIP contract and manifest format.
+See `docs/WINDOWS_PRODUCTION_RELEASE.md` for the release and Windows VM test runbook.
+
+## Release Model
+
+Customer machines consume prebuilt release ZIPs. They must never run `git pull`, `pnpm install`, or `pnpm build`.
+
+The intended release flow is:
+
+1. Push changes to GitHub.
+2. GitHub Actions installs dependencies, runs checks/tests, and builds the SvelteKit production app.
+3. CI packages the production build, runtime dependencies, Node runtime, PostgreSQL runtime, WinSW service wrapper, and Windows scripts into a ZIP such as `nova-pos-1.2.3.zip`.
+4. CI publishes the ZIP and a manifest containing `version`, `packageUrl`, `sha256`, and `changelog`.
+5. Installed customers click **Check for Updates** in Nova.
+6. Nova starts the local Windows updater, which downloads the ZIP, verifies it, backs up the database, replaces app files, runs migrations, restarts the service, and health-checks the local app.
+
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `BETTER_AUTH_SECRET` | Yes | Random 64-char hex secret for auth |
+| `BETTER_AUTH_URL` | Yes | Local app URL, usually `http://127.0.0.1:3000` in production |
+| `PORT` | No | HTTP port, default `3000` |
+| `NODE_ENV` | No | Use `production` for installed deployments |
+| `PUBLIC_APP_VERSION` | No | Current app version, matching `version.json` on release |
+| `VERSION_CHECK_URL` | No | Public release manifest URL for update checks |
+| `NOVA_UPDATER_SCRIPT` | Production | Path to the local updater script, usually `C:\ProgramData\NovaPOS\update.ps1` |
 
 ## Development Setup
 
@@ -35,7 +72,7 @@ Double-click `scripts/uninstall-windows.bat`. Add `-KeepData` to preserve the da
 
 - Node.js 22+
 - pnpm
-- PostgreSQL (or use the Docker Compose stack below)
+- PostgreSQL
 
 ### Install dependencies
 
@@ -43,17 +80,11 @@ Double-click `scripts/uninstall-windows.bat`. Add `-KeepData` to preserve the da
 pnpm install
 ```
 
-### Start the database
-
-```sh
-docker compose up db -d
-```
-
 ### Configure environment
 
 ```sh
 cp .env.example .env
-# Edit .env and fill in your values
+# Edit .env and set DATABASE_URL, BETTER_AUTH_SECRET, and BETTER_AUTH_URL
 ```
 
 ### Run migrations
@@ -68,73 +99,15 @@ pnpm drizzle-kit migrate
 pnpm dev
 ```
 
----
-
-## Production Deployment (Docker)
-
-The full stack runs via Docker Compose: app, PostgreSQL, hourly backups, and Watchtower for automatic updates.
-
-```sh
-cp .env.example .env
-# Edit .env - set BETTER_AUTH_SECRET, BETTER_AUTH_URL, WATCHTOWER_API_TOKEN
-
-docker compose up -d --build
-```
-
-App is available at `http://localhost:3000`.
-
-### Environment variables
-
-| Variable | Required | Description |
-|---|---|---|
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `BETTER_AUTH_SECRET` | Yes | Random 64-char hex secret for auth |
-| `BETTER_AUTH_URL` | Yes | Public URL the app is served from |
-| `PORT` | No | HTTP port (default: `3000`) |
-| `NODE_ENV` | No | Set to `production` |
-| `PUBLIC_APP_VERSION` | No | Must match `version.json` on release |
-| `VERSION_CHECK_URL` | No | URL to `version.json` for update checks |
-| `WATCHTOWER_API_URL` | No | Watchtower endpoint for triggering updates |
-| `WATCHTOWER_API_TOKEN` | No | Bearer token for Watchtower API |
-
----
-
-## Releasing a New Version
-
-1. Update `version.json` with the new version and changelog:
-
-```json
-{
-  "version": "1.1.0",
-  "changelog": "What changed in this release."
-}
-```
-
-2. Publish the new version to the public update manifest:
-
-```sh
-gh gist edit bb9bc3f021cffa5b80603b2a0c21a9e0 version.json
-```
-
-3. Push your code. Watchtower will pull the updated Docker image and restart the app automatically when triggered via the in-app **Settings → Check for Updates** button.
-
----
-
 ## Useful Commands
 
 ```sh
-# View live app logs
-wsl -d Ubuntu-24.04 -- journalctl -u nova-pos -f
+# Typecheck
+pnpm check
 
-# Edit .env on an installed machine
-wsl -d Ubuntu-24.04 -- nano /opt/nova/.env
-
-# Restart the app
-wsl -d Ubuntu-24.04 -- bash -c "cd /opt/nova && docker compose restart app"
-
-# Connect to the database
-wsl -d Ubuntu-24.04 -- bash -c "docker compose -f /opt/nova/docker-compose.yml exec db psql -U nova_dev nova_crm"
-
-# Run tests
+# Run unit tests
 pnpm test:unit
+
+# Build production output
+pnpm build
 ```

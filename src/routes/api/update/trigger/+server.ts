@@ -1,5 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ locals }) => {
@@ -7,30 +9,40 @@ export const POST: RequestHandler = async ({ locals }) => {
     throw error(403, 'Admin access required');
   }
 
-  const watchtowerUrl = env.WATCHTOWER_API_URL;
-  const watchtowerToken = env.WATCHTOWER_API_TOKEN;
-
-  if (!watchtowerUrl || !watchtowerToken) {
-    throw error(500, 'Watchtower is not configured (WATCHTOWER_API_URL / WATCHTOWER_API_TOKEN missing)');
+  if (process.platform !== 'win32') {
+    throw error(500, 'Windows updater is only available on Windows production installs');
   }
 
-  let res: Response;
+  const updaterScript = env.NOVA_UPDATER_SCRIPT;
+  if (!updaterScript) {
+    throw error(500, 'NOVA_UPDATER_SCRIPT is not configured');
+  }
+  if (!existsSync(updaterScript)) {
+    throw error(500, `Updater script not found: ${updaterScript}`);
+  }
+  const manifestUrl = env.VERSION_CHECK_URL;
+  if (!manifestUrl) {
+    throw error(500, 'VERSION_CHECK_URL is not configured');
+  }
+
   try {
-    res = await fetch(`${watchtowerUrl}/v1/update`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${watchtowerToken}` },
-      signal: AbortSignal.timeout(10000)
+    const child = spawn('powershell.exe', [
+      '-NoProfile',
+      '-ExecutionPolicy',
+      'Bypass',
+      '-File',
+      updaterScript,
+      '-ManifestUrl',
+      manifestUrl,
+      '-Quiet'
+    ], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true
     });
+    child.unref();
   } catch (err: any) {
-    throw error(502, 'Could not reach Watchtower. Is it running?');
-  }
-
-  if (!res.ok) {
-    const message =
-      res.status === 401
-        ? 'Update service authentication failed. Check WATCHTOWER_API_TOKEN.'
-        : `Watchtower returned an unexpected error (HTTP ${res.status})`;
-    throw error(502, message);
+    throw error(502, `Could not start Windows updater: ${err?.message ?? 'unknown error'}`);
   }
 
   console.log(`[AUDIT] App update triggered by user ${locals.user.id} at ${new Date().toISOString()}`);

@@ -40,7 +40,12 @@
 		"vitest": "^4.1.0"
 	},
 	"pnpm": {
-		"onlyBuiltDependencies": ["@prisma/engines", "esbuild", "prisma", "usb"]
+		"onlyBuiltDependencies": [
+			"@prisma/engines",
+			"esbuild",
+			"prisma",
+			"usb"
+		]
 	},
 	"dependencies": {
 		"@node-escpos/core": "^0.6.0",
