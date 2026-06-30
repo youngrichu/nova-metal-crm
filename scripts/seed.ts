@@ -13,6 +13,7 @@ const pool = new Pool({
 const db = drizzle(pool, { schema });
 
 const auth = betterAuth({
+    secret: process.env.BETTER_AUTH_SECRET,
     database: drizzleAdapter(db, {
         provider: "pg",
         schema
