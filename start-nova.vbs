@@ -4,7 +4,7 @@ Set oFSO   = CreateObject("Scripting.FileSystemObject")
 ' Check if already running on port 5173
 Dim sTmp
 sTmp = oShell.ExpandEnvironmentStrings("%TEMP%") & "\nova_check.txt"
-oShell.Run "cmd /c netstat -ano | findstr :5173 > """ & sTmp & """", 0, True
+oShell.Run "cmd /c netstat -ano | findstr :5173 | findstr LISTENING > """ & sTmp & """", 0, True
 
 Dim bRunning
 bRunning = False
