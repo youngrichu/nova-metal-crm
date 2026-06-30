@@ -21,8 +21,9 @@ End If
 If bRunning Then
     oShell.Run "http://localhost:5173"
 Else
-    ' Start server minimized to taskbar
-    oShell.Run "cmd /k ""cd /d D:\nova-metal-crm && pnpm dev""", 7, False
+    ' Start server minimized to taskbar, working directory set explicitly
+    oShell.CurrentDirectory = "D:\nova-metal-crm"
+    oShell.Run "cmd /k pnpm dev", 7, False
 
     ' Poll until SvelteKit is actually ready (not just Vite placeholder)
     Dim oHTTP
