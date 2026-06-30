@@ -21,24 +21,24 @@ End If
 If bRunning Then
     oShell.Run "http://localhost:5173"
 Else
-    ' Start server minimized to taskbar, working directory set explicitly
-    oShell.CurrentDirectory = "D:\nova-metal-crm"
-    oShell.Run "cmd /k pnpm dev", 7, False
+    ' Start server minimized (style 2 = SW_SHOWMINIMIZED)
+    oShell.Run "cmd /k D:\nova-metal-crm\nova-server.bat", 2, False
 
-    ' Poll until SvelteKit is actually ready (not just Vite placeholder)
+    ' Poll /login until SvelteKit is fully ready
+    ' "sveltekit-preload-data" only appears in the real app HTML, never in Vite placeholder
     Dim oHTTP
     Set oHTTP = CreateObject("WinHttp.WinHttpRequest.5.1")
-    oHTTP.SetTimeouts 1000, 1000, 3000, 3000
+    oHTTP.SetTimeouts 1000, 1000, 4000, 4000
 
     Dim bReady, i
     bReady = False
     For i = 1 To 90
         On Error Resume Next
-        oHTTP.Open "GET", "http://localhost:5173", False
+        oHTTP.Open "GET", "http://localhost:5173/login", False
         oHTTP.Send
         If Err.Number = 0 Then
             If oHTTP.Status = 200 Then
-                If InStr(oHTTP.ResponseText, "Welcome to SvelteKit") = 0 Then
+                If InStr(oHTTP.ResponseText, "sveltekit-preload-data") > 0 Then
                     bReady = True
                 End If
             End If
