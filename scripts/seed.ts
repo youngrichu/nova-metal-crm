@@ -48,7 +48,9 @@ async function main() {
                 name: "System Admin"
             }
         });
+        await raw.query('UPDATE "user" SET role=\'admin\' WHERE email=$1', [email]);
         console.log("Admin user created: " + user.user.email);
+        console.log("Role set to admin.");
         console.log("Login with  email: " + email + "  password: " + password);
     } catch (e: any) {
         console.error("Failed:", e.message || e);

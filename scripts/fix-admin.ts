@@ -42,6 +42,9 @@ try {
     });
     console.log("Created: " + created.user.email);
 
+    await raw.query('UPDATE "user" SET role=\'admin\' WHERE email=$1', [email]);
+    console.log("Role set to admin.");
+
     const row = await raw.query(
         'SELECT password FROM account WHERE user_id=(SELECT id FROM "user" WHERE email=$1) AND provider_id=\'credential\'',
         [email]
