@@ -16,10 +16,8 @@ async function main() {
 
 	const client = await pool.connect();
 	try {
-		const result = await client.query(
-			`UPDATE account SET password = $1 WHERE user_id = (SELECT id FROM "user" WHERE email = $2)`,
-			[hash, email]
-		);
+		const sql = 'UPDATE account SET password = $1 WHERE user_id = (SELECT id FROM "user" WHERE email = $2)';
+		const result = await client.query(sql, [hash, email]);
 		if (result.rowCount === 0) {
 			console.error("No account found for", email, "- run the seed script first");
 		} else {
