@@ -10,10 +10,10 @@ if %errorlevel%==0 (
 )
 
 echo Starting Nova Metal CRM server...
-start "Nova Metal CRM Server" cmd /k "cd /d D:\nova-metal-crm && pnpm dev"
+start /min "Nova Metal CRM Server" cmd /k "cd /d D:\nova-metal-crm && pnpm dev"
 
-echo Waiting for server to start (25 seconds)...
-timeout /t 25 /nobreak >nul
+echo Waiting for server to start...
+timeout /t 15 /nobreak >nul
 
 echo Opening browser...
 start "" "http://localhost:5173"
