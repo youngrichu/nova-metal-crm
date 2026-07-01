@@ -3,6 +3,7 @@ import { env } from '$env/dynamic/private';
 import { env as publicEnv } from '$env/dynamic/public';
 import { resolvePublicAppVersion } from '$lib/utils/app-version';
 import { compareVersions, parseVersionJson } from '$lib/utils/version';
+import { DEFAULT_VERSION_CHECK_URL } from '$lib/utils/update-config';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -10,10 +11,7 @@ export const GET: RequestHandler = async ({ locals }) => {
     throw error(403, 'Admin access required');
   }
 
-  const versionCheckUrl = env.VERSION_CHECK_URL;
-  if (!versionCheckUrl) {
-    throw error(500, 'VERSION_CHECK_URL not configured');
-  }
+  const versionCheckUrl = env.VERSION_CHECK_URL || DEFAULT_VERSION_CHECK_URL;
 
   const currentVersion = resolvePublicAppVersion(publicEnv);
 

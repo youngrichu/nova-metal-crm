@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { DEFAULT_VERSION_CHECK_URL } from '$lib/utils/update-config';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ locals }) => {
@@ -20,10 +21,7 @@ export const POST: RequestHandler = async ({ locals }) => {
   if (!existsSync(updaterScript)) {
     throw error(500, `Updater script not found: ${updaterScript}`);
   }
-  const manifestUrl = env.VERSION_CHECK_URL;
-  if (!manifestUrl) {
-    throw error(500, 'VERSION_CHECK_URL is not configured');
-  }
+  const manifestUrl = env.VERSION_CHECK_URL || DEFAULT_VERSION_CHECK_URL;
 
   try {
     const child = spawn('powershell.exe', [
