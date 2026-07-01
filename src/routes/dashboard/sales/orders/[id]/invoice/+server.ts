@@ -1,7 +1,8 @@
 import { error } from "@sveltejs/kit";
 import { db } from "$lib/server/db";
 import { salesOrders, salesOrderItems, customers, products } from "$lib/server/db/schema";
-import { eq } from "drizzle-orm";
+import { systemSettings } from "$lib/server/db/schema/settings";
+import { eq, inArray } from "drizzle-orm";
 import { createRequire } from "module";
 import path from "path";
 import fs from "fs";
@@ -47,6 +48,19 @@ export const GET: RequestHandler = async ({ params }) => {
 	const orderId = params.id;
 
 	try {
+		const settingRows = await db
+			.select()
+			.from(systemSettings)
+			.where(inArray(systemSettings.key, ['company_name', 'company_address', 'company_tin', 'company_vat']));
+
+		const settings: Record<string, string> = {
+			company_name: 'NOVA METAL PLC',
+			company_address: 'Addis Ababa, Ethiopia',
+			company_tin: '',
+			company_vat: ''
+		};
+		for (const row of settingRows) settings[row.key] = row.value;
+
 		const [order] = await db
 			.select({
 				id: salesOrders.id,
@@ -101,7 +115,11 @@ export const GET: RequestHandler = async ({ params }) => {
                     margin: [0, 0, 0, 5]
                 },
                 {
-                    text: 'Addis Ababa, Ethiopia | TIN: 0000000000 | VAT: 0000000000',
+                    text: [
+                        settings.company_address,
+                        settings.company_tin ? ` | TIN: ${settings.company_tin}` : '',
+                        settings.company_vat ? ` | VAT: ${settings.company_vat}` : ''
+                    ].join(''),
                     alignment: 'center',
                     color: '#666666',
                     fontSize: 9,

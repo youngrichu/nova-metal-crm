@@ -23,11 +23,11 @@ try {
 	if (escpos) escpos.Network = escposNetwork;
 } catch (e) { console.warn('escpos-network not available:', e); }
 
-async function getPrinterSettings(): Promise<{ type: string; address: string; paperWidth: number; vatRate: number; currencyCode: string; currencyLocale: string; companyName: string; companyAddress: string }> {
+async function getPrinterSettings(): Promise<{ type: string; address: string; paperWidth: number; vatRate: number; currencyCode: string; currencyLocale: string; companyName: string; companyAddress: string; companyTin: string; companyVat: string }> {
 	const rows = await db
 		.select()
 		.from(systemSettings)
-		.where(inArray(systemSettings.key, ['printer_type', 'printer_address', 'paper_width', 'vat_rate', 'currency_code', 'currency_locale', 'company_name', 'company_address']));
+		.where(inArray(systemSettings.key, ['printer_type', 'printer_address', 'paper_width', 'vat_rate', 'currency_code', 'currency_locale', 'company_name', 'company_address', 'company_tin', 'company_vat']));
 
 	const map: Record<string, string> = {};
 	for (const row of rows) map[row.key] = row.value;
@@ -40,7 +40,9 @@ async function getPrinterSettings(): Promise<{ type: string; address: string; pa
 		currencyCode: map.currency_code ?? 'ETB',
 		currencyLocale: map.currency_locale ?? 'en-ET',
 		companyName: map.company_name ?? 'NOVA METAL PLC',
-		companyAddress: map.company_address ?? 'Addis Ababa, Ethiopia'
+		companyAddress: map.company_address ?? 'Addis Ababa, Ethiopia',
+		companyTin: map.company_tin ?? '',
+		companyVat: map.company_vat ?? ''
 	};
 }
 
@@ -160,8 +162,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 						.text(config.companyName.substring(0, maxHeaderChars))
 						.size(1, 1)
 						.style('normal')
-						.text(config.companyAddress.substring(0, lineWidth))
-						.drawLine()
+						.text(config.companyAddress.substring(0, lineWidth));
+
+					if (config.companyTin) printer.text(`TIN: ${config.companyTin}`.substring(0, lineWidth));
+					if (config.companyVat) printer.text(`VAT: ${config.companyVat}`.substring(0, lineWidth));
+
+					printer.drawLine()
 
 						.align('lt')
 						.text(`Receipt: ${o.orderNumber}`)

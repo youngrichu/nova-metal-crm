@@ -477,15 +477,15 @@
 
 			<!-- Totals Section -->
 			<div class="mt-8 pt-6 border-t-2 border-border/50 flex flex-col items-end space-y-2">
-				<div class="flex justify-between w-full md:w-[300px] text-sm font-bold tracking-widest uppercase text-muted-foreground">
+				<div class="flex justify-between gap-8 w-full md:w-[420px] text-sm font-bold tracking-widest uppercase text-muted-foreground">
 					<span>Subtotal</span>
 					<span class="font-mono text-foreground">{formatCurrency(subtotal)}</span>
 				</div>
-				<div class="flex justify-between w-full md:w-[300px] text-sm font-bold tracking-widest uppercase text-muted-foreground">
+				<div class="flex justify-between gap-8 w-full md:w-[420px] text-sm font-bold tracking-widest uppercase text-muted-foreground">
 					<span>VAT ({(data.vatRate * 100).toFixed(0)}%)</span>
 					<span class="font-mono text-foreground">{formatCurrency(taxAmount)}</span>
 				</div>
-				<div class="flex justify-between w-full md:w-[300px] text-2xl md:text-3xl font-black uppercase text-primary border-t-2 border-foreground/10 pt-4 mt-2">
+				<div class="flex justify-between gap-8 w-full md:w-[420px] text-2xl md:text-3xl font-black uppercase text-primary border-t-2 border-foreground/10 pt-4 mt-2">
 					<span>Total</span>
 					<span class="font-mono">{formatCurrency(totalAmount)}</span>
 				</div>

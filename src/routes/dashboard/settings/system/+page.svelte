@@ -15,15 +15,19 @@
 	let printerAddress = $state(data.settings.printer_address ?? '192.168.1.100');
 	let companyName = $state(data.settings.company_name ?? 'NOVA METAL PLC');
 	let companyAddress = $state(data.settings.company_address ?? 'Addis Ababa, Ethiopia');
+	let companyTin = $state(data.settings.company_tin ?? '');
+	let companyVat = $state(data.settings.company_vat ?? '');
 
 	// Re-sync only when the specific printer keys change on the server (e.g. after a failed save)
 	$effect(() => {
-		const { printer_type, paper_width, printer_address, company_name, company_address } = data.settings;
+		const { printer_type, paper_width, printer_address, company_name, company_address, company_tin, company_vat } = data.settings;
 		printerType = printer_type ?? 'network';
 		paperWidth = paper_width ?? '80';
 		printerAddress = printer_address ?? '192.168.1.100';
 		companyName = company_name ?? 'NOVA METAL PLC';
 		companyAddress = company_address ?? 'Addis Ababa, Ethiopia';
+		companyTin = company_tin ?? '';
+		companyVat = company_vat ?? '';
 	});
 
 	function handleEnhance() {
@@ -270,6 +274,38 @@
 							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all"
 						/>
 						<p class="text-xs text-muted-foreground/60">{m.system_company_address_hint()}</p>
+					</div>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div class="space-y-2 group">
+						<Label for="company_tin" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
+							{m.system_company_tin()}
+						</Label>
+						<Input
+							id="company_tin"
+							name="company_tin"
+							type="text"
+							bind:value={companyTin}
+							maxlength={50}
+							placeholder="0000000000"
+							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all font-mono"
+						/>
+						<p class="text-xs text-muted-foreground/60">{m.system_company_tin_hint()}</p>
+					</div>
+					<div class="space-y-2 group">
+						<Label for="company_vat" class="text-xs font-bold tracking-wider uppercase text-foreground/70 group-focus-within:text-primary transition-colors">
+							{m.system_company_vat()}
+						</Label>
+						<Input
+							id="company_vat"
+							name="company_vat"
+							type="text"
+							bind:value={companyVat}
+							maxlength={50}
+							placeholder="0000000000"
+							class="h-14 bg-muted/30 border-2 border-transparent focus-visible:bg-transparent focus-visible:border-primary focus-visible:ring-0 rounded-none text-base px-4 transition-all font-mono"
+						/>
+						<p class="text-xs text-muted-foreground/60">{m.system_company_vat_hint()}</p>
 					</div>
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -4,7 +4,7 @@ import { redirect, fail } from '@sveltejs/kit';
 import { invalidateBarcodeCache } from '$lib/server/barcodeCache';
 import type { PageServerLoad, Actions } from './$types';
 
-const SETTING_KEYS = ['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred', 'currency_code', 'currency_locale', 'barcode_enabled', 'printer_type', 'printer_address', 'paper_width', 'company_name', 'company_address'] as const;
+const SETTING_KEYS = ['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred', 'currency_code', 'currency_locale', 'barcode_enabled', 'printer_type', 'printer_address', 'paper_width', 'company_name', 'company_address', 'company_tin', 'company_vat'] as const;
 
 const DEFAULTS: Record<string, string> = {
     vat_rate: '0.15',
@@ -19,7 +19,9 @@ const DEFAULTS: Record<string, string> = {
     printer_address: '192.168.1.100',
     paper_width: '80',
     company_name: 'NOVA METAL PLC',
-    company_address: 'Addis Ababa, Ethiopia'
+    company_address: 'Addis Ababa, Ethiopia',
+    company_tin: '',
+    company_vat: ''
 };
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -58,9 +60,16 @@ export const actions: Actions = {
 
         const updates: { key: string; value: string }[] = [];
 
+        const OPTIONAL_KEYS = ['company_tin', 'company_vat'];
+
         for (const key of SETTING_KEYS) {
             const raw = formData.get(key)?.toString().trim();
-            if (!raw) continue;
+            if (!raw) {
+                if (OPTIONAL_KEYS.includes(key)) {
+                    updates.push({ key, value: '' });
+                }
+                continue;
+            }
 
             // Validate numeric fields
             if (['vat_rate', 'markup_retail', 'markup_wholesale', 'markup_vip', 'markup_preferred'].includes(key)) {
@@ -125,6 +134,14 @@ export const actions: Actions = {
             if (key === 'company_address') {
                 if (raw.length > 200) return fail(400, { error: 'Company address must be 200 characters or fewer' });
                 if (/[\x00-\x1F\x7F]/.test(raw)) return fail(400, { error: 'Company address must not contain control characters' });
+            }
+            if (key === 'company_tin') {
+                if (raw.length > 50) return fail(400, { error: 'TIN number must be 50 characters or fewer' });
+                if (/[\x00-\x1F\x7F]/.test(raw)) return fail(400, { error: 'TIN number must not contain control characters' });
+            }
+            if (key === 'company_vat') {
+                if (raw.length > 50) return fail(400, { error: 'VAT number must be 50 characters or fewer' });
+                if (/[\x00-\x1F\x7F]/.test(raw)) return fail(400, { error: 'VAT number must not contain control characters' });
             }
 
             updates.push({ key, value: raw });
